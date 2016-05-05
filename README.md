@@ -2,6 +2,8 @@
 
 [![Build Status](https://travis-ci.org/salsify/avromatic.svg?branch=master)][travis]
 
+[travis]: http://travis-ci.org/salsify/avromatic
+
 `Avromatic` generates models from Avro schemas and provides utilities to
 encode and decode them.
 
