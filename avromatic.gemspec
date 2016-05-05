@@ -9,8 +9,8 @@ Gem::Specification.new do |spec|
   spec.authors       = ["Salsify Engineering"]
   spec.email         = ["engineering@salsify.com"]
 
-  spec.summary       = %q{TODO: Write a short summary, because Rubygems requires one.}
-  spec.description   = %q{TODO: Write a longer description or delete this line.}
+  spec.summary       = %q{Generate Ruby models from Avro schemas}
+  spec.description   = spec.summary
   spec.homepage      = "https://github.com/salsify/avromatic.git"
   spec.license       = "MIT"
 
