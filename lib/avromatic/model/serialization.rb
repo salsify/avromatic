@@ -10,6 +10,11 @@ module Avromatic
 
       delegate :messaging, to: :class
 
+      included do |model_class|
+        model_class.messaging = Avromatic.messaging ||
+          Avromatic.build_messaging
+      end
+
       module Encode
         def avro_message_value
           messaging.encode(
@@ -65,16 +70,9 @@ module Avromatic
       end
 
       module ClassMethods
-
         # The messaging object acts as an intermediary talking to the schema
         # registry and using returned/specified schemas to decode/encode.
-        def messaging
-          # TODO: avoid this lazy initialize
-          @messaging ||= AvroTurf::Messaging.new(
-            registry_url: Avromatic.registry_url,
-            schema_store: Avromatic.schema_store,
-            logger: Avromatic.logger)
-        end
+        attr_accessor :messaging
 
         include Decode
       end
