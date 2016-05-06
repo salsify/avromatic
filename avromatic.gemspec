@@ -20,9 +20,18 @@ Gem::Specification.new do |spec|
   spec.require_paths = ["lib"]
 
   spec.add_runtime_dependency "avro", ">= 1.7.0"
+  spec.add_runtime_dependency "virtus"
+  spec.add_runtime_dependency "activesupport"
+  spec.add_runtime_dependency "activemodel"
+  spec.add_runtime_dependency "avro_turf"
+  spec.add_runtime_dependency "private_attr"
 
   spec.add_development_dependency "bundler", "~> 1.11"
   spec.add_development_dependency "rake", "~> 10.0"
   spec.add_development_dependency "rspec", "~> 3.0"
   spec.add_development_dependency "simplecov"
+  spec.add_development_dependency "webmock"
+  spec.add_development_dependency "avro-builder", ">= 0.3.2"
+  # For FakeSchemaRegistryServer
+  spec.add_development_dependency "sinatra"
 end

@@ -1,6 +1,7 @@
 require 'private_attr'
+require 'avro_turf/schema_registry'
 
-module SalsifyAvro
+module Avromatic
   module Model
 
     # This class is used to decode Avro messages to their corresponding models.
@@ -24,7 +25,7 @@ module SalsifyAvro
       class DuplicateKeyError < StandardError
         def initialize(*models)
           super("Multiple models #{models} have the same key "\
-                "'#{SalsifyAvro::Model::Decoder.model_key(models.first)}'")
+                "'#{Avromatic::Model::Decoder.model_key(models.first)}'")
         end
       end
 
@@ -38,21 +39,21 @@ module SalsifyAvro
       delegate :model_key, to: :class
 
       # @param *models [generated models] Models to register for decoding.
-      # @param schema_registry [SalsifyAvro::SchemaRegistryClient] Optional schema
+      # @param schema_registry [Avromatic::SchemaRegistryClient] Optional schema
       #   registry client.
       # @param registry_url [String] Optional URL for schema registry server.
       def initialize(*models, schema_registry: nil, registry_url: nil)
         @model_map = build_model_map(models)
         @schema_names_by_id = {}
         @schema_registry = schema_registry ||
-          (registry_url && SalsifyAvro::SchemaRegistryClient(registry_url, logger: SalsifyAvro.logger)) ||
-          SalsifyAvro.build_schema_registry
+          (registry_url && AvroTurf::SchemaRegistry.new(registry_url, logger: Avromatic.logger)) ||
+          Avromatic.build_schema_registry
       end
 
       # If two arguments are specified then the first is interpreted as the
       # message key and the second is the message value. If there is only one
       # arg then it is used as the message value.
-      # @return [SalsifyAvro model]
+      # @return [Avromatic model]
       def decode(*args)
         message_key, message_value = args.size > 1 ? args : [nil, args.first]
         value_schema_name = schema_name_for_data(message_value)

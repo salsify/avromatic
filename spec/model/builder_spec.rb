@@ -1,10 +1,7 @@
 require 'spec_helper'
 
-describe SalsifyAvro::Model::Builder do
-  before do
-    SalsifyAvro.schema_path = 'spec/avro/schema'
-  end
-  let(:schema_store) { SalsifyAvro.build_schema_store }
+describe Avromatic::Model::Builder do
+  let(:schema_store) { Avromatic.schema_store }
   let(:schema) { schema_store.find(schema_name) }
   let(:key_schema) { schema_store.find(key_schema_name) }
   let(:test_class) do
@@ -23,7 +20,7 @@ describe SalsifyAvro::Model::Builder do
 
     it "returns a new model class" do
       expect(klass).to be_a(Class)
-      expect(klass.ancestors).to include(SalsifyAvro::Model::Attributes)
+      expect(klass.ancestors).to include(Avromatic::Model::Attributes)
       expect(klass.attribute_set.to_a.map(&:name).map(&:to_s))
         .to match_array(schema.fields.map(&:name))
     end
@@ -82,7 +79,7 @@ describe SalsifyAvro::Model::Builder do
       let(:schema_name) { 'test.primitive_types' }
 
       let(:test_class) do
-        SalsifyAvro::Model.model(schema: schema)
+        Avromatic::Model.model(schema: schema)
       end
 
       it_behaves_like 'a generated model'
@@ -122,8 +119,8 @@ describe SalsifyAvro::Model::Builder do
       let(:schema_name) { 'test.value' }
       let(:key_schema_name) { 'test.key' }
       let(:test_class) do
-        SalsifyAvro::Model.model(value_schema_name: schema_name,
-                                 key_schema_name: key_schema_name)
+        Avromatic::Model.model(value_schema_name: schema_name,
+                               key_schema_name: key_schema_name)
       end
 
       it "defines a model with attributes for the key and value" do

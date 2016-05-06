@@ -1,10 +1,11 @@
-module SalsifyAvro
+module Avromatic
   module Model
 
     # This class holds configuration for a model build from Avro schema(s).
     class Configuration
 
       attr_reader :avro_schema, :key_avro_schema
+      delegate :schema_store, to: Avromatic
 
       # Either schema(_name) or value_schema(_name), but not both, must be
       # specified.
@@ -18,7 +19,6 @@ module SalsifyAvro
       # @option options [String, Symbol] :key_schema_name
       # @option options [schema store] :schema_store
       def initialize(**options)
-        @schema_store = options[:schema_store] || SalsifyAvro.build_schema_store
         @avro_schema = find_avro_schema(**options)
         raise ArgumentError.new('value_schema(_name) or schema(_name) must be specified') unless avro_schema
         @key_avro_schema = find_schema_by_option(:key_schema, **options)
@@ -39,7 +39,7 @@ module SalsifyAvro
       def find_schema_by_option(option_name, **options)
         schema_name_option = :"#{option_name}_name"
         options[option_name] ||
-          (options[schema_name_option] && @schema_store.find(options[schema_name_option]))
+          (options[schema_name_option] && schema_store.find(options[schema_name_option]))
 
       end
     end

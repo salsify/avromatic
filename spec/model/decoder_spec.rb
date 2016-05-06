@@ -1,23 +1,23 @@
 require 'spec_helper'
 require 'webmock/rspec'
-require 'salsify_avro/test/fake_schema_registry_server'
+require 'avro_turf/test/fake_schema_registry_server'
 
-describe SalsifyAvro::Model::Decoder do
+describe Avromatic::Model::Decoder do
   let(:registry_url) { 'http://registry.example.com' }
-  let(:schema_registry) { SalsifyAvro.schema_registry }
+  let(:schema_registry) { Avromatic.schema_registry }
 
   let(:instance) { described_class.new(*models) }
   let(:model1) do
-    SalsifyAvro::Model.model(
+    Avromatic::Model.model(
       value_schema_name: 'test.encode_value',
       key_schema_name: 'test.encode_key')
   end
   let(:model2) do
-    SalsifyAvro::Model.model(value_schema_name: 'test.value')
+    Avromatic::Model.model(value_schema_name: 'test.value')
   end
 
   before do
-    SalsifyAvro.registry_url = registry_url
+    Avromatic.registry_url = registry_url
     stub_request(:any, /^#{registry_url}/).to_rack(FakeSchemaRegistryServer)
     FakeSchemaRegistryServer.clear
   end
@@ -25,7 +25,7 @@ describe SalsifyAvro::Model::Decoder do
   describe "#initialize" do
     context "when multiple models use the same schema" do
       let(:model3) do
-        SalsifyAvro::Model.model(
+        Avromatic::Model.model(
           value_schema_name: 'test.encode_value',
           key_schema_name: 'test.encode_key')
       end
@@ -74,7 +74,7 @@ describe SalsifyAvro::Model::Decoder do
 
     context "when the schema name is not known by the decoder" do
       let(:unknown_model) do
-        SalsifyAvro::Model.model(schema_name: 'test.defaults')
+        Avromatic::Model.model(schema_name: 'test.defaults')
       end
       let(:message_value) do
         unknown_model.new.avro_message_value

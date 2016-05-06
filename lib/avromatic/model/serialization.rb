@@ -1,6 +1,6 @@
 require 'avro_turf/messaging'
 
-module SalsifyAvro
+module Avromatic
   module Model
 
     # This concern adds support for serialization to a model
@@ -38,7 +38,7 @@ module SalsifyAvro
 
         def avro_hash(fields)
           attributes.slice(*fields).each_with_object(Hash.new) do |(key, value), result|
-            result[key.to_s] = if value.is_a?(SalsifyAvro::Model::Attributes)
+            result[key.to_s] = if value.is_a?(Avromatic::Model::Attributes)
                                  value.value_attributes_for_avro
                                else
                                  value
@@ -69,10 +69,11 @@ module SalsifyAvro
         # The messaging object acts as an intermediary talking to the schema
         # registry and using returned/specified schemas to decode/encode.
         def messaging
+          # TODO: avoid this lazy initialize
           @messaging ||= AvroTurf::Messaging.new(
-            registry_url: SalsifyAvro.registry_url,
-            schema_store: SalsifyAvro.build_schema_store,
-            logger: SalsifyAvro.logger)
+            registry_url: Avromatic.registry_url,
+            schema_store: Avromatic.schema_store,
+            logger: Avromatic.logger)
         end
 
         include Decode

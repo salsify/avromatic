@@ -1,4 +1,4 @@
-module SalsifyAvro
+module Avromatic
   module Model
 
     # This module is used to override the comparisons defined by

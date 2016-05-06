@@ -1,21 +1,21 @@
 require 'spec_helper'
 require 'webmock/rspec'
-require 'salsify_avro/test/fake_schema_registry_server'
+require 'avro_turf/test/fake_schema_registry_server'
 
-describe SalsifyAvro::Model::Serialization do
+describe Avromatic::Model::Serialization do
   let(:registry_url) { 'http://registry.example.com' }
   let(:values) { { id: rand(99) } }
   let(:instance) { test_class.new(values) }
 
   before do
-    SalsifyAvro.registry_url = registry_url
+    Avromatic.registry_url = registry_url
     stub_request(:any, /^#{registry_url}/).to_rack(FakeSchemaRegistryServer)
     FakeSchemaRegistryServer.clear
   end
 
   describe "#avro_message_value" do
     let(:test_class) do
-      SalsifyAvro::Model.model(value_schema_name: 'test.encode_value')
+      Avromatic::Model.model(value_schema_name: 'test.encode_value')
     end
     let(:values) { { str1: 'a', str2: 'b' } }
 
@@ -28,7 +28,7 @@ describe SalsifyAvro::Model::Serialization do
 
   describe "#avro_message_key" do
     let(:test_class) do
-      SalsifyAvro::Model.model(
+      Avromatic::Model.model(
         value_schema_name: 'test.encode_value',
         key_schema_name: 'test.encode_key')
     end
@@ -43,7 +43,7 @@ describe SalsifyAvro::Model::Serialization do
 
     context "when a model does not have a key schema" do
       let(:test_class) do
-        SalsifyAvro::Model.model(value_schema_name: 'test.encode_value')
+        Avromatic::Model.model(value_schema_name: 'test.encode_value')
       end
       let(:values) { { str1: 'a', str2: 'b' } }
 
@@ -55,7 +55,7 @@ describe SalsifyAvro::Model::Serialization do
 
   describe ".deserialize" do
     let(:test_class) do
-      SalsifyAvro::Model.model(value_schema_name: 'test.encode_value')
+      Avromatic::Model.model(value_schema_name: 'test.encode_value')
     end
     let(:values) { { str1: 'a', str2: 'b' } }
     let(:avro_message_value) { instance.avro_message_value }
@@ -67,7 +67,7 @@ describe SalsifyAvro::Model::Serialization do
 
     context "when a value and a key are specified" do
       let(:test_class) do
-        SalsifyAvro::Model.model(
+        Avromatic::Model.model(
           value_schema_name: 'test.encode_value',
           key_schema_name: 'test.encode_key')
       end

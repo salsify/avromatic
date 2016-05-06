@@ -1,7 +1,7 @@
-require 'salsify_avro/model/builder'
-require 'salsify_avro/model/decoder'
+require 'avromatic/model/builder'
+require 'avromatic/model/decoder'
 
-module SalsifyAvro
+module Avromatic
   module Model
 
     # Returns a module that can be included in a class to define a model
@@ -9,7 +9,7 @@ module SalsifyAvro
     #
     # Example:
     #   class MyTopic
-    #     include SalsifyAvro::Model.build(schema_name: :topic_value,
+    #     include Avromatic::Model.build(schema_name: :topic_value,
     #                                      key_schema_name: :topic_key)
     #   end
     #
@@ -41,7 +41,7 @@ module SalsifyAvro
     end
 
     # Returns an anonymous class, that can be assigned to a constant,
-    # defined based on Avro schema(s). See SalsifyAvro::Model.build.
+    # defined based on Avro schema(s). See Avromatic::Model.build.
     def self.model(**options)
       Builder.model(**options)
     end

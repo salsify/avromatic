@@ -1,13 +1,13 @@
 require 'virtus'
 require 'active_support/concern'
 require 'active_model'
-require 'salsify_avro/model/configuration'
-require 'salsify_avro/model/value_object'
-require 'salsify_avro/model/configurable'
-require 'salsify_avro/model/attributes'
-require 'salsify_avro/model/serialization'
+require 'avromatic/model/configuration'
+require 'avromatic/model/value_object'
+require 'avromatic/model/configurable'
+require 'avromatic/model/attributes'
+require 'avromatic/model/serialization'
 
-module SalsifyAvro
+module Avromatic
   module Model
 
     # This class implements generating models from Avro schemas.
@@ -15,10 +15,10 @@ module SalsifyAvro
 
       attr_reader :mod, :config
 
-      # For options see SalsifyAvro::Model.build
+      # For options see Avromatic::Model.build
       def self.model(**options)
         Class.new do
-          include SalsifyAvro::Model::Builder.new(**options).mod
+          include Avromatic::Model::Builder.new(**options).mod
 
           # Name is required for attribute validations on an anonymous class.
           def self.name
@@ -27,10 +27,10 @@ module SalsifyAvro
         end
       end
 
-      # For options see SalsifyAvro::Model.build
+      # For options see Avromatic::Model.build
       def initialize(**options)
         @mod = Module.new
-        @config = SalsifyAvro::Model::Configuration.new(**options)
+        @config = Avromatic::Model::Configuration.new(**options)
         define_included_method
       end
 
@@ -38,10 +38,10 @@ module SalsifyAvro
         [
           ActiveModel::Validations,
           Virtus.value_object,
-          SalsifyAvro::Model::Configurable,
-          SalsifyAvro::Model::Attributes,
-          SalsifyAvro::Model::ValueObject,
-          SalsifyAvro::Model::Serialization
+          Avromatic::Model::Configurable,
+          Avromatic::Model::Attributes,
+          Avromatic::Model::ValueObject,
+          Avromatic::Model::Serialization
         ]
       end
 

@@ -1,6 +1,7 @@
 {
   "type": "record",
   "name": "with_map",
+  "namespace": "test",
   "fields": [
     {
       "name": "pairs",

@@ -1,7 +1,7 @@
 require 'active_support/core_ext/object/duplicable'
 require 'ice_nine/core_ext/object'
 
-module SalsifyAvro
+module Avromatic
   module Model
 
     # This module supports defining Virtus attributes for a model based on the
@@ -104,7 +104,7 @@ module SalsifyAvro
             # TODO: This should add the generated model to a module.
             # A hash of generated models should be kept by name for reuse.
             Class.new do
-              include SalsifyAvro::Model.build(schema: field_type)
+              include Avromatic::Model.build(schema: field_type)
             end
           else
             raise "Unsupported type #{field_type}"

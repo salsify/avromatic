@@ -1,4 +1,4 @@
-module SalsifyAvro
+module Avromatic
   module Model
 
     # This concern adds methods for configuration for a model generated from
