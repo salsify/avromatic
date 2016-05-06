@@ -1,0 +1,39 @@
+{
+  "type": "record",
+  "name": "primitive_types",
+  "namespace": "test",
+  "fields": [
+    {
+      "name": "s",
+      "type": "string"
+    },
+    {
+      "name": "b",
+      "type": "bytes"
+    },
+    {
+      "name": "tf",
+      "type": "boolean"
+    },
+    {
+      "name": "i",
+      "type": "int"
+    },
+    {
+      "name": "l",
+      "type": "long"
+    },
+    {
+      "name": "f",
+      "type": "float"
+    },
+    {
+      "name": "d",
+      "type": "double"
+    },
+    {
+      "name": "n",
+      "type": "null"
+    }
+  ]
+}

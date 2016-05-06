@@ -1,0 +1,16 @@
+{
+  "type": "record",
+  "name": "with_map",
+  "fields": [
+    {
+      "name": "pairs",
+      "type": {
+        "type": "map",
+        "values": "int"
+      },
+      "default": {
+        "a": 1
+      }
+    }
+  ]
+}

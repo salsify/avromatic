@@ -1,0 +1,11 @@
+{
+  "type": "record",
+  "name": "encode_key",
+  "namespace": "test",
+  "fields": [
+    {
+      "name": "id",
+      "type": "int"
+    }
+  ]
+}

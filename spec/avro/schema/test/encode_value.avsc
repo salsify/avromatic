@@ -1,0 +1,17 @@
+{
+  "type": "record",
+  "name": "encode_value",
+  "namespace": "test",
+  "fields": [
+    {
+      "name": "str1",
+      "type": "string",
+      "default": "X"
+    },
+    {
+      "name": "str2",
+      "type": "string",
+      "default": "Y"
+    }
+  ]
+}

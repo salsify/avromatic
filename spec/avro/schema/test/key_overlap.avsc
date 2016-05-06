@@ -1,0 +1,15 @@
+{
+  "type": "record",
+  "name": "key_overlap",
+  "namespace": "test",
+  "fields": [
+    {
+      "name": "id",
+      "type": "long"
+    },
+    {
+      "name": "b",
+      "type": "string"
+    }
+  ]
+}
