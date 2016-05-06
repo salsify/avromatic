@@ -1,0 +1,42 @@
+{
+  "type": "record",
+  "name": "named_fields",
+  "namespace": "test",
+  "fields": [
+    {
+      "name": "f",
+      "type": {
+        "name": "__named_fields_f_fixed",
+        "type": "fixed",
+        "namespace": "test",
+        "size": 7
+      }
+    },
+    {
+      "name": "e",
+      "type": {
+        "name": "__named_fields_e_enum",
+        "type": "enum",
+        "namespace": "test",
+        "symbols": [
+          "A",
+          "B"
+        ]
+      }
+    },
+    {
+      "name": "sub",
+      "type": {
+        "type": "record",
+        "name": "__named_fields_sub_record",
+        "namespace": "test",
+        "fields": [
+          {
+            "name": "s",
+            "type": "string"
+          }
+        ]
+      }
+    }
+  ]
+}

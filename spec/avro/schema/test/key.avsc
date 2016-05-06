@@ -1,0 +1,15 @@
+{
+  "type": "record",
+  "name": "key",
+  "namespace": "test",
+  "fields": [
+    {
+      "name": "a",
+      "type": "int"
+    },
+    {
+      "name": "b",
+      "type": "string"
+    }
+  ]
+}

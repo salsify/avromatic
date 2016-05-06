@@ -1,0 +1,17 @@
+{
+  "type": "record",
+  "name": "with_map",
+  "namespace": "test",
+  "fields": [
+    {
+      "name": "pairs",
+      "type": {
+        "type": "map",
+        "values": "int"
+      },
+      "default": {
+        "a": 1
+      }
+    }
+  ]
+}

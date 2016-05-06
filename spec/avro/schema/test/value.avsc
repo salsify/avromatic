@@ -1,0 +1,24 @@
+{
+  "type": "record",
+  "name": "value",
+  "namespace": "test",
+  "fields": [
+    {
+      "name": "action",
+      "type": {
+        "name": "__value_action_enum",
+        "type": "enum",
+        "namespace": "test",
+        "symbols": [
+          "CREATE",
+          "UPDATE",
+          "DESTROY"
+        ]
+      }
+    },
+    {
+      "name": "id",
+      "type": "long"
+    }
+  ]
+}

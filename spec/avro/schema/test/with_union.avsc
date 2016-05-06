@@ -1,0 +1,15 @@
+{
+  "type": "record",
+  "name": "with_union",
+  "namespace": "test",
+  "fields": [
+    {
+      "name": "s",
+      "type": [
+        "null",
+        "string"
+      ],
+      "default": null
+    }
+  ]
+}

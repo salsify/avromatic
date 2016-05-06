@@ -1,0 +1,15 @@
+{
+  "type": "record",
+  "name": "key_conflict",
+  "namespace": "test",
+  "fields": [
+    {
+      "name": "id",
+      "type": "bytes"
+    },
+    {
+      "name": "b",
+      "type": "string"
+    }
+  ]
+}

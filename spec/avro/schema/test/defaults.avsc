@@ -1,0 +1,30 @@
+{
+  "type": "record",
+  "name": "defaults",
+  "namespace": "test",
+  "fields": [
+    {
+      "name": "defaulted_enum",
+      "type": {
+        "name": "__defaults_defaulted_enum_enum",
+        "type": "enum",
+        "namespace": "test",
+        "symbols": [
+          "A",
+          "B"
+        ]
+      },
+      "default": "A"
+    },
+    {
+      "name": "defaulted_string",
+      "type": "string",
+      "default": "fnord"
+    },
+    {
+      "name": "defaulted_int",
+      "type": "int",
+      "default": 42
+    }
+  ]
+}

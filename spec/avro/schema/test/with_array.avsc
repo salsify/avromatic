@@ -1,0 +1,17 @@
+{
+  "type": "record",
+  "name": "with_array",
+  "namespace": "test",
+  "fields": [
+    {
+      "name": "names",
+      "type": {
+        "type": "array",
+        "items": "string"
+      },
+      "default": [
+        "first"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,25 @@
+{
+  "type": "record",
+  "name": "repeated_name",
+  "namespace": "test",
+  "fields": [
+    {
+      "name": "old",
+      "type": {
+        "type": "record",
+        "name": "sub",
+        "namespace": "test",
+        "fields": [
+          {
+            "name": "i",
+            "type": "int"
+          }
+        ]
+      }
+    },
+    {
+      "name": "new",
+      "type": "test.sub"
+    }
+  ]
+}
