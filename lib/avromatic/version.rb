@@ -1,3 +1,3 @@
 module Avromatic
-  VERSION = "0.1.2-rc0"
+  VERSION = "0.1.2"
 end
