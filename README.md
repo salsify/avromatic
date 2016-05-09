@@ -34,9 +34,9 @@ Or install it yourself as:
 * schema_store: The schema store is used to load Avro schemas from the filesystem.
   It should be an object that responds to `find(name, namespace = nil)` and
   returns an `Avro::Schema` object.
-* messaging: An `AvroTurf::Messaging` object may be specified and will be shared
-  by all models. If unspecified a new messaging object is created based on the
-  schema store and registry_url.
+* messaging: An `AvroTurf::Messaging` object to be shared by all generated models.
+  The `build_messaging!` method may be used to create a `Messaging` instance based
+  on the other configuration values.
 * logger: The logger is for the schema registry client.
 
 ### Models
