@@ -8,12 +8,7 @@ module Avromatic
     module Serialization
       extend ActiveSupport::Concern
 
-      delegate :messaging, to: :class
-
-      included do |model_class|
-        model_class.messaging = Avromatic.messaging ||
-          Avromatic.build_messaging
-      end
+      delegate :messaging, to: :Avromatic
 
       module Encode
         def avro_message_value
@@ -72,7 +67,7 @@ module Avromatic
       module ClassMethods
         # The messaging object acts as an intermediary talking to the schema
         # registry and using returned/specified schemas to decode/encode.
-        attr_accessor :messaging
+        delegate :messaging, to: :Avromatic
 
         include Decode
       end

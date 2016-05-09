@@ -28,6 +28,10 @@ module Avromatic
       schema_store: Avromatic.schema_store,
       logger: Avromatic.logger)
   end
+
+  def self.build_messaging!
+    self.messaging = build_messaging
+  end
 end
 
 require 'avromatic/railtie' if defined?(Rails)
