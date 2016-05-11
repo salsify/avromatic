@@ -46,6 +46,7 @@ module Avromatic
         @model_map = build_model_map(models)
         @schema_names_by_id = {}
         @schema_registry = schema_registry ||
+          Avromatic.schema_registry ||
           (registry_url && AvroTurf::SchemaRegistry.new(registry_url, logger: Avromatic.logger)) ||
           Avromatic.build_schema_registry
       end

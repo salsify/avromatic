@@ -1,5 +1,8 @@
 # avromatic changelog
 
+## v0.2.0
+- Allow a module level schema registry to be configured.
+
 ## v0.1.2
 - Do not build an `AvroTurf::Messaging` object for each model class.
 
