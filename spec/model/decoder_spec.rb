@@ -4,7 +4,6 @@ require 'avro_turf/test/fake_schema_registry_server'
 
 describe Avromatic::Model::Decoder do
   let(:registry_url) { 'http://registry.example.com' }
-  let(:schema_registry) { Avromatic.schema_registry }
 
   let(:instance) { described_class.new(*models) }
   let(:model1) do
@@ -85,6 +84,20 @@ describe Avromatic::Model::Decoder do
           instance.decode(message_value)
         end.to raise_error(described_class::UnexpectedKeyError,
                            "Unexpected schemas [nil, \"test.defaults\"]")
+      end
+    end
+
+    context "when the decoder is initialized with a schema registry" do
+      let(:schema_registry) { Avromatic.build_schema_registry }
+      let(:instance) { described_class.new(*models, schema_registry: schema_registry) }
+
+      before do
+        allow(schema_registry).to receive(:fetch).and_call_original
+        instance.decode(model1_key, model1_value)
+      end
+
+      it "calls find on the provided schema registry" do
+        expect(schema_registry).to have_received(:fetch).at_least(1).times
       end
     end
   end

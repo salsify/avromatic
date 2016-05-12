@@ -29,8 +29,12 @@ Or install it yourself as:
 
 `Avromatic` supports the following configuration:
 
+* schema_registry: An `AvroTurf::SchemaRegistry` object used to store Avro schemas 
+  so that they can be referenced by id. Either `schema_registry` or 
+  `registry_url` must be configured.
 * registry_url: URL for the schema registry. The schema registry is used to store
-  Avro schemas so that they can be referenced by id.
+  Avro schemas so that they can be referenced by id.  Either `schema_registry` or 
+  `registry_url` must be configured.
 * schema_store: The schema store is used to load Avro schemas from the filesystem.
   It should be an object that responds to `find(name, namespace = nil)` and
   returns an `Avro::Schema` object.
