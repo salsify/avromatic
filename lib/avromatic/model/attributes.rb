@@ -80,9 +80,16 @@ module Avromatic
           !optional?(field)
         end
 
+        # TODO: Introduce some kind of TypeRegistry?
+        def fetch_custom_type(field_type)
+          if field_type.respond_to?(:fullname)
+            Avromatic.custom_types[field_type.fullname]
+          end
+        end
+
         def avro_field_class(field_type)
-          if Avromatic.custom_types.key?(field_type.try(:fullname))
-            custom_type = Avromatic.custom_types[field_type.fullname]
+          custom_type = fetch_custom_type(field_type)
+          if custom_type
             value_class = custom_type.value_class
             return value_class if value_class
           end
@@ -129,8 +136,8 @@ module Avromatic
         def avro_field_options(field)
           options = {}
 
-          if Avromatic.custom_types.key?(field.type.try(:fullname))
-            custom_type = Avromatic.custom_types[field.type.fullname]
+          custom_type = fetch_custom_type(field.type)
+          if custom_type
             coercer = if custom_type.from_avro
                         custom_type.from_avro
                       elsif custom_type.value_class && custom_type.value_class.respond_to?(:from_avro)
