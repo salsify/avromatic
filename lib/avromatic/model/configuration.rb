@@ -1,7 +1,7 @@
 module Avromatic
   module Model
 
-    # This class holds configuration for a model build from Avro schema(s).
+    # This class holds configuration for a model built from Avro schema(s).
     class Configuration
 
       attr_reader :avro_schema, :key_avro_schema
@@ -17,7 +17,6 @@ module Avromatic
       # @option options [String, Symbol] :value_schema_name
       # @option options [Avro::Schema] :key_schema
       # @option options [String, Symbol] :key_schema_name
-      # @option options [schema store] :schema_store
       def initialize(**options)
         @avro_schema = find_avro_schema(**options)
         raise ArgumentError.new('value_schema(_name) or schema(_name) must be specified') unless avro_schema

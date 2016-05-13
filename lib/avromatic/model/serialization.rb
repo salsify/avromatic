@@ -41,7 +41,7 @@ module Avromatic
             result[key.to_s] = if value.is_a?(Avromatic::Model::Attributes)
                                  value.value_attributes_for_avro
                                else
-                                 value
+                                 avro_coder[key].try(:call, value) || value
                                end
           end
         end
