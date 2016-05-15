@@ -1,0 +1,16 @@
+{
+  "type": "record",
+  "name": "named_type",
+  "namespace": "test",
+  "fields": [
+    {
+      "name": "name",
+      "type": {
+        "name": "six",
+        "type": "fixed",
+        "namespace": "test",
+        "size": 6
+      }
+    }
+  ]
+}
