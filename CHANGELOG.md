@@ -1,5 +1,8 @@
 # avromatic changelog
 
+## v0.3.0
+- Remove dependency on the `private_attr` gem.
+
 ## v0.2.0
 - Allow a module level schema registry to be configured.
 
