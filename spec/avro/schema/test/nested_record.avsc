@@ -1,0 +1,32 @@
+{
+  "type": "record",
+  "name": "nested_record",
+  "namespace": "test",
+  "fields": [
+    {
+      "name": "str",
+      "type": "string",
+      "default": "A"
+    },
+    {
+      "name": "sub",
+      "type": {
+        "type": "record",
+        "name": "__nested_record_sub_record",
+        "namespace": "test",
+        "fields": [
+          {
+            "name": "str",
+            "type": "string",
+            "default": "B"
+          },
+          {
+            "name": "i",
+            "type": "int",
+            "default": 0
+          }
+        ]
+      }
+    }
+  ]
+}

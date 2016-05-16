@@ -26,6 +26,12 @@ module Avromatic
           @key_avro_fields_by_name ||= mapped_by_name(key_avro_schema)
         end
 
+        # Store a hash of Procs by field name (as a symbol) to convert
+        # the value before Avro serialization.
+        def avro_coder
+          @avro_coder ||= {}
+        end
+
         private
 
         def mapped_by_name(schema)
@@ -36,7 +42,7 @@ module Avromatic
       end
 
       delegate :avro_schema, :value_avro_schema, :key_avro_schema,
-               :value_avro_field_names, :key_avro_field_names,
+               :value_avro_field_names, :key_avro_field_names, :avro_coder,
                to: :class
     end
   end

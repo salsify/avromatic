@@ -80,7 +80,20 @@ module Avromatic
           !optional?(field)
         end
 
+        # TODO: Introduce some kind of TypeRegistry?
+        def fetch_custom_type(field_type)
+          if field_type.respond_to?(:fullname)
+            Avromatic.custom_types[field_type.fullname]
+          end
+        end
+
         def avro_field_class(field_type)
+          custom_type = fetch_custom_type(field_type)
+          if custom_type
+            value_class = custom_type.value_class
+            return value_class if value_class
+          end
+
           case field_type.type_sym
           when :string, :bytes, :fixed
             String
@@ -121,14 +134,30 @@ module Avromatic
         end
 
         def avro_field_options(field)
-          if field.default
-            {
-              default: default_for(field.default),
-              lazy: true
-            }
-          else
-            { }
+          options = {}
+
+          custom_type = fetch_custom_type(field.type)
+          if custom_type
+            coercer = if custom_type.from_avro
+                        custom_type.from_avro
+                      elsif custom_type.value_class && custom_type.value_class.respond_to?(:from_avro)
+                        custom_type.value_class.method(:from_avro).to_proc
+                      end
+            coder = if custom_type.to_avro
+                      custom_type.to_avro
+                    elsif custom_type.value_class && custom_type.value_class.respond_to?(:to_avro)
+                      custom_type.value_class.method(:to_avro).to_proc
+                    end
+            avro_coder[field.name.to_sym] = coder if coder
+
+            options[:coercer] = coercer if coercer
           end
+
+          if field.default
+            options.merge!(default: default_for(field.default), lazy: true)
+          end
+
+          options
         end
 
         def default_for(value)

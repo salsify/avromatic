@@ -248,6 +248,26 @@ describe Avromatic::Model::Builder do
     end
   end
 
+  # context "custom types" do
+  #   let(:schema_name) { 'test.named_type' }
+  #
+  #   before do
+  #     Avromatic.register_type('test.six') do |type|
+  #       type.to_avro = ->(value) { value.strip.downcase.ljust(6, '_') }
+  #       type.from_avro = ->(value) { value.strip.capitalize.rjust(6, '_') }
+  #     end
+  #   end
+  #
+  #   after do
+  #     Avromatic.custom_types.clear
+  #   end
+  #
+  #   let(:values) { { name: 'pERSON'} }
+  #
+  #   it ""
+  #
+  # end
+
   context "value objects" do
     let(:schema_name) { 'test.primitive_types' }
     let(:values) { { s: 'foo', tf: true, i: 42 } }

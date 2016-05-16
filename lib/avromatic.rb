@@ -5,10 +5,12 @@ require 'avro_turf/messaging'
 
 module Avromatic
   class << self
-    attr_accessor :schema_registry, :registry_url, :schema_store, :logger, :messaging
+    attr_accessor :schema_registry, :registry_url, :schema_store, :logger,
+                  :messaging, :custom_types
   end
 
   self.logger = Logger.new($stdout)
+  self.custom_types = {}
 
   def self.configure
     yield self
@@ -30,6 +32,12 @@ module Avromatic
 
   def self.build_messaging!
     self.messaging = build_messaging
+  end
+
+  def self.register_type(type_name, value_class = nil)
+    custom_types[type_name] = Avromatic::Model::CustomType.new(value_class).tap do |type|
+      yield(type) if block_given?
+    end
   end
 end
 
