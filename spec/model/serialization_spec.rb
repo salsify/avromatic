@@ -24,6 +24,19 @@ describe Avromatic::Model::Serialization do
       decoded = test_class.deserialize(message_value)
       expect(decoded).to eq(instance)
     end
+
+    context "with a nested record" do
+      let(:test_class) do
+        Avromatic::Model.model(value_schema_name: 'test.nested_record')
+      end
+      let(:values) { { str: 'a', sub: { str: 'b', i: 1 } } }
+
+      it "encodes the value for the model" do
+        message_value = instance.avro_message_value
+        decoded = test_class.deserialize(message_value)
+        expect(decoded).to eq(instance)
+      end
+    end
   end
 
   describe "#avro_message_key" do
