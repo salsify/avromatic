@@ -1,0 +1,25 @@
+{
+  "type": "record",
+  "name": "with_varchar",
+  "namespace": "test",
+  "fields": [
+    {
+      "name": "str",
+      "type": {
+        "type": "record",
+        "name": "varchar",
+        "namespace": "test",
+        "fields": [
+          {
+            "name": "length",
+            "type": "int"
+          },
+          {
+            "name": "data",
+            "type": "bytes"
+          }
+        ]
+      }
+    }
+  ]
+}

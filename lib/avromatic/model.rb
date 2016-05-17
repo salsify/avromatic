@@ -1,5 +1,6 @@
 require 'avromatic/model/builder'
 require 'avromatic/model/decoder'
+require 'avromatic/model/type_registry'
 
 module Avromatic
   module Model

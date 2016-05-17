@@ -4,8 +4,8 @@
 
 [travis]: http://travis-ci.org/salsify/avromatic
 
-`Avromatic` generates Ruby models from Avro schemas and provides utilities to
-encode and decode them.
+`Avromatic` generates Ruby models from [Avro](http://avro.apache.org/) schemas
+and provides utilities to encode and decode them.
 
 ## Installation
 
@@ -31,21 +31,31 @@ Or install it yourself as:
 
 * schema_registry: An `AvroTurf::SchemaRegistry` object used to store Avro schemas 
   so that they can be referenced by id. Either `schema_registry` or 
-  `registry_url` must be configured.
+  `registry_url` must be configured. See [Confluent Schema Registry](http://docs.confluent.io/2.0.1/schema-registry/docs/intro.html).
 * registry_url: URL for the schema registry. The schema registry is used to store
   Avro schemas so that they can be referenced by id.  Either `schema_registry` or 
   `registry_url` must be configured.
 * schema_store: The schema store is used to load Avro schemas from the filesystem.
   It should be an object that responds to `find(name, namespace = nil)` and
-  returns an `Avro::Schema` object.
+  returns an `Avro::Schema` object. An `AvroTurf::SchemaStore` can be used.
 * messaging: An `AvroTurf::Messaging` object to be shared by all generated models.
   The `build_messaging!` method may be used to create a `Messaging` instance based
   on the other configuration values.
-* logger: The logger is for the schema registry client.
+* logger: The logger to use for the schema registry client.
+* [Custom Types](#custom-types)
+
+Example:
+
+```ruby
+Avromatic.configure do |config|
+  config.schema_store = AvroTurf::SchemaStore.new(path: 'avro/schemas')
+  config.registry_url = Rails.configuration.x.avro_schema_registry_url
+  config.build_messaging!
+```
 
 ### Models
 
-Models may be defined based on an Avro schema for a record.
+Models are defined based on an Avro schema for a record.
 
 The Avro schema can be specified by name and loaded using the schema store:
 
@@ -61,13 +71,12 @@ Or an `Avro::Schema` object can be specified directly:
 class MyModel
   include Avromatic::Model.build(schema: schema_object)
 end
-
 ```
 
 Models are generated as [Virtus](https://github.com/solnic/virtus) value
 objects. `Virtus` attributes are added for each field in the Avro schema
 including any default values defined in the schema. `ActiveModel` validations
-are used to define validations on certain types of fields.
+are used to define validations on certain types of fields ([see below](#validations)).
 
 A model may be defined with both a key and a value schema:
 
@@ -88,6 +97,45 @@ constant:
 MyModel = Avromatic::Model.model(schema_name :my_model)
 ```
 
+#### Custom Types
+
+Custom types can be configured for fields of named types (record, enum, fixed).
+These customizations are registered on the `Avromatic` module. Once a custom type
+is registered, it is used for all models with a schema that references that type.
+It is recommended to register types within a block passed to `Avromatic.configure`:
+
+```ruby
+Avromatic.configure do |config|
+  config.register_type('com.example.my_string', MyString)
+end
+```
+
+The full name of the type and an optional class may be specified. When a class is
+provided then values for attributes of that type are defined using the specified 
+class.
+
+If the provided class responds to the class methods `from_avro` and `to_avro`
+then those methods are used to convert values when assigning to the model and 
+before encoding using Avro respectively.
+
+`from_avro` and `to_avro` methods may be also be specified as Procs when 
+registering the type:
+
+```ruby
+Avromatic.configure do |config|
+  config.register_type('com.example.updown_string') do |type|
+    type.from_avro = ->(value) { value.upcase }
+    type.to_avro = ->(value) { value.downcase }
+  end
+end
+```
+
+Nil handling is not required as the conversion methods are not be called if the
+inbound or outbound value is nil.
+
+If a custom type is registered for a record-type field, then any `to_avro` 
+method/Proc should return a Hash with string keys for encoding using Avro.
+
 #### Encode/Decode
 
 Models can be encoded using Avro leveraging a schema registry to encode a schema
@@ -97,7 +145,7 @@ id at the beginning of the value.
 model.avro_message_value
 ```
 
-If a model has a Avro schema for a key, then the key can also be encoded
+If a model has an Avro schema for a key, then the key can also be encoded
 prefixed with a schema id.
 
 ```ruby

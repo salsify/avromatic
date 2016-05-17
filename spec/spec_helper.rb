@@ -11,5 +11,6 @@ RSpec.configure do |config|
     Avromatic.registry_url = 'http://registry.example.com'
     Avromatic.schema_store = AvroTurf::SchemaStore.new(path: 'spec/avro/schema')
     Avromatic.build_messaging!
+    Avromatic.type_registry.clear
   end
 end
