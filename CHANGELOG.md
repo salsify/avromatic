@@ -4,6 +4,9 @@
 - Allow the specification of a custom type, including conversion to/from Avro,
   for named types.
 
+## v0.3.0
+- Remove dependency on the `private_attr` gem.
+
 ## v0.2.0
 - Allow a module level schema registry to be configured.
 

@@ -57,7 +57,7 @@ module Avromatic
                       avro_field_options(field))
 
             add_validation(field)
-            add_coder(field)
+            add_serializer(field)
           end
         end
 
@@ -132,7 +132,7 @@ module Avromatic
           options = {}
 
           custom_type = Avromatic.type_registry.fetch(field)
-          coercer = custom_type.coercer
+          coercer = custom_type.deserializer
           options[:coercer] = coercer if coercer
 
           if field.default
@@ -142,11 +142,11 @@ module Avromatic
           options
         end
 
-        def add_coder(field)
+        def add_serializer(field)
           custom_type = Avromatic.type_registry.fetch(field)
-          coder = custom_type.coder
+          serializer = custom_type.serializer
 
-          avro_coder[field.name.to_sym] = coder if coder
+          avro_serializer[field.name.to_sym] = serializer if serializer
         end
 
         def default_for(value)

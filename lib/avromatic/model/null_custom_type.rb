@@ -8,11 +8,11 @@ module Avromatic
           nil
         end
 
-        def coercer
+        def deserializer
           nil
         end
 
-        def coder
+        def serializer
           nil
         end
       end

@@ -1,7 +1,7 @@
 module Avromatic
   module Model
-    # This trivial coder simply returns the value provided.
-    module PassthroughCoder
+    # This trivial serializer simply returns the value provided.
+    module PassthroughSerializer
       def self.call(value)
         value
       end

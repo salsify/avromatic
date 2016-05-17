@@ -102,9 +102,12 @@ MyModel = Avromatic::Model.model(schema_name :my_model)
 Custom types can be configured for fields of named types (record, enum, fixed).
 These customizations are registered on the `Avromatic` module. Once a custom type
 is registered, it is used for all models with a schema that references that type.
+It is recommended to register types within a block passed to `Avromatic.configure`:
 
 ```ruby
-Avromatic.register_type('com.example.my_string', MyString)
+Avromatic.configure do |config|
+  config.register_type('com.example.my_string', MyString)
+end
 ```
 
 The full name of the type and an optional class may be specified. When a class is
@@ -119,9 +122,11 @@ before encoding using Avro respectively.
 registering the type:
 
 ```ruby
-Avromatic.register_type('com.example.updown_string') do |type|
-  type.from_avro = ->(value) { value.upcase }
-  type.to_avro = ->(value) { value.downcase }
+Avromatic.configure do |config|
+  config.register_type('com.example.updown_string') do |type|
+    type.from_avro = ->(value) { value.upcase }
+    type.to_avro = ->(value) { value.downcase }
+  end
 end
 ```
 

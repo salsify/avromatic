@@ -13,20 +13,20 @@ module Avromatic
         @value_class = value_class
       end
 
-      # A coercer method is used when assigning to the model. It is used both when
+      # A deserializer method is used when assigning to the model. It is used both when
       # deserializing a model instance from Avro and when directly instantiating
-      # an instance. The coecer method must accept a single argument and return
+      # an instance. The deserializer method must accept a single argument and return
       # the value to store in the model for the attribute.
-      def coercer
+      def deserializer
         proc = from_avro_proc
         wrap_proc(proc) if proc
       end
 
-      # A coder method is used when preparing attributes to be serialized using
-      # Avro. The coder method must accept a single argument of the model value
+      # A serializer method is used when preparing attributes to be serialized using
+      # Avro. The serializer method must accept a single argument of the model value
       # for the attribute and return a value in a form that Avro can serialize
       # for the attribute.
-      def coder
+      def serializer
         proc = to_avro_proc
         wrap_proc(proc) if proc
       end
