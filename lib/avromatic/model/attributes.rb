@@ -9,6 +9,15 @@ module Avromatic
     module Attributes
       extend ActiveSupport::Concern
 
+      def self.first_union_schema(field_type)
+        # TODO: This is a hack until I find a better solution for unions with
+        # Virtus. This only handles a union for an optional field with :null
+        # and one other type.
+        schemas = field_type.schemas.reject { |schema| schema.type_sym == :null }
+        raise "Only the union of null with one other type is supported #{field_type}" if schemas.size > 1
+        schemas.first
+      end
+
       module ClassMethods
         def add_avro_fields
           if key_avro_schema
@@ -48,6 +57,7 @@ module Avromatic
                       avro_field_options(field))
 
             add_validation(field)
+            add_coder(field)
           end
         end
 
@@ -81,6 +91,9 @@ module Avromatic
         end
 
         def avro_field_class(field_type)
+          custom_type = Avromatic.type_registry.fetch(field_type)
+          return custom_type.value_class if custom_type.value_class
+
           case field_type.type_sym
           when :string, :bytes, :fixed
             String
@@ -112,23 +125,28 @@ module Avromatic
         end
 
         def union_field_class(field_type)
-          # TODO: This is a hack until I find a better solution for unions with
-          # Virtus. This only handles a union for a optional field with :null
-          # and one other type.
-          schemas = field_type.schemas.reject { |schema| schema.type_sym == :null }
-          raise "Only the union of null with one other type is supported #{field_type}" if schemas.size > 1
-          avro_field_class(schemas.first)
+          avro_field_class(Avromatic::Model::Attributes.first_union_schema(field_type))
         end
 
         def avro_field_options(field)
+          options = {}
+
+          custom_type = Avromatic.type_registry.fetch(field)
+          coercer = custom_type.coercer
+          options[:coercer] = coercer if coercer
+
           if field.default
-            {
-              default: default_for(field.default),
-              lazy: true
-            }
-          else
-            { }
+            options.merge!(default: default_for(field.default), lazy: true)
           end
+
+          options
+        end
+
+        def add_coder(field)
+          custom_type = Avromatic.type_registry.fetch(field)
+          coder = custom_type.coder
+
+          avro_coder[field.name.to_sym] = coder if coder
         end
 
         def default_for(value)

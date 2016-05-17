@@ -5,10 +5,14 @@ require 'avro_turf/messaging'
 
 module Avromatic
   class << self
-    attr_accessor :schema_registry, :registry_url, :schema_store, :logger, :messaging
+    attr_accessor :schema_registry, :registry_url, :schema_store, :logger,
+                  :messaging, :type_registry
+
+    delegate :register_type, to: :type_registry
   end
 
   self.logger = Logger.new($stdout)
+  self.type_registry = Avromatic::Model::TypeRegistry.new
 
   def self.configure
     yield self

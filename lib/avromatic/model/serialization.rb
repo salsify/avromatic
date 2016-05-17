@@ -1,4 +1,5 @@
 require 'avro_turf/messaging'
+require 'avromatic/model/passthrough_coder'
 
 module Avromatic
   module Model
@@ -32,6 +33,8 @@ module Avromatic
 
         private
 
+        delegate :avro_coder, to: :class
+
         def key_attributes_for_avro
           avro_hash(key_avro_field_names)
         end
@@ -41,7 +44,7 @@ module Avromatic
             result[key.to_s] = if value.is_a?(Avromatic::Model::Attributes)
                                  value.value_attributes_for_avro
                                else
-                                 value
+                                 avro_coder[key].call(value)
                                end
           end
         end
@@ -70,6 +73,13 @@ module Avromatic
         delegate :messaging, to: :Avromatic
 
         include Decode
+
+        # Store a hash of Procs by field name (as a symbol) to convert
+        # the value before Avro serialization.
+        # Returns the default PassthroughCoder if a key is not present.
+        def avro_coder
+          @avro_coder ||= Hash.new(PassthroughCoder)
+        end
       end
     end
   end

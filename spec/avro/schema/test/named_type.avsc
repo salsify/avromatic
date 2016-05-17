@@ -1,0 +1,25 @@
+{
+  "type": "record",
+  "name": "named_type",
+  "namespace": "test",
+  "fields": [
+    {
+      "name": "six_str",
+      "type": {
+        "name": "six",
+        "type": "fixed",
+        "namespace": "test",
+        "size": 6
+      },
+      "default": "      "
+    },
+    {
+      "name": "optional_six",
+      "type": [
+        "null",
+        "test.six"
+      ],
+      "default": null
+    }
+  ]
+}
