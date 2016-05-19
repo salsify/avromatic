@@ -5,7 +5,7 @@ module Avromatic
 
     # This class is used to decode Avro messages to their corresponding models.
     class Decoder
-      MAGIC_BYTE = [0].pack("C").freeze
+      MAGIC_BYTE = [0].pack('C').freeze
 
       class UnexpectedKeyError < StandardError
         def initialize(schema_key)
@@ -13,11 +13,11 @@ module Avromatic
         end
       end
 
-       class MagicByteError < StandardError
-         def initialize(magic_byte)
-           super("Expected data to begin with a magic byte, got '#{magic_byte}'")
-         end
-       end
+      class MagicByteError < StandardError
+        def initialize(magic_byte)
+          super("Expected data to begin with a magic byte, got '#{magic_byte}'")
+        end
+      end
 
       class DuplicateKeyError < StandardError
         def initialize(*models)

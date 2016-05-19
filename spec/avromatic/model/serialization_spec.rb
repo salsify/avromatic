@@ -46,7 +46,8 @@ describe Avromatic::Model::Serialization do
     let(:test_class) do
       Avromatic::Model.model(
         value_schema_name: 'test.encode_value',
-        key_schema_name: 'test.encode_key')
+        key_schema_name: 'test.encode_key'
+      )
     end
     let(:values) { super().merge!(str1: 'a', str2: 'b') }
 
@@ -84,7 +85,8 @@ describe Avromatic::Model::Serialization do
       let(:test_class) do
         Avromatic::Model.model(
           value_schema_name: 'test.encode_value',
-          key_schema_name: 'test.encode_key')
+          key_schema_name: 'test.encode_key'
+        )
       end
       let(:values) { { id: rand(99), str1: 'a', str2: 'b' } }
 
@@ -201,7 +203,7 @@ describe Avromatic::Model::Serialization do
 
       it "converts when encoding the value" do
         decoded = Avromatic.messaging.decode(avro_message_value, schema_name: schema_name)
-        expect(decoded['str']).to eq({ 'length' => 4, 'data' => 'test' })
+        expect(decoded['str']).to eq('length' => 4, 'data' => 'test')
       end
 
       it "converts when assigning to the model" do

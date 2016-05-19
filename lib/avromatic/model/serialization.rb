@@ -15,14 +15,16 @@ module Avromatic
         def avro_message_value
           messaging.encode(
             value_attributes_for_avro,
-            schema_name: value_avro_schema.fullname)
+            schema_name: value_avro_schema.fullname
+          )
         end
 
         def avro_message_key
           raise 'Model has no key schema' unless key_avro_schema
           messaging.encode(
             key_attributes_for_avro,
-            schema_name: key_avro_schema.fullname)
+            schema_name: key_avro_schema.fullname
+          )
         end
 
         protected

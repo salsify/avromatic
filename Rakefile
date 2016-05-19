@@ -1,6 +1,6 @@
-require "bundler/gem_tasks"
-require "rspec/core/rake_task"
-require "avro/builder"
+require 'bundler/gem_tasks'
+require 'rspec/core/rake_task'
+require 'avro/builder'
 
 RSpec::Core::RakeTask.new(:spec)
 
@@ -19,4 +19,4 @@ namespace :avro do
   end
 end
 
-task :default => :spec
+task default: :spec

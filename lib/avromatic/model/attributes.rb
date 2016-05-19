@@ -30,15 +30,17 @@ module Avromatic
         private
 
         def check_for_field_conflicts!
-          (key_avro_field_names & value_avro_field_names).each_with_object([]) do |name, conflicts|
-              if schema_fields_differ?(name)
-                conflicts << "Field '#{name}' has a different type in each schema: "\
-                             "value #{value_avro_fields_by_name[name]}, "\
-                             "key #{key_avro_fields_by_name[name]}"
-              end
-          end.tap do |conflicts|
-            raise conflicts.join("\n") if conflicts.any?
-          end
+          conflicts =
+            (key_avro_field_names & value_avro_field_names).each_with_object([]) do |name, msgs|
+              next unless schema_fields_differ?(name)
+              msgs << "Field '#{name}' has a different type in each schema: "\
+                      "value #{value_avro_fields_by_name[name]}, "\
+                      "key #{key_avro_fields_by_name[name]}"
+            end
+
+          raise conflicts.join("\n") if conflicts.any?
+
+          conflicts
         end
 
         # The Avro::Schema::Field#== method is lame. It just compares
