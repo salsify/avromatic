@@ -23,8 +23,8 @@ describe Avromatic do
       it "returns a CachedSchemaRegistryClient" do
         allow(AvroTurf::SchemaRegistry).to receive(:new).and_call_original
         expect(Avromatic.build_schema_registry).to be_a(AvroTurf::CachedSchemaRegistry)
-        expect(AvroTurf::SchemaRegistry).to have_received(:new).
-          with(Avromatic.registry_url, logger: Avromatic.logger)
+        expect(AvroTurf::SchemaRegistry).to have_received(:new)
+          .with(Avromatic.registry_url, logger: Avromatic.logger)
       end
 
       it "does not cache the schema registry client" do

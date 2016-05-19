@@ -14,11 +14,11 @@ module Avromatic
       end
 
       def inspect
-        "#<#{self.class.name} #{attributes.map { |k, v| "#{k}: #{v.inspect}" }.join(', ') }>"
+        "#<#{self.class.name} #{attributes.map { |k, v| "#{k}: #{v.inspect}" }.join(', ')}>"
       end
 
       def to_s
-        "#<%s:0x00%x>" % [self.class.name, object_id.abs * 2]
+        format('#<%s:0x00%x>', self.class.name, object_id.abs * 2)
       end
     end
   end

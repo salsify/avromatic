@@ -9,7 +9,8 @@ describe Avromatic::Model::Decoder do
   let(:model1) do
     Avromatic::Model.model(
       value_schema_name: 'test.encode_value',
-      key_schema_name: 'test.encode_key')
+      key_schema_name: 'test.encode_key'
+    )
   end
   let(:model2) do
     Avromatic::Model.model(value_schema_name: 'test.value')
@@ -26,14 +27,15 @@ describe Avromatic::Model::Decoder do
       let(:model3) do
         Avromatic::Model.model(
           value_schema_name: 'test.encode_value',
-          key_schema_name: 'test.encode_key')
+          key_schema_name: 'test.encode_key'
+        )
       end
       let(:models) { [model1, model3] }
 
       it "raises an error" do
-        expect { instance }.
-          to raise_error(described_class::DuplicateKeyError,
-                         /Multiple models \[.*\] have the same key .*/)
+        expect { instance }
+          .to raise_error(described_class::DuplicateKeyError,
+                          /Multiple models \[.*\] have the same key .*/)
       end
     end
 
