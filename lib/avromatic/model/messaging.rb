@@ -6,7 +6,7 @@ module Avromatic
 
     # This concern adds support for serialization to a model
     # generated from Avro schema(s).
-    module Serialization
+    module Messaging
       extend ActiveSupport::Concern
 
       delegate :messaging, to: :Avromatic

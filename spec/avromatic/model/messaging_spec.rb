@@ -3,7 +3,7 @@ require 'webmock/rspec'
 require 'avro_turf/test/fake_schema_registry_server'
 require 'avro/builder'
 
-describe Avromatic::Model::Serialization do
+describe Avromatic::Model::Messaging do
   let(:registry_url) { 'http://registry.example.com' }
   let(:values) { { id: rand(99) } }
   let(:instance) { test_class.new(values) }
