@@ -29,22 +29,32 @@ Or install it yourself as:
 
 `Avromatic` supports the following configuration:
 
-* **schema_registry**: An `AvroTurf::SchemaRegistry` object used to store Avro schemas
-  so that they can be referenced by id. Either `schema_registry` or 
-  `registry_url` must be configured. See [Confluent Schema Registry](http://docs.confluent.io/2.0.1/schema-registry/docs/intro.html).
-* **registry_url**: URL for the schema registry. The schema registry is used to store
-  Avro schemas so that they can be referenced by id.  Either `schema_registry` or 
-  `registry_url` must be configured.
-* **schema_store**: The schema store is used to load Avro schemas from the filesystem.
+#### Model Generation
+
+* **schema_store**: A schema store is required to load Avro schemas from the filesystem.
   It should be an object that responds to `find(name, namespace = nil)` and
   returns an `Avro::Schema` object. An `AvroTurf::SchemaStore` can be used.
+  The `schema_store` is unnecessary if models are generated directly from 
+  `Avro::Schema` objects. See [Models](#models).
+  
+#### Using a Schema Registry/Messaging API
+ 
+The configuration options below are required when using a schema registry 
+(see [Confluent Schema Registry](http://docs.confluent.io/2.0.1/schema-registry/docs/intro.html)).
+and the [Messaging API](#messaging-api).
+  
+* **schema_registry**: An `AvroTurf::SchemaRegistry` object used to store Avro schemas 
+  so that they can be referenced by id. Either `schema_registry` or 
+  `registry_url` must be configured.
+* **registry_url**: URL for the schema registry. Either `schema_registry` or 
+  `registry_url` must be configured.
 * **messaging**: An `AvroTurf::Messaging` object to be shared by all generated models.
   The `build_messaging!` method may be used to create a `Messaging` instance based
   on the other configuration values.
-* logger: The logger to use for the schema registry client.
+* **logger**: The logger to use for the schema registry client.
 * [Custom Types](#custom-types)
 
-Example:
+Example using a schema registry:
 
 ```ruby
 Avromatic.configure do |config|
