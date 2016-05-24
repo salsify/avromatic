@@ -29,16 +29,16 @@ Or install it yourself as:
 
 `Avromatic` supports the following configuration:
 
-* schema_registry: An `AvroTurf::SchemaRegistry` object used to store Avro schemas 
+* **schema_registry**: An `AvroTurf::SchemaRegistry` object used to store Avro schemas
   so that they can be referenced by id. Either `schema_registry` or 
   `registry_url` must be configured. See [Confluent Schema Registry](http://docs.confluent.io/2.0.1/schema-registry/docs/intro.html).
-* registry_url: URL for the schema registry. The schema registry is used to store
+* **registry_url**: URL for the schema registry. The schema registry is used to store
   Avro schemas so that they can be referenced by id.  Either `schema_registry` or 
   `registry_url` must be configured.
-* schema_store: The schema store is used to load Avro schemas from the filesystem.
+* **schema_store**: The schema store is used to load Avro schemas from the filesystem.
   It should be an object that responds to `find(name, namespace = nil)` and
   returns an `Avro::Schema` object. An `AvroTurf::SchemaStore` can be used.
-* messaging: An `AvroTurf::Messaging` object to be shared by all generated models.
+* **messaging**: An `AvroTurf::Messaging` object to be shared by all generated models.
   The `build_messaging!` method may be used to create a `Messaging` instance based
   on the other configuration values.
 * logger: The logger to use for the schema registry client.
@@ -136,24 +136,68 @@ inbound or outbound value is nil.
 If a custom type is registered for a record-type field, then any `to_avro` 
 method/Proc should return a Hash with string keys for encoding using Avro.
 
-#### Encode/Decode
+### Encoding and Decoding
 
-Models can be encoded using Avro leveraging a schema registry to encode a schema
-id at the beginning of the value.
+`Avromatic` provides two different interfaces for encoding the key (optional)
+and value associated with a model.
 
-```ruby
-model.avro_message_value
-```
+#### Manually Managed Schemas
 
-If a model has an Avro schema for a key, then the key can also be encoded
-prefixed with a schema id.
+The attributes for the value schema used to define a model can be encoded using:
 
 ```ruby
-model.avro_message_key
+encoded_value = model.avro_encoded_value
 ```
 
-A model instance can be created from an Avro-encoded value and an Avro-encoded
-optional key:
+In order to decode this data, a copy of the value schema is required.
+
+If a model also has an Avro schema for a key, then the key attributes can be
+encoded using:
+
+```ruby
+encoded_key = model.avro_encoded_key
+```
+
+If attributes were encoded using the same schema(s) used to define a model, then
+the data can be decoded to create a new model instance:
+
+```ruby
+MyTopic.decode(key: encoded_key, value: encoded_value)
+```
+
+If the attributes where encoded using a different version of the model's schemas,
+then a new model instance can be created by also providing the schemas used to 
+encode the data:
+
+```ruby
+MyTopic.decode(key: encoded_key,
+               key_schema: writers_key_schema,
+               value: encoded_value,
+               value_schema: writers_value_schema)
+```
+
+#### Messaging API
+
+The other interface for encoding and decoding attributes uses the
+`AvroTurf::Messaging` API. This interface leverages a schema registry and
+prefixes the encoded data with an id to identify the schema. In this approach,
+a schema registry is used to ensure that the correct schemas are available during
+decoding.
+
+The attributes for the value schema can be encoded with a schema id prefix using:
+
+```ruby
+message_value = model.avro_message_value
+```
+
+If a model has an Avro schema for a key, then those attributes can also be encoded
+prefixed with a schema id:
+
+```ruby
+message_key = model.avro_message_key
+```
+
+A model instance can be created from a key and value encoded in this manner:
 
 ```ruby
 MyTopic.deserialize(message_key, message_value)
@@ -165,22 +209,22 @@ Or just a value if only one schema is used:
 MyValue.deserialize(message_value)
 ```
 
-#### Decoder
+#### Avromatric::Model::Decoder
 
-A stream of messages encoded from various models can be deserialized using
-`Avromatic::Model::Decoder`. The decoder must be initialized with the list
-of models to decode:
+A stream of messages encoded from various models using the messaging approach
+can be deserialized using `Avromatic::Model::Decoder`. The decoder must be 
+initialized with the list of models to decode:
 
 ```ruby
 decoder = Avromatic::Model::Decoder.new(MyModel1, MyModel2)
 
-decoder.decode(model1_key, model1_value)
+decoder.decode(model1_messge_key, model1_message_value)
 # => instance of MyModel1
-decoder.decode(model2_value)
+decoder.decode(model2_message_value)
 # => instance of MyModel2
 ```
 
-#### Validations
+### Validations
 
 The following validations are supported:
 
@@ -188,7 +232,7 @@ The following validations are supported:
 - The value for an enum type field is in the declared set of values.
 - Presence of a value for required fields.
 
-#### Unsupported/Future
+### Unsupported/Future
 
 The following types/features are not supported for generated models:
 

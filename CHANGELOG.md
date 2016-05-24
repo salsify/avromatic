@@ -1,5 +1,9 @@
 # avromatic changelog
 
+## v0.5.0
+- Add `#avro_encoded_key`, `#avro_encoded_value` and `.decode` methods to
+  generated models to support encoding and decoding without a schema registry.
+
 ## v0.4.0
 - Allow the specification of a custom type, including conversion to/from Avro,
   for named types.

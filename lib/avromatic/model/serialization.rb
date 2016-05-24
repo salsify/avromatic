@@ -1,0 +1,111 @@
+require 'avromatic/model/passthrough_serializer'
+
+module Avromatic
+  module Model
+
+    # This module provides serialization support for encoding directly to Avro
+    # without dependency on a schema registry.
+    module Serialization
+      extend ActiveSupport::Concern
+
+      module Encode
+        delegate :avro_serializer, :datum_writer, :datum_reader, to: :class
+        private :avro_serializer, :datum_writer, :datum_reader
+
+        def avro_encoded_value
+          encode(value_attributes_for_avro, :value)
+        end
+
+        def avro_encoded_key
+          raise 'Model has no key schema' unless key_avro_schema
+          encode(key_attributes_for_avro, :key)
+        end
+
+        protected
+
+        def value_attributes_for_avro
+          avro_hash(value_avro_field_names)
+        end
+
+        private
+
+        def key_attributes_for_avro
+          avro_hash(key_avro_field_names)
+        end
+
+        def avro_hash(fields)
+          attributes.slice(*fields).each_with_object(Hash.new) do |(key, value), result|
+            result[key.to_s] = if value.is_a?(Avromatic::Model::Attributes)
+                                 value.value_attributes_for_avro
+                               else
+                                 avro_serializer[key].call(value)
+                               end
+          end
+        end
+
+        def encode(data, key_or_value = :value)
+          stream = StringIO.new
+          encoder = Avro::IO::BinaryEncoder.new(stream)
+          datum_writer[key_or_value].write(data, encoder)
+          stream.string
+        end
+      end
+      include Encode
+
+      module Decode
+
+        # Create a new instance based on an encoded value and optional encoded key.
+        # If supplied then the key_schema and value_schema are used as the writer's
+        # schema for the corresponding value. The model's schemas are always used
+        # as the reader's schemas.
+        def decode(key: nil, value:, key_schema: nil, value_schema: nil)
+          key_attributes = key && decode_avro(key, key_schema, :key)
+          value_attributes = decode_avro(value, value_schema, :value)
+
+          new(value_attributes.merge!(key_attributes || {}))
+        end
+
+        private
+
+        def decode_avro(data, schema = nil, key_or_value = :value)
+          stream = StringIO.new(data)
+          decoder = Avro::IO::BinaryDecoder.new(stream)
+          reader = schema ? custom_datum_reader(schema, key_or_value) : datum_reader[key_or_value]
+          reader.read(decoder)
+        end
+
+        def custom_datum_reader(schema, key_or_value)
+          Avro::IO::DatumReader.new(schema, send("#{key_or_value}_avro_schema"))
+        end
+      end
+
+      module ClassMethods
+
+        # Store a hash of Procs by field name (as a symbol) to convert
+        # the value before Avro serialization.
+        # Returns the default PassthroughSerializer if a key is not present.
+        def avro_serializer
+          @avro_serializer ||= Hash.new(PassthroughSerializer)
+        end
+
+        def datum_writer
+          @datum_writer ||= begin
+                              hash = { value: Avro::IO::DatumWriter.new(value_avro_schema) }
+                              hash[:key] = Avro::IO::DatumWriter.new(key_avro_schema) if key_avro_schema
+                              hash
+                            end
+        end
+
+        def datum_reader
+          @datum_reader ||= begin
+            hash = { value: Avro::IO::DatumReader.new(value_avro_schema) }
+            hash[:key] = Avro::IO::DatumReader.new(key_avro_schema) if key_avro_schema
+            hash
+          end
+        end
+
+        include Decode
+      end
+    end
+  end
+end

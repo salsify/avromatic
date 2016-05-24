@@ -1,11 +1,11 @@
 require 'avro_turf/messaging'
-require 'avromatic/model/passthrough_serializer'
 
 module Avromatic
   module Model
 
-    # This concern adds support for serialization to a model
-    # generated from Avro schema(s).
+    # This concern adds support for serialization based on AvroTurf::Messaging.
+    # This serialization leverages a schema registry to prefix encoded values
+    # with an id for the schema.
     module Messaging
       extend ActiveSupport::Concern
 
@@ -25,30 +25,6 @@ module Avromatic
             key_attributes_for_avro,
             schema_name: key_avro_schema.fullname
           )
-        end
-
-        protected
-
-        def value_attributes_for_avro
-          avro_hash(value_avro_field_names)
-        end
-
-        private
-
-        delegate :avro_serializer, to: :class
-
-        def key_attributes_for_avro
-          avro_hash(key_avro_field_names)
-        end
-
-        def avro_hash(fields)
-          attributes.slice(*fields).each_with_object(Hash.new) do |(key, value), result|
-            result[key.to_s] = if value.is_a?(Avromatic::Model::Attributes)
-                                 value.value_attributes_for_avro
-                               else
-                                 avro_serializer[key].call(value)
-                               end
-          end
         end
       end
       include Encode
@@ -75,13 +51,6 @@ module Avromatic
         delegate :messaging, to: :Avromatic
 
         include Decode
-
-        # Store a hash of Procs by field name (as a symbol) to convert
-        # the value before Avro serialization.
-        # Returns the default PassthroughSerializer if a key is not present.
-        def avro_serializer
-          @avro_serializer ||= Hash.new(PassthroughSerializer)
-        end
       end
     end
   end

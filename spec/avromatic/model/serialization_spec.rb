@@ -1,29 +1,26 @@
 require 'spec_helper'
-require 'webmock/rspec'
-require 'avro_turf/test/fake_schema_registry_server'
+require 'avro/builder'
 
-describe Avromatic::Model::Messaging do
-  let(:registry_url) { 'http://registry.example.com' }
+describe Avromatic::Model::Serialization do
   let(:values) { { id: rand(99) } }
   let(:instance) { test_class.new(values) }
-  let(:avro_message_value) { instance.avro_message_value }
-  let(:avro_message_key) { instance.avro_message_key }
+  let(:avro_encoded_value) { instance.avro_encoded_value }
+  let(:avro_encoded_key) { instance.avro_encoded_key }
 
   before do
-    Avromatic.registry_url = registry_url
-    stub_request(:any, /^#{registry_url}/).to_rack(FakeSchemaRegistryServer)
-    FakeSchemaRegistryServer.clear
+    # Ensure that there is no dependency on messaging
+    Avromatic.messaging = nil
   end
 
-  describe "#avro_message_value" do
+  describe "#avro_encoded_value" do
     let(:test_class) do
       Avromatic::Model.model(value_schema_name: 'test.encode_value')
     end
     let(:values) { { str1: 'a', str2: 'b' } }
 
     it "encodes the value for the model" do
-      message_value = instance.avro_message_value
-      decoded = test_class.deserialize(message_value)
+      encoded_value = instance.avro_encoded_value
+      decoded = test_class.decode(value: encoded_value)
       expect(decoded).to eq(instance)
     end
 
@@ -34,14 +31,14 @@ describe Avromatic::Model::Messaging do
       let(:values) { { str: 'a', sub: { str: 'b', i: 1 } } }
 
       it "encodes the value for the model" do
-        message_value = instance.avro_message_value
-        decoded = test_class.deserialize(message_value)
+        encoded_value = instance.avro_encoded_value
+        decoded = test_class.decode(value: encoded_value)
         expect(decoded).to eq(instance)
       end
     end
   end
 
-  describe "#avro_message_key" do
+  describe "#avro_encoded_key" do
     let(:test_class) do
       Avromatic::Model.model(
         value_schema_name: 'test.encode_value',
@@ -51,9 +48,9 @@ describe Avromatic::Model::Messaging do
     let(:values) { super().merge!(str1: 'a', str2: 'b') }
 
     it "encodes the key for the model" do
-      message_value = instance.avro_message_value
-      message_key = instance.avro_message_key
-      decoded = test_class.deserialize(message_key, message_value)
+      encoded_value = instance.avro_encoded_value
+      encoded_key = instance.avro_encoded_key
+      decoded = test_class.decode(key: encoded_key, value: encoded_value)
       expect(decoded).to eq(instance)
     end
 
@@ -64,19 +61,19 @@ describe Avromatic::Model::Messaging do
       let(:values) { { str1: 'a', str2: 'b' } }
 
       it "raises an error" do
-        expect { instance.avro_message_key }.to raise_error('Model has no key schema')
+        expect { instance.avro_encoded_key }.to raise_error('Model has no key schema')
       end
     end
   end
 
-  describe ".deserialize" do
+  describe ".decode" do
     let(:test_class) do
       Avromatic::Model.model(value_schema_name: 'test.encode_value')
     end
     let(:values) { { str1: 'a', str2: 'b' } }
 
-    it "deserializes a model" do
-      decoded = test_class.deserialize(avro_message_value)
+    it "decodes a model" do
+      decoded = test_class.decode(value: avro_encoded_value)
       expect(decoded).to eq(instance)
     end
 
@@ -89,9 +86,46 @@ describe Avromatic::Model::Messaging do
       end
       let(:values) { { id: rand(99), str1: 'a', str2: 'b' } }
 
-      it "deserializes a model" do
-        decoded = test_class.deserialize(avro_message_key, avro_message_value)
+      it "decodes a model" do
+        decoded = test_class.decode(key: avro_encoded_key, value: avro_encoded_value)
         expect(decoded).to eq(instance)
+      end
+
+      context "when the writers schemas are different" do
+        # schema names for reader and writer must match
+        let(:writer_value_schema) do
+          Avro::Builder.build_schema do
+            record :encode_value, namespace: :test do
+              required :str1, :string, default: 'X'
+              required :str3, :string, default: 'Z'
+            end
+          end
+        end
+        let(:writer_key_schema) do
+          Avro::Builder.build_schema do
+            record :encode_key, namespace: :test do
+              required :id, :int
+              required :id_type, :string, default: 'regular'
+            end
+          end
+        end
+        let(:writer_test_class) do
+          Avromatic::Model.model(value_schema: writer_value_schema,
+                                 key_schema: writer_key_schema)
+        end
+        let(:instance) { writer_test_class.new(values) }
+        let(:values) do
+          { id: rand(99), id_type: 'admin', str1: 'a', str3: 'c' }
+        end
+
+        it "decodes a model based on the writers schema and the model schemas" do
+          decoded = test_class.decode(key: avro_encoded_key,
+                                      value: avro_encoded_value,
+                                      key_schema: writer_key_schema,
+                                      value_schema: writer_value_schema)
+
+          expect(decoded.attributes).to eq(id: values[:id], str1: 'a', str2: 'Y')
+        end
       end
     end
   end
@@ -102,6 +136,7 @@ describe Avromatic::Model::Messaging do
       Avromatic::Model.model(schema_name: schema_name)
     end
     let(:values) { { six_str: 'fOObAR' } }
+    let(:decoded) { test_class.send(:decode_avro, avro_encoded_value) }
 
     context "with a value class" do
       let(:value_class) do
@@ -126,16 +161,7 @@ describe Avromatic::Model::Messaging do
         Avromatic.register_type('test.six', value_class)
       end
 
-      it "stores the attribute in the model class" do
-        expect(instance.six_str).to be_a(value_class)
-      end
-
-      it "converts when assigning to the model" do
-        expect(instance.six_str.value).to eq('foobar')
-      end
-
       it "converts when encoding the value" do
-        decoded = Avromatic.messaging.decode(avro_message_value, schema_name: schema_name)
         expect(decoded['six_str']).to eq('Foobar')
       end
     end
@@ -148,12 +174,7 @@ describe Avromatic::Model::Messaging do
         end
       end
 
-      it "converts when assigning to the model" do
-        expect(instance.six_str).to eq('foobar')
-      end
-
       it "converts when encoding the value" do
-        decoded = Avromatic.messaging.decode(avro_message_value, schema_name: schema_name)
         expect(decoded['six_str']).to eq('Foobar')
       end
     end
@@ -168,12 +189,7 @@ describe Avromatic::Model::Messaging do
         end
       end
 
-      it "converts when assigning to the model" do
-        expect(instance.optional_six).to eq('foobar')
-      end
-
       it "converts when encoding the value" do
-        decoded = Avromatic.messaging.decode(avro_message_value, schema_name: schema_name)
         expect(decoded['optional_six']).to eq('Foobar')
       end
     end
@@ -196,19 +212,10 @@ describe Avromatic::Model::Messaging do
         end
       end
 
-      it "stores the attribute" do
-        expect(instance.str).to eq('test')
-      end
-
       it "converts when encoding the value" do
-        decoded = Avromatic.messaging.decode(avro_message_value, schema_name: schema_name)
         expect(decoded['str']).to eq('length' => 4, 'data' => 'test')
-      end
-
-      it "converts when assigning to the model" do
-        decoded = test_class.deserialize(avro_message_value)
-        expect(decoded.str).to eq('test')
       end
     end
   end
+
 end
