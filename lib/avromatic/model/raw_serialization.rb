@@ -5,7 +5,7 @@ module Avromatic
 
     # This module provides serialization support for encoding directly to Avro
     # without dependency on a schema registry.
-    module Serialization
+    module RawSerialization
       extend ActiveSupport::Concern
 
       module Encode
@@ -13,12 +13,12 @@ module Avromatic
         private :avro_serializer, :datum_writer, :datum_reader
 
         def avro_raw_value
-          encode(value_attributes_for_avro, :value)
+          avro_raw_encode(value_attributes_for_avro, :value)
         end
 
         def avro_raw_key
           raise 'Model has no key schema' unless key_avro_schema
-          encode(key_attributes_for_avro, :key)
+          avro_raw_encode(key_attributes_for_avro, :key)
         end
 
         protected
@@ -43,7 +43,7 @@ module Avromatic
           end
         end
 
-        def encode(data, key_or_value = :value)
+        def avro_raw_encode(data, key_or_value = :value)
           stream = StringIO.new
           encoder = Avro::IO::BinaryEncoder.new(stream)
           datum_writer[key_or_value].write(data, encoder)
@@ -58,16 +58,16 @@ module Avromatic
         # If supplied then the key_schema and value_schema are used as the writer's
         # schema for the corresponding value. The model's schemas are always used
         # as the reader's schemas.
-        def raw_decode(key: nil, value:, key_schema: nil, value_schema: nil)
-          key_attributes = key && decode_avro(key, key_schema, :key)
-          value_attributes = decode_avro(value, value_schema, :value)
+        def avro_raw_decode(key: nil, value:, key_schema: nil, value_schema: nil)
+          key_attributes = key && decode_avro_datum(key, key_schema, :key)
+          value_attributes = decode_avro_datum(value, value_schema, :value)
 
           new(value_attributes.merge!(key_attributes || {}))
         end
 
         private
 
-        def decode_avro(data, schema = nil, key_or_value = :value)
+        def decode_avro_datum(data, schema = nil, key_or_value = :value)
           stream = StringIO.new(data)
           decoder = Avro::IO::BinaryDecoder.new(stream)
           reader = schema ? custom_datum_reader(schema, key_or_value) : datum_reader[key_or_value]

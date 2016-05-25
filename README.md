@@ -40,7 +40,7 @@ Or install it yourself as:
 #### Using a Schema Registry/Messaging API
  
 The configuration options below are required when using a schema registry 
-(see [Confluent Schema Registry](http://docs.confluent.io/2.0.1/schema-registry/docs/intro.html)).
+(see [Confluent Schema Registry](http://docs.confluent.io/2.0.1/schema-registry/docs/intro.html))
 and the [Messaging API](#messaging-api).
   
 * **schema_registry**: An `AvroTurf::SchemaRegistry` object used to store Avro schemas 
@@ -61,6 +61,7 @@ Avromatic.configure do |config|
   config.schema_store = AvroTurf::SchemaStore.new(path: 'avro/schemas')
   config.registry_url = Rails.configuration.x.avro_schema_registry_url
   config.build_messaging!
+end
 ```
 
 ### Models
@@ -172,7 +173,7 @@ If attributes were encoded using the same schema(s) used to define a model, then
 the data can be decoded to create a new model instance:
 
 ```ruby
-MyTopic.raw_decode(key: encoded_key, value: encoded_value)
+MyModel.avro_raw_decode(key: encoded_key, value: encoded_value)
 ```
 
 If the attributes where encoded using a different version of the model's schemas,
@@ -180,10 +181,10 @@ then a new model instance can be created by also providing the schemas used to
 encode the data:
 
 ```ruby
-MyTopic.decode(key: encoded_key,
-               key_schema: writers_key_schema,
-               value: encoded_value,
-               value_schema: writers_value_schema)
+MyModel.avro_raw_decode(key: encoded_key,
+                        key_schema: writers_key_schema,
+                        value: encoded_value,
+                        value_schema: writers_value_schema)
 ```
 
 #### Messaging API
@@ -210,13 +211,13 @@ message_key = model.avro_message_key
 A model instance can be created from a key and value encoded in this manner:
 
 ```ruby
-MyTopic.message_decode(message_key, message_value)
+MyTopic.avro_message_decode(message_key, message_value)
 ```
 
 Or just a value if only one schema is used:
 
 ```ruby
-MyValue.message_decode(message_value)
+MyValue.avro_message_decode(message_value)
 ```
 
 #### Avromatric::Model::MessageDecoder

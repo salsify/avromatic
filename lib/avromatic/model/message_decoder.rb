@@ -64,7 +64,7 @@ module Avromatic
 
       def deserialize(model_key, message_key, message_value)
         raise UnexpectedKeyError.new(model_key) unless model_map.key?(model_key)
-        model_map[model_key].message_decode(message_key, message_value)
+        model_map[model_key].avro_message_decode(message_key, message_value)
       end
 
       def schema_name_for_data(data)

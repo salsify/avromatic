@@ -5,8 +5,8 @@ require 'avromatic/model/configuration'
 require 'avromatic/model/value_object'
 require 'avromatic/model/configurable'
 require 'avromatic/model/attributes'
-require 'avromatic/model/serialization'
-require 'avromatic/model/messaging'
+require 'avromatic/model/raw_serialization'
+require 'avromatic/model/messaging_serialization'
 
 module Avromatic
   module Model
@@ -42,8 +42,8 @@ module Avromatic
           Avromatic::Model::Configurable,
           Avromatic::Model::Attributes,
           Avromatic::Model::ValueObject,
-          Avromatic::Model::Serialization,
-          Avromatic::Model::Messaging
+          Avromatic::Model::RawSerialization,
+          Avromatic::Model::MessagingSerialization
         ]
       end
 
