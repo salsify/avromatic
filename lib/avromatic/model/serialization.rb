@@ -12,11 +12,11 @@ module Avromatic
         delegate :avro_serializer, :datum_writer, :datum_reader, to: :class
         private :avro_serializer, :datum_writer, :datum_reader
 
-        def avro_encoded_value
+        def avro_raw_value
           encode(value_attributes_for_avro, :value)
         end
 
-        def avro_encoded_key
+        def avro_raw_key
           raise 'Model has no key schema' unless key_avro_schema
           encode(key_attributes_for_avro, :key)
         end
@@ -58,7 +58,7 @@ module Avromatic
         # If supplied then the key_schema and value_schema are used as the writer's
         # schema for the corresponding value. The model's schemas are always used
         # as the reader's schemas.
-        def decode(key: nil, value:, key_schema: nil, value_schema: nil)
+        def raw_decode(key: nil, value:, key_schema: nil, value_schema: nil)
           key_attributes = key && decode_avro(key, key_schema, :key)
           value_attributes = decode_avro(value, value_schema, :value)
 

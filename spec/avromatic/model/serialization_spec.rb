@@ -4,23 +4,23 @@ require 'avro/builder'
 describe Avromatic::Model::Serialization do
   let(:values) { { id: rand(99) } }
   let(:instance) { test_class.new(values) }
-  let(:avro_encoded_value) { instance.avro_encoded_value }
-  let(:avro_encoded_key) { instance.avro_encoded_key }
+  let(:avro_raw_value) { instance.avro_raw_value }
+  let(:avro_raw_key) { instance.avro_raw_key }
 
   before do
     # Ensure that there is no dependency on messaging
     Avromatic.messaging = nil
   end
 
-  describe "#avro_encoded_value" do
+  describe "#avro_raw_value" do
     let(:test_class) do
       Avromatic::Model.model(value_schema_name: 'test.encode_value')
     end
     let(:values) { { str1: 'a', str2: 'b' } }
 
     it "encodes the value for the model" do
-      encoded_value = instance.avro_encoded_value
-      decoded = test_class.decode(value: encoded_value)
+      encoded_value = instance.avro_raw_value
+      decoded = test_class.raw_decode(value: encoded_value)
       expect(decoded).to eq(instance)
     end
 
@@ -31,14 +31,14 @@ describe Avromatic::Model::Serialization do
       let(:values) { { str: 'a', sub: { str: 'b', i: 1 } } }
 
       it "encodes the value for the model" do
-        encoded_value = instance.avro_encoded_value
-        decoded = test_class.decode(value: encoded_value)
+        encoded_value = instance.avro_raw_value
+        decoded = test_class.raw_decode(value: encoded_value)
         expect(decoded).to eq(instance)
       end
     end
   end
 
-  describe "#avro_encoded_key" do
+  describe "#avro_raw_key" do
     let(:test_class) do
       Avromatic::Model.model(
         value_schema_name: 'test.encode_value',
@@ -48,9 +48,9 @@ describe Avromatic::Model::Serialization do
     let(:values) { super().merge!(str1: 'a', str2: 'b') }
 
     it "encodes the key for the model" do
-      encoded_value = instance.avro_encoded_value
-      encoded_key = instance.avro_encoded_key
-      decoded = test_class.decode(key: encoded_key, value: encoded_value)
+      encoded_value = instance.avro_raw_value
+      encoded_key = instance.avro_raw_key
+      decoded = test_class.raw_decode(key: encoded_key, value: encoded_value)
       expect(decoded).to eq(instance)
     end
 
@@ -61,19 +61,19 @@ describe Avromatic::Model::Serialization do
       let(:values) { { str1: 'a', str2: 'b' } }
 
       it "raises an error" do
-        expect { instance.avro_encoded_key }.to raise_error('Model has no key schema')
+        expect { instance.avro_raw_key }.to raise_error('Model has no key schema')
       end
     end
   end
 
-  describe ".decode" do
+  describe ".raw_decode" do
     let(:test_class) do
       Avromatic::Model.model(value_schema_name: 'test.encode_value')
     end
     let(:values) { { str1: 'a', str2: 'b' } }
 
     it "decodes a model" do
-      decoded = test_class.decode(value: avro_encoded_value)
+      decoded = test_class.raw_decode(value: avro_raw_value)
       expect(decoded).to eq(instance)
     end
 
@@ -87,7 +87,7 @@ describe Avromatic::Model::Serialization do
       let(:values) { { id: rand(99), str1: 'a', str2: 'b' } }
 
       it "decodes a model" do
-        decoded = test_class.decode(key: avro_encoded_key, value: avro_encoded_value)
+        decoded = test_class.raw_decode(key: avro_raw_key, value: avro_raw_value)
         expect(decoded).to eq(instance)
       end
 
@@ -119,8 +119,8 @@ describe Avromatic::Model::Serialization do
         end
 
         it "decodes a model based on the writers schema and the model schemas" do
-          decoded = test_class.decode(key: avro_encoded_key,
-                                      value: avro_encoded_value,
+          decoded = test_class.raw_decode(key: avro_raw_key,
+                                      value: avro_raw_value,
                                       key_schema: writer_key_schema,
                                       value_schema: writer_value_schema)
 
@@ -136,7 +136,7 @@ describe Avromatic::Model::Serialization do
       Avromatic::Model.model(schema_name: schema_name)
     end
     let(:values) { { six_str: 'fOObAR' } }
-    let(:decoded) { test_class.send(:decode_avro, avro_encoded_value) }
+    let(:decoded) { test_class.send(:decode_avro, avro_raw_value) }
 
     context "with a value class" do
       let(:value_class) do

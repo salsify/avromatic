@@ -156,7 +156,7 @@ and value associated with a model.
 The attributes for the value schema used to define a model can be encoded using:
 
 ```ruby
-encoded_value = model.avro_encoded_value
+encoded_value = model.avro_raw_value
 ```
 
 In order to decode this data, a copy of the value schema is required.
@@ -165,14 +165,14 @@ If a model also has an Avro schema for a key, then the key attributes can be
 encoded using:
 
 ```ruby
-encoded_key = model.avro_encoded_key
+encoded_key = model.avro_raw_key
 ```
 
 If attributes were encoded using the same schema(s) used to define a model, then
 the data can be decoded to create a new model instance:
 
 ```ruby
-MyTopic.decode(key: encoded_key, value: encoded_value)
+MyTopic.raw_decode(key: encoded_key, value: encoded_value)
 ```
 
 If the attributes where encoded using a different version of the model's schemas,
