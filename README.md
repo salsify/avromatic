@@ -210,23 +210,23 @@ message_key = model.avro_message_key
 A model instance can be created from a key and value encoded in this manner:
 
 ```ruby
-MyTopic.deserialize(message_key, message_value)
+MyTopic.message_decode(message_key, message_value)
 ```
 
 Or just a value if only one schema is used:
 
 ```ruby
-MyValue.deserialize(message_value)
+MyValue.message_decode(message_value)
 ```
 
-#### Avromatric::Model::Decoder
+#### Avromatric::Model::MessageDecoder
 
 A stream of messages encoded from various models using the messaging approach
-can be deserialized using `Avromatic::Model::Decoder`. The decoder must be 
+can be decoded using `Avromatic::Model::MessageDecoder`. The decoder must be 
 initialized with the list of models to decode:
 
 ```ruby
-decoder = Avromatic::Model::Decoder.new(MyModel1, MyModel2)
+decoder = Avromatic::Model::MessageDecoder.new(MyModel1, MyModel2)
 
 decoder.decode(model1_messge_key, model1_message_value)
 # => instance of MyModel1

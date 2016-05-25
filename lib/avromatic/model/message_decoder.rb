@@ -3,8 +3,9 @@ require 'avro_turf/schema_registry'
 module Avromatic
   module Model
 
-    # This class is used to decode Avro messages to their corresponding models.
-    class Decoder
+    # This class is used to decode messages encoded using Avro to their
+    # corresponding models.
+    class MessageDecoder
       MAGIC_BYTE = [0].pack('C').freeze
 
       class UnexpectedKeyError < StandardError
@@ -22,7 +23,7 @@ module Avromatic
       class DuplicateKeyError < StandardError
         def initialize(*models)
           super("Multiple models #{models} have the same key "\
-                "'#{Avromatic::Model::Decoder.model_key(models.first)}'")
+                "'#{Avromatic::Model::MessageDecoder.model_key(models.first)}'")
         end
       end
 
@@ -63,7 +64,7 @@ module Avromatic
 
       def deserialize(model_key, message_key, message_value)
         raise UnexpectedKeyError.new(model_key) unless model_map.key?(model_key)
-        model_map[model_key].deserialize(message_key, message_value)
+        model_map[model_key].message_decode(message_key, message_value)
       end
 
       def schema_name_for_data(data)
