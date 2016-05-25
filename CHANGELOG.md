@@ -1,5 +1,11 @@
 # avromatic changelog
 
+## v0.5.0
+- Rename `Avromatic::Model::Decoder` to `MessageDecoder`.
+- Rename `.deserialize` on generated models to `.avro_message_decode`.
+- Add `#avro_raw_key`, `#avro_raw_value` and `.avro_raw_decode` methods to
+  generated models to support encoding and decoding without a schema registry.
+
 ## v0.4.0
 - Allow the specification of a custom type, including conversion to/from Avro,
   for named types.

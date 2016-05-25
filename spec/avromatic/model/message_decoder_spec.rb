@@ -2,7 +2,7 @@ require 'spec_helper'
 require 'webmock/rspec'
 require 'avro_turf/test/fake_schema_registry_server'
 
-describe Avromatic::Model::Decoder do
+describe Avromatic::Model::MessageDecoder do
   let(:registry_url) { 'http://registry.example.com' }
 
   let(:instance) { described_class.new(*models) }

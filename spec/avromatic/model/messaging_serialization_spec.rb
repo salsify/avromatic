@@ -1,9 +1,8 @@
 require 'spec_helper'
 require 'webmock/rspec'
 require 'avro_turf/test/fake_schema_registry_server'
-require 'avro/builder'
 
-describe Avromatic::Model::Serialization do
+describe Avromatic::Model::MessagingSerialization do
   let(:registry_url) { 'http://registry.example.com' }
   let(:values) { { id: rand(99) } }
   let(:instance) { test_class.new(values) }
@@ -24,7 +23,7 @@ describe Avromatic::Model::Serialization do
 
     it "encodes the value for the model" do
       message_value = instance.avro_message_value
-      decoded = test_class.deserialize(message_value)
+      decoded = test_class.avro_message_decode(message_value)
       expect(decoded).to eq(instance)
     end
 
@@ -36,7 +35,7 @@ describe Avromatic::Model::Serialization do
 
       it "encodes the value for the model" do
         message_value = instance.avro_message_value
-        decoded = test_class.deserialize(message_value)
+        decoded = test_class.avro_message_decode(message_value)
         expect(decoded).to eq(instance)
       end
     end
@@ -54,7 +53,7 @@ describe Avromatic::Model::Serialization do
     it "encodes the key for the model" do
       message_value = instance.avro_message_value
       message_key = instance.avro_message_key
-      decoded = test_class.deserialize(message_key, message_value)
+      decoded = test_class.avro_message_decode(message_key, message_value)
       expect(decoded).to eq(instance)
     end
 
@@ -70,14 +69,14 @@ describe Avromatic::Model::Serialization do
     end
   end
 
-  describe ".deserialize" do
+  describe ".avro_message_decode" do
     let(:test_class) do
       Avromatic::Model.model(value_schema_name: 'test.encode_value')
     end
     let(:values) { { str1: 'a', str2: 'b' } }
 
     it "deserializes a model" do
-      decoded = test_class.deserialize(avro_message_value)
+      decoded = test_class.avro_message_decode(avro_message_value)
       expect(decoded).to eq(instance)
     end
 
@@ -91,7 +90,7 @@ describe Avromatic::Model::Serialization do
       let(:values) { { id: rand(99), str1: 'a', str2: 'b' } }
 
       it "deserializes a model" do
-        decoded = test_class.deserialize(avro_message_key, avro_message_value)
+        decoded = test_class.avro_message_decode(avro_message_key, avro_message_value)
         expect(decoded).to eq(instance)
       end
     end
@@ -207,7 +206,7 @@ describe Avromatic::Model::Serialization do
       end
 
       it "converts when assigning to the model" do
-        decoded = test_class.deserialize(avro_message_value)
+        decoded = test_class.avro_message_decode(avro_message_value)
         expect(decoded.str).to eq('test')
       end
     end
