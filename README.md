@@ -220,7 +220,7 @@ Or just a value if only one schema is used:
 MyValue.avro_message_decode(message_value)
 ```
 
-#### Avromatric::Model::MessageDecoder
+#### Avromatic::Model::MessageDecoder
 
 A stream of messages encoded from various models using the messaging approach
 can be decoded using `Avromatic::Model::MessageDecoder`. The decoder must be 
