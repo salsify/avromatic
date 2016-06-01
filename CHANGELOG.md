@@ -1,5 +1,8 @@
 # avromatic changelog
 
+## v0.6.0
+- Require `avro_turf` v0.7.0 or later.
+
 ## v0.5.0
 - Rename `Avromatic::Model::Decoder` to `MessageDecoder`.
 - Rename `.deserialize` on generated models to `.avro_message_decode`.

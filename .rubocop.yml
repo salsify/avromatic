@@ -1,8 +1,2 @@
 inherit_gem:
   salsify_rubocop: conf/rubocop.yml
-
-Performance/RedundantMerge:
-  MaxKeyValuePairs: 1
-
-Style/RaiseArgs:
-  EnforcedStyle: compact
