@@ -76,7 +76,7 @@ module Avromatic
         end
 
         def add_required_validation(field)
-          if required?(field) && field.default.nil?
+          if required?(field) && field.default == :no_default
             validates(field.name, presence: true)
           end
         end
@@ -137,7 +137,8 @@ module Avromatic
           coercer = custom_type.deserializer
           options[:coercer] = coercer if coercer
 
-          if field.default
+          # See: https://github.com/dasch/avro_turf/pull/36
+          if field.default != :no_default
             options.merge!(default: default_for(field.default), lazy: true)
           end
 
