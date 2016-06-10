@@ -1,4 +1,5 @@
 require 'avromatic/model/passthrough_serializer'
+require 'active_support/core_ext/hash/transform_values'
 
 module Avromatic
   module Model
@@ -9,7 +10,8 @@ module Avromatic
       extend ActiveSupport::Concern
 
       module Encode
-        delegate :avro_serializer, :datum_writer, :datum_reader, to: :class
+        delegate :avro_serializer, :datum_writer, :datum_reader, :attribute_set,
+                 to: :class
         private :avro_serializer, :datum_writer, :datum_reader
 
         def avro_raw_value
@@ -33,10 +35,24 @@ module Avromatic
           avro_hash(key_avro_field_names)
         end
 
+        def array_of_models?(key)
+          attribute_set[key].is_a?(Virtus::Attribute::Collection) &&
+            attribute_set[key].member_type.primitive.include?(Avromatic::Model::Attributes)
+        end
+
+        def hash_of_models?(key)
+          attribute_set[key].is_a?(Virtus::Attribute::Hash) &&
+            attribute_set[key].value_type.primitive.include?(Avromatic::Model::Attributes)
+        end
+
         def avro_hash(fields)
           attributes.slice(*fields).each_with_object(Hash.new) do |(key, value), result|
             result[key.to_s] = if value.is_a?(Avromatic::Model::Attributes)
                                  value.value_attributes_for_avro
+                               elsif array_of_models?(key)
+                                 value.map(&:value_attributes_for_avro)
+                               elsif hash_of_models?(key)
+                                 value.transform_values(&:value_attributes_for_avro)
                                else
                                  avro_serializer[key].call(value)
                                end

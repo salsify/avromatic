@@ -1,5 +1,8 @@
 # avromatic changelog
 
+## v0.6.1
+- Fix serialization of array and map types that contain nested models.
+
 ## v0.6.0
 - Require `avro_turf` v0.7.0 or later.
 
