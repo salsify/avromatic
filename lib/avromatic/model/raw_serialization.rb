@@ -23,8 +23,6 @@ module Avromatic
           avro_raw_encode(key_attributes_for_avro, :key)
         end
 
-        protected
-
         def value_attributes_for_avro
           avro_hash(value_avro_field_names)
         end
