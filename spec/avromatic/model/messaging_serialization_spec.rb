@@ -1,6 +1,7 @@
 require 'spec_helper'
 require 'webmock/rspec'
 require 'avro_turf/test/fake_schema_registry_server'
+require 'avro/builder'
 
 describe Avromatic::Model::MessagingSerialization do
   let(:registry_url) { 'http://registry.example.com' }
@@ -34,6 +35,88 @@ describe Avromatic::Model::MessagingSerialization do
       let(:values) { { str: 'a', sub: { str: 'b', i: 1 } } }
 
       it "encodes the value for the model" do
+        expect(instance.sub.str).to eq('b')
+        expect(instance.sub.i).to eq(1)
+        message_value = instance.avro_message_value
+        decoded = test_class.avro_message_decode(message_value)
+        expect(decoded).to eq(instance)
+      end
+    end
+
+    context "with an array of models" do
+      let(:test_class) do
+        schema = Avro::Builder.build_schema do
+          record :key_value do
+            required :key, :string
+            required :value, :string
+          end
+
+          record :key_value_pairs do
+            required :id, :int
+            required :pairs, :array, items: :key_value
+          end
+        end
+        Avromatic::Model.model(schema: schema)
+      end
+      let(:values) do
+        {
+          id: 1,
+          pairs: [
+            { key: 'foo', value: 'A' },
+            { key: 'bar', value: 'B' }
+          ]
+        }
+      end
+      let(:instance) { test_class.new(values) }
+
+      before do
+        allow(Avromatic.schema_store)
+          .to receive(:find).with('key_value_pairs', nil).and_return(test_class.value_avro_schema)
+      end
+
+      it "encodes the value for the model" do
+        first_pair = instance.pairs.first
+        expect(first_pair.key).to eq('foo')
+        expect(first_pair.value).to eq('A')
+        message_value = instance.avro_message_value
+        decoded = test_class.avro_message_decode(message_value)
+        expect(decoded).to eq(instance)
+      end
+    end
+
+    context "with a map of models" do
+      let(:test_class) do
+        schema = Avro::Builder.build_schema do
+          record :submodel do
+            required :length, :int
+            required :str, :string
+          end
+
+          record :with_embedded do
+            required :hash, :map, values: :submodel
+          end
+        end
+        Avromatic::Model.model(schema: schema)
+      end
+      let(:values) do
+        {
+          hash: {
+            foo: { length: 3, str: 'bar' },
+            baz: { length: 6, str: 'foobar' }
+          }
+        }
+      end
+      let(:instance) { test_class.new(values) }
+
+      before do
+        allow(Avromatic.schema_store)
+          .to receive(:find).with('with_embedded', nil).and_return(test_class.value_avro_schema)
+      end
+
+      it "encodes the value for the model" do
+        first_value = instance.hash['foo']
+        expect(first_value.length).to eq(3)
+        expect(first_value.str).to eq('bar')
         message_value = instance.avro_message_value
         decoded = test_class.avro_message_decode(message_value)
         expect(decoded).to eq(instance)
