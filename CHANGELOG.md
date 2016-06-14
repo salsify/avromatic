@@ -1,5 +1,8 @@
 # avromatic changelog
 
+## v0.6.2
+- Remove dependency on `Hash#transform_values` from `ActiveSupport` v4.2.
+
 ## v0.6.1
 - Fix serialization of array and map types that contain nested models.
 

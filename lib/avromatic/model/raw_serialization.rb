@@ -1,5 +1,4 @@
 require 'avromatic/model/passthrough_serializer'
-require 'active_support/core_ext/hash/transform_values'
 
 module Avromatic
   module Model
@@ -50,7 +49,9 @@ module Avromatic
                                elsif array_of_models?(key)
                                  value.map(&:value_attributes_for_avro)
                                elsif hash_of_models?(key)
-                                 value.transform_values(&:value_attributes_for_avro)
+                                 value.each_with_object({}) do |(k, v), hash|
+                                   hash[k] = v.value_attributes_for_avro
+                                 end
                                else
                                  avro_serializer[key].call(value)
                                end
