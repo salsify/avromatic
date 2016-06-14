@@ -6,8 +6,8 @@ gemfile:
   - gemfiles/rails4_1.gemfile
   - gemfiles/rails4_2.gemfile
 matrix:
-  include:
+  exclude:
   - rvm: 2.2.4
-    gemfile: gemfiles/rails4_1.gemfile
-  - rvm: 2.3.1
     gemfile: gemfiles/rails4_2.gemfile
+  - rvm: 2.3.1
+    gemfile: gemfiles/rails4_1.gemfile
