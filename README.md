@@ -251,6 +251,13 @@ The following types/features are not supported for generated models:
   another type, is supported.
 - Reused models for nested records: Currently an anonymous model class is
   generated for each subrecord.
+  
+### Test Utilities
+
+Tests that leverage the Messaging API for encoding/decoding will need to talk to schema registry. 
+The `avromatic/rspec` file can be required by tests to route schema registry HTTP calls to the
+avro_turf [FakeSchemaRegistryServer](https://github.com/dasch/avro_turf/blob/master/lib/avro_turf/test/fake_schema_registry_server.rb)
+via [webmock](https://github.com/bblimke/webmock).
 
 ## Development
 
