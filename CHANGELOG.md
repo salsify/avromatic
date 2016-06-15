@@ -1,5 +1,8 @@
 # avromatic changelog
 
+## v0.7.0
+- Add RSpec `FakeSchemaRegistryServer` test helper.
+
 ## v0.6.2
 - Remove dependency on `Hash#transform_values` from `ActiveSupport` v4.2.
 

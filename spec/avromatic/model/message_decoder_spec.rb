@@ -1,10 +1,6 @@
 require 'spec_helper'
-require 'webmock/rspec'
-require 'avro_turf/test/fake_schema_registry_server'
 
 describe Avromatic::Model::MessageDecoder do
-  let(:registry_url) { 'http://registry.example.com' }
-
   let(:instance) { described_class.new(*models) }
   let(:model1) do
     Avromatic::Model.model(
@@ -14,12 +10,6 @@ describe Avromatic::Model::MessageDecoder do
   end
   let(:model2) do
     Avromatic::Model.model(value_schema_name: 'test.value')
-  end
-
-  before do
-    Avromatic.registry_url = registry_url
-    stub_request(:any, /^#{registry_url}/).to_rack(FakeSchemaRegistryServer)
-    FakeSchemaRegistryServer.clear
   end
 
   describe "#initialize" do
