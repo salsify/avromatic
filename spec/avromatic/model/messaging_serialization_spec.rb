@@ -1,20 +1,11 @@
 require 'spec_helper'
-require 'webmock/rspec'
-require 'avro_turf/test/fake_schema_registry_server'
 require 'avro/builder'
 
 describe Avromatic::Model::MessagingSerialization do
-  let(:registry_url) { 'http://registry.example.com' }
   let(:values) { { id: rand(99) } }
   let(:instance) { test_class.new(values) }
   let(:avro_message_value) { instance.avro_message_value }
   let(:avro_message_key) { instance.avro_message_key }
-
-  before do
-    Avromatic.registry_url = registry_url
-    stub_request(:any, /^#{registry_url}/).to_rack(FakeSchemaRegistryServer)
-    FakeSchemaRegistryServer.clear
-  end
 
   describe "#avro_message_value" do
     let(:test_class) do

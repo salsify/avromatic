@@ -14,3 +14,7 @@ RSpec.configure do |config|
     Avromatic.type_registry.clear
   end
 end
+
+# This needs to be required after the before block that sets
+# Avromatic.registry_url
+require 'avromatic/rspec'
