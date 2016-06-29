@@ -1,6 +1,7 @@
 # Avromatic
 
 [![Build Status](https://travis-ci.org/salsify/avromatic.svg?branch=master)][travis]
+[![Gem Version](https://badge.fury.io/rb/avromatic.svg)](https://badge.fury.io/rb/avromatic)
 
 [travis]: http://travis-ci.org/salsify/avromatic
 
