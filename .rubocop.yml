@@ -1,2 +1,6 @@
 inherit_gem:
   salsify_rubocop: conf/rubocop.yml
+
+AllCops:
+  TargetRubyVersion: 2.2
+
