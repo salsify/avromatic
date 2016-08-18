@@ -115,6 +115,40 @@ describe Avromatic::Model::Builder do
       it_behaves_like 'a generated model'
     end
 
+    context "unsupported union" do
+      let(:schema_name) { 'test.real_union' }
+
+      it "raises an error" do
+        expect { test_class }
+          .to raise_error(/Only the union of null with one other type is supported/)
+      end
+    end
+
+    context "top-level union" do
+      let(:schema) do
+        [
+          {
+            type: :record,
+            name: :foo,
+            fields: [{ name: :foo_message, type: :string }]
+          },
+          {
+            type: :record,
+            name: :boo,
+            fields: [{ name: :bar_message, type: :string }]
+          }
+        ].to_json
+      end
+      let(:test_class) do
+        Avromatic::Model.model(schema: Avro::Schema.parse(schema))
+      end
+
+      it "raises an error" do
+        expect { test_class }
+          .to raise_error("Unsupported schema type 'union', only 'record' schemas are supported.")
+      end
+    end
+
     context "with a key and value" do
       let(:schema_name) { 'test.value' }
       let(:key_schema_name) { 'test.key' }
