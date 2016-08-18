@@ -1,5 +1,9 @@
 # avromatic changelog
 
+## v0.7.1
+- Raise a more descriptive error when attempting to generate a model for a
+  non-record Avro type.
+
 ## v0.7.0
 - Add RSpec `FakeSchemaRegistryServer` test helper.
 

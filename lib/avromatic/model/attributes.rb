@@ -51,6 +51,10 @@ module Avromatic
         end
 
         def define_avro_attributes(schema)
+          if schema.type_sym != :record
+            raise "Unsupported schema type '#{schema.type_sym}', only 'record' schemas are supported."
+          end
+
           schema.fields.each do |field|
             field_class = avro_field_class(field.type)
 
