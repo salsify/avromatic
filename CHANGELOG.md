@@ -1,5 +1,9 @@
 # avromatic changelog
 
+## v0.8.0
+- Allow schema fields to be aliased if they conflict with an internal
+  method defined on the model.
+
 ## v0.7.1
 - Raise a more descriptive error when attempting to generate a model for a
   non-record Avro type.

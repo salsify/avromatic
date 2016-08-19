@@ -1,0 +1,30 @@
+{
+  "type": "record",
+  "name": "reserved",
+  "namespace": "test",
+  "fields": [
+    {
+      "name": "attributes",
+      "type": {
+        "type": "array",
+        "items": "string"
+      }
+    },
+    {
+      "name": "avro_message_value",
+      "type": "string"
+    },
+    {
+      "name": "hash",
+      "type": {
+        "type": "map",
+        "values": "string"
+      }
+    },
+    {
+      "name": "okay",
+      "type": "string",
+      "default": ""
+    }
+  ]
+}

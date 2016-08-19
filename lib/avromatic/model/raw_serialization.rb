@@ -1,4 +1,5 @@
 require 'avromatic/model/passthrough_serializer'
+require 'active_support/core_ext/hash/indifferent_access'
 
 module Avromatic
   module Model
@@ -44,17 +45,19 @@ module Avromatic
 
         def avro_hash(fields)
           attributes.slice(*fields).each_with_object(Hash.new) do |(key, value), result|
-            result[key.to_s] = if value.is_a?(Avromatic::Model::Attributes)
-                                 value.value_attributes_for_avro
-                               elsif array_of_models?(key)
-                                 value.map(&:value_attributes_for_avro)
-                               elsif hash_of_models?(key)
-                                 value.each_with_object({}) do |(k, v), hash|
-                                   hash[k] = v.value_attributes_for_avro
-                                 end
-                               else
-                                 avro_serializer[key].call(value)
-                               end
+            key_str = key.to_s
+            name = inverse_aliases[key_str] || key_str
+            result[name] = if value.is_a?(Avromatic::Model::Attributes)
+                             value.value_attributes_for_avro
+                           elsif array_of_models?(key)
+                             value.map(&:value_attributes_for_avro)
+                           elsif hash_of_models?(key)
+                             value.each_with_object({}) do |(k, v), hash|
+                               hash[k] = v.value_attributes_for_avro
+                             end
+                           else
+                             avro_serializer[key].call(value)
+                           end
           end
         end
 
@@ -80,7 +83,19 @@ module Avromatic
           new(value_attributes.merge!(key_attributes || {}))
         end
 
+        def new(attributes = {})
+          super(alias_attribute_hash(attributes))
+        end
+
         private
+
+        def alias_attribute_hash(model_attributes)
+          model_attributes.with_indifferent_access.tap do |hash|
+            (hash.keys & aliases.keys).each do |key|
+              hash[aliases[key]] = hash.delete(key)
+            end
+          end
+        end
 
         def decode_avro_datum(data, schema = nil, key_or_value = :value)
           stream = StringIO.new(data)

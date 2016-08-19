@@ -149,6 +149,51 @@ describe Avromatic::Model::Builder do
       end
     end
 
+    context "reserved words" do
+      let(:schema_name) { 'test.reserved' }
+
+      it "raises an error" do
+        expect { test_class }
+          .to raise_error(/Disallowed field names: "attributes", "avro_message_value", "hash"/)
+      end
+    end
+
+    context "reserved words with aliases" do
+      let(:schema_name) { 'test.reserved' }
+      let(:aliases) do
+        { attributes: :my_attributes,
+          avro_message_value: :message,
+          hash: :map }
+      end
+      let(:test_class) do
+        Avromatic::Model.model(schema_name: schema_name,
+                               aliases: aliases)
+      end
+
+      it "uses alias for the attribute names" do
+        expect(attribute_names)
+          .to match_array(aliases.values.map(&:to_s).push('okay'))
+      end
+    end
+
+    context "reserved words with an alias that conflicts with a field" do
+      let(:schema_name) { 'test.reserved' }
+      let(:aliases) do
+        { attributes: :my_attributes,
+          avro_message_value: :okay,
+          hash: :map }
+      end
+      let(:test_class) do
+        Avromatic::Model.model(schema_name: schema_name,
+                               aliases: aliases)
+      end
+
+      it "raises an error" do
+        expect { test_class }
+          .to raise_error(/alias `okay` for field `avro_message_value` conflicts with an existing field/)
+      end
+    end
+
     context "with a key and value" do
       let(:schema_name) { 'test.value' }
       let(:key_schema_name) { 'test.key' }

@@ -20,6 +20,8 @@ module Avromatic
 
       module ClassMethods
         def add_avro_fields
+          validate_schemas!
+
           if key_avro_schema
             check_for_field_conflicts!
             define_avro_attributes(key_avro_schema)
@@ -51,20 +53,51 @@ module Avromatic
         end
 
         def define_avro_attributes(schema)
-          if schema.type_sym != :record
-            raise "Unsupported schema type '#{schema.type_sym}', only 'record' schemas are supported."
-          end
-
           schema.fields.each do |field|
-            field_class = avro_field_class(field.type)
+            field_class = avro_field_class(field: field)
+            field_name = avro_field_name(field.name)
 
-            attribute(field.name,
+            attribute(field_name,
                       field_class,
                       avro_field_options(field))
 
             add_validation(field)
             add_serializer(field)
           end
+        end
+
+        def validate_schemas!
+          [key_avro_schema, avro_schema].compact
+            .each { |schema| validate_schema!(schema) }
+        end
+
+        def validate_schema!(schema)
+          if schema.type_sym != :record
+            raise "Unsupported schema type '#{schema.type_sym}', only 'record' schemas are supported."
+          end
+
+          invalid_fields = schema.fields.select do |field|
+            instance_methods.include?(field.name.to_sym) && no_valid_alias?(field.name)
+          end
+          if invalid_fields.any?
+            raise "Disallowed field names: #{invalid_fields.map(&:name).map(&:inspect).join(', ')}.\n"\
+                  'Consider using the `aliases` option when defining the model to specify an alternate name.'
+          end
+        end
+
+        def raw_field_names
+          @raw_field_names ||=
+            [key_avro_schema, avro_schema].compact.flat_map(&:fields).map(&:name).to_set
+        end
+
+        # TODO: should this check for aliases that conflict with
+        # existing fields in general, or duplicate aliases?
+        # This is only checking the aliases for invalid fields.
+        def no_valid_alias?(name)
+          alias_name = aliases[name]
+          alias_name.nil? ||
+            (raw_field_names.include?(alias_name) &&
+             raise("alias `#{alias_name}` for field `#{name}` conflicts with an existing field."))
         end
 
         def add_validation(field)
@@ -96,7 +129,13 @@ module Avromatic
           !optional?(field)
         end
 
-        def avro_field_class(field_type)
+        def avro_field_name(field_name)
+          aliases[field_name] || field_name
+        end
+
+        def avro_field_class(field_type: nil, field: nil, name: nil)
+          field_type ||= field.type
+          field_name = name || field.name
           custom_type = Avromatic.type_registry.fetch(field_type)
           return custom_type.value_class if custom_type.value_class
 
@@ -114,24 +153,36 @@ module Avromatic
           when :null
             NilClass
           when :array
-            Array[avro_field_class(field_type.items)]
+            Array[avro_field_class(field_type: field_type.items, name: field_name)]
           when :map
-            Hash[String => avro_field_class(field_type.values)]
+            Hash[String => avro_field_class(field_type: field_type.values, name: field_name)]
           when :union
-            union_field_class(field_type)
+            union_field_class(field_type, field_name)
           when :record
             # TODO: This should add the generated model to a module.
             # A hash of generated models should be kept by name for reuse.
+            record_aliases = propagated_aliases(field_name)
             Class.new do
-              include Avromatic::Model.build(schema: field_type)
+              include Avromatic::Model.build(schema: field_type,
+                                             aliases: record_aliases)
             end
           else
             raise "Unsupported type #{field_type}"
           end
         end
 
-        def union_field_class(field_type)
-          avro_field_class(Avromatic::Model::Attributes.first_union_schema(field_type))
+        def propagated_aliases(prefix)
+          field_name_prefix = "#{prefix}."
+          aliases.select do |key, _value|
+            key.start_with?(field_name_prefix)
+          end.each_with_object(Hash.new) do |(key, value), result|
+            result[key.slice(field_name_prefix.length, key.length)] = value
+          end
+        end
+
+        def union_field_class(field_type, field_name)
+          avro_field_class(field_type: Avromatic::Model::Attributes.first_union_schema(field_type),
+                           name: field_name)
         end
 
         def avro_field_options(field)
