@@ -2,15 +2,10 @@ language: ruby
 rvm:
   - 2.2.4
   - 2.3.1
-gemfile:
-  - gemfiles/rails4_1.gemfile
-  - gemfiles/rails4_2.gemfile
-matrix:
-  exclude:
-  - rvm: 2.2.4
-    gemfile: gemfiles/rails4_2.gemfile
-  - rvm: 2.3.1
-    gemfile: gemfiles/rails4_1.gemfile
+before_script:
+  - bundle exec appraisal install --jobs=3
 script:
   - bundle exec rubocop
-  - bundle exec rspec
+  - bundle exec appraisal rails4_1 rake spec
+  - bundle exec appraisal rails4_2 rake spec
+  - bundle exec appraisal avro-salsify-fork rake spec
