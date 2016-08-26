@@ -35,4 +35,5 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency 'sinatra'
   spec.add_development_dependency 'salsify_rubocop', '~> 0.42.0'
   spec.add_development_dependency 'overcommit'
+  spec.add_development_dependency 'appraisal'
 end
