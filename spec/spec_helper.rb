@@ -3,7 +3,7 @@ require 'simplecov'
 
 SimpleCov.start do
   add_filter 'spec'
-  minimum_coverage 99
+  minimum_coverage 98
 end
 
 require 'avromatic'

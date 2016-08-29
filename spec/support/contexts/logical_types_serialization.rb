@@ -27,9 +27,10 @@ shared_examples_for "logical type encoding and decoding" do
 
     without_logical_types do
       context "unsupported" do
+        let(:epoch_start) { Date.new(1970, 1, 1) }
         let(:values) do
           {
-            date: (Date.today - Date.new(1970, 1, 1)).to_i,
+            date: (Date.today - epoch_start).to_i,
             ts_msec: now.to_i + now.usec / 1000 * 1000,
             ts_usec: now.to_i * 1_000_000 + now.usec,
             unknown: 42

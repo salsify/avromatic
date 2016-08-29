@@ -9,7 +9,7 @@ module Avromatic
       }.freeze
 
       def self.value_class(logical_type)
-        LOGICAL_TYPE_MAP.fetch(logical_type, nil)
+        LOGICAL_TYPE_MAP[logical_type]
       end
     end
   end
