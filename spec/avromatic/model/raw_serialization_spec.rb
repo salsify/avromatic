@@ -130,6 +130,11 @@ describe Avromatic::Model::RawSerialization do
     end
   end
 
+  it_behaves_like "logical type encoding and decoding" do
+    let(:encoded_value) { instance.avro_raw_value }
+    let(:decoded) { test_class.avro_raw_decode(value: encoded_value) }
+  end
+
   context "custom types" do
     let(:schema_name) { 'test.named_type' }
     let(:test_class) do

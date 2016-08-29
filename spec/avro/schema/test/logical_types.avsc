@@ -1,0 +1,35 @@
+{
+  "type": "record",
+  "name": "logical_types",
+  "namespace": "test",
+  "fields": [
+    {
+      "name": "date",
+      "type": {
+        "type": "int",
+        "logicalType": "date"
+      }
+    },
+    {
+      "name": "ts_msec",
+      "type": {
+        "type": "long",
+        "logicalType": "timestamp-millis"
+      }
+    },
+    {
+      "name": "ts_usec",
+      "type": {
+        "type": "long",
+        "logicalType": "timestamp-micros"
+      }
+    },
+    {
+      "name": "unknown",
+      "type": {
+        "type": "int",
+        "logicalType": "foobar"
+      }
+    }
+  ]
+}

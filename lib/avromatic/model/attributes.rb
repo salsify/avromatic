@@ -100,6 +100,11 @@ module Avromatic
           custom_type = Avromatic.type_registry.fetch(field_type)
           return custom_type.value_class if custom_type.value_class
 
+          if field_type.respond_to?(:logical_type)
+            value_class = Avromatic::Model::LogicalTypes.value_class(field_type.logical_type)
+            return value_class if value_class
+          end
+
           case field_type.type_sym
           when :string, :bytes, :fixed
             String

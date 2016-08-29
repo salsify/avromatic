@@ -1,11 +1,18 @@
 $LOAD_PATH.unshift File.expand_path('../../lib', __FILE__)
 require 'simplecov'
 
-SimpleCov.start
+SimpleCov.start do
+  add_filter 'spec'
+  minimum_coverage 99
+end
 
 require 'avromatic'
 
+Dir["#{File.dirname(__FILE__)}/support/**/*.rb"].each { |f| require f }
+
 RSpec.configure do |config|
+  config.extend LogicalTypesHelper
+
   config.before do
     Avromatic.logger = Logger.new('log/test.log')
     Avromatic.registry_url = 'http://registry.example.com'

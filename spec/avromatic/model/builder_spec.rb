@@ -181,6 +181,12 @@ describe Avromatic::Model::Builder do
         end
       end
     end
+
+    context "logical types" do
+      let(:schema_name) { 'test.logical_types' }
+
+      it_behaves_like "a generated model"
+    end
   end
 
   context "validation" do
