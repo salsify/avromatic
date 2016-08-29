@@ -1,5 +1,9 @@
 # avromatic changelog
 
+## v0.8.0
+- Add support for logical types. Currently this requires using the
+  `avro-salsify-fork` gem for logical types support with Ruby.
+
 ## v0.7.1
 - Raise a more descriptive error when attempting to generate a model for a
   non-record Avro type.

@@ -30,7 +30,7 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency 'rspec', '~> 3.0'
   spec.add_development_dependency 'simplecov'
   spec.add_development_dependency 'webmock'
-  spec.add_development_dependency 'avro-builder', '>= 0.7.0'
+  spec.add_development_dependency 'avro-builder', '>= 0.11.0'
   # For FakeSchemaRegistryServer
   spec.add_development_dependency 'sinatra'
   spec.add_development_dependency 'salsify_rubocop', '~> 0.42.0'

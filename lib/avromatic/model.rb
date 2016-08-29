@@ -1,6 +1,7 @@
 require 'avromatic/model/builder'
 require 'avromatic/model/message_decoder'
 require 'avromatic/model/type_registry'
+require 'avromatic/model/logical_types'
 
 module Avromatic
   module Model
