@@ -130,6 +130,68 @@ describe Avromatic::Model::RawSerialization do
     end
   end
 
+  context "fields with reserved names" do
+    let(:test_class) do
+      Avromatic::Model.model(schema_name: 'test.reserved',
+                             aliases: { attributes: :attrs,
+                                        avro_message_value: :message,
+                                        hash: :map })
+    end
+    let(:values) do
+      {
+        attributes: %w(foo bar baz),
+        avro_message_value: 'opaque',
+        hash: { 'a' => 'b' }
+      }
+    end
+
+    specify "the model is correctly encoded and decoded" do
+      expect(test_class.avro_raw_decode(value: avro_raw_value)).to eq(instance)
+    end
+  end
+
+  context "nested renaming" do
+    let(:schema) do
+      Avro::Builder.build_schema do
+        record :fnord_record do
+          required :fnord, :string
+        end
+
+        record :nested_rename do
+          required :fnord, :string
+          required :subrecord, :record do
+            required :fnord, :string
+          end
+          required :map, :map, values: :fnord_record
+          required :array, :array, items: :fnord_record
+          optional :opt, :fnord_record
+        end
+      end
+    end
+    let(:test_class) do
+      Avromatic::Model.model(schema: schema,
+                             aliases: { 'fnord' => 'top',
+                                        'subrecord.fnord' => 'nested',
+                                        'map.fnord' => 'map',
+                                        'array.fnord' => 'array',
+                                        'opt.fnord' => 'opt' })
+    end
+    let(:values) do
+      {
+        fnord: 'top',
+        subrecord: { fnord: 'nested' },
+        map: { 'key' => { fnord: 'map' } },
+        array: [{ fnord: 'array' }],
+        opt: { fnord: 'opt' }
+      }
+    end
+
+    it "encodes and decodes models" do
+      expect(test_class.avro_raw_decode(value: avro_raw_value).attributes)
+        .to eq(instance.attributes)
+    end
+  end
+
   context "custom types" do
     let(:schema_name) { 'test.named_type' }
     let(:test_class) do

@@ -84,14 +84,14 @@ describe Avromatic::Model::MessagingSerialization do
           end
 
           record :with_embedded do
-            required :hash, :map, values: :submodel
+            required :hashy, :map, values: :submodel
           end
         end
         Avromatic::Model.model(schema: schema)
       end
       let(:values) do
         {
-          hash: {
+          hashy: {
             foo: { length: 3, str: 'bar' },
             baz: { length: 6, str: 'foobar' }
           }
@@ -105,7 +105,7 @@ describe Avromatic::Model::MessagingSerialization do
       end
 
       it "encodes the value for the model" do
-        first_value = instance.hash['foo']
+        first_value = instance.hashy['foo']
         expect(first_value.length).to eq(3)
         expect(first_value.str).to eq('bar')
         message_value = instance.avro_message_value
@@ -167,6 +167,26 @@ describe Avromatic::Model::MessagingSerialization do
         decoded = test_class.avro_message_decode(avro_message_key, avro_message_value)
         expect(decoded).to eq(instance)
       end
+    end
+  end
+
+  context "fields with reserved names" do
+    let(:test_class) do
+      Avromatic::Model.model(schema_name: 'test.reserved',
+                             aliases: { attributes: :attrs,
+                                        avro_message_value: :message,
+                                        hash: :map })
+    end
+    let(:values) do
+      {
+        attributes: %w(foo bar baz),
+        avro_message_value: 'opaque',
+        hash: { 'a' => 'b' }
+      }
+    end
+
+    specify "the model is correctly encoded and decoded" do
+      expect(test_class.avro_message_decode(avro_message_value)).to eq(instance)
     end
   end
 

@@ -148,6 +148,30 @@ inbound or outbound value is nil.
 If a custom type is registered for a record-type field, then any `to_avro` 
 method/Proc should return a Hash with string keys for encoding using Avro.
 
+#### Model Attribute Aliasing
+
+Note: this is different than the aliasing of fields and records within an Avro
+schema, which is not currently supported by the ruby `avro` gem.
+
+If a field in an Avro schema conflicts with the name of an internal method for a
+model, then field can be aliased by specifying the `aliases` option when
+defining the model.
+
+For example, `attributes` is a reserved name for Virtus (used internally by
+Avromatic). If a schema contains an attributes field, then it can be aliased
+to a different name on the model:
+
+```ruby
+Avromatic::Model.model(
+  schema_name: 'reserved_names',
+  aliases: { attributes: :my_attributes }
+)
+```
+
+A value for `attributes` will be assigned to `my_attributes` when creating an
+instance of the model, and the `my_attributes` value will be written to the
+`attributes` field when serializing to Avro.
+
 ### Encoding and Decoding
 
 `Avromatic` provides two different interfaces for encoding the key (optional)
