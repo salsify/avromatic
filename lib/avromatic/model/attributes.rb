@@ -13,9 +13,10 @@ module Avromatic
         # TODO: This is a hack until I find a better solution for unions with
         # Virtus. This only handles a union for an optional field with :null
         # and one other type.
-        schemas = field_type.schemas.reject { |schema| schema.type_sym == :null }
-        raise "Only the union of null with one other type is supported #{field_type}" if schemas.size > 1
-        schemas.first
+        # This hack lives on for now because custom type coercion is not pushed
+        # down into unions. This means that custom types can only be optional
+        # fields, not members of real unions.
+        field_type.schemas.reject { |schema| schema.type_sym == :null }.first
       end
 
       module ClassMethods
@@ -60,10 +61,10 @@ module Avromatic
 
             attribute(field.name,
                       field_class,
-                      avro_field_options(field))
+                      avro_field_options(field, field_class))
 
             add_validation(field)
-            add_serializer(field)
+            add_serializer(field, field_class)
           end
         end
 
@@ -127,24 +128,33 @@ module Avromatic
           when :record
             # TODO: This should add the generated model to a module.
             # A hash of generated models should be kept by name for reuse.
-            Class.new do
-              include Avromatic::Model.build(schema: field_type)
-            end
+            Avromatic::Model.model(schema: field_type)
           else
             raise "Unsupported type #{field_type}"
           end
         end
 
         def union_field_class(field_type)
-          avro_field_class(Avromatic::Model::Attributes.first_union_schema(field_type))
+          field_classes = field_type.schemas.select { |schema| schema.type_sym != :null }
+                            .map { |schema| avro_field_class(schema) }
+
+          if field_classes.size == 1
+            field_classes.first
+          else
+            Avromatic::Model::AttributeType::Union[*field_classes]
+          end
         end
 
-        def avro_field_options(field)
+        def avro_field_options(field, field_class)
           options = {}
 
-          custom_type = Avromatic.type_registry.fetch(field)
-          coercer = custom_type.deserializer
-          options[:coercer] = coercer if coercer
+          if field_class.is_a?(Class) && field_class < Avromatic::Model::AttributeType::Union
+            # TODO: pass coercer for member attributes in union
+          else
+            custom_type = Avromatic.type_registry.fetch(field, field_class)
+            coercer = custom_type.deserializer
+            options[:coercer] = coercer if coercer
+          end
 
           # See: https://github.com/dasch/avro_turf/pull/36
           if field.default != :no_default
@@ -154,8 +164,9 @@ module Avromatic
           options
         end
 
-        def add_serializer(field)
-          custom_type = Avromatic.type_registry.fetch(field)
+        def add_serializer(field, field_class)
+          # TODO: handle serializer for custom type within union
+          custom_type = Avromatic.type_registry.fetch(field, field_class)
           serializer = custom_type.serializer
 
           avro_serializer[field.name.to_sym] = serializer if serializer

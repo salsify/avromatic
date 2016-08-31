@@ -116,6 +116,9 @@ These customizations are registered on the `Avromatic` module. Once a custom typ
 is registered, it is used for all models with a schema that references that type.
 It is recommended to register types within a block passed to `Avromatic.configure`:
 
+Note: custom types are not currently supported on members of unions with more
+than one non-null type.
+
 ```ruby
 Avromatic.configure do |config|
   config.register_type('com.example.my_string', MyString)
@@ -248,8 +251,7 @@ The following validations are supported:
 
 The following types/features are not supported for generated models:
 
-- Generic union fields: The special case of an optional field, the union of `:null` and
-  another type, is supported.
+- Custom types for members within a union.
 - Reused models for nested records: Currently an anonymous model class is
   generated for each subrecord.
 
