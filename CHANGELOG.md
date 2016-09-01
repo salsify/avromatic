@@ -1,5 +1,8 @@
 # avromatic changelog
 
+## v0.9.0 (unreleased)
+- Add support for more than one non-null type in a union.
+
 ## v0.8.0
 - Add support for logical types. Currently this requires using the
   `avro-salsify-fork` gem for logical types support with Ruby.

@@ -1,4 +1,5 @@
 require 'spec_helper'
+require 'avro/builder'
 
 describe Avromatic::Model::Builder do
   let(:schema_store) { Avromatic.schema_store }
@@ -115,13 +116,25 @@ describe Avromatic::Model::Builder do
       it_behaves_like 'a generated model'
     end
 
+    context "simple union" do
+      let(:schema) do
+        Avro::Builder.build_schema do
+          record :with_simple_union do
+            required :u, :union, types: [:int, :string]
+          end
+        end
+      end
+      let(:test_class) do
+        Avromatic::Model.model(schema: schema)
+      end
+
+      it_behaves_like 'a generated model'
+    end
+
     context "unsupported union" do
       let(:schema_name) { 'test.real_union' }
 
-      it "raises an error" do
-        expect { test_class }
-          .to raise_error(/Only the union of null with one other type is supported/)
-      end
+      it_behaves_like 'a generated model'
     end
 
     context "top-level union" do
@@ -239,6 +252,154 @@ describe Avromatic::Model::Builder do
       it "coerces the value to a string" do
         instance = test_class.new(e: :C)
         expect(instance.e).to eq('C')
+      end
+    end
+  end
+
+  context "unions" do
+    let(:schema) do
+      Avro::Builder.build_schema do
+        record :with_simple_union do
+          required :u, :union, types: [:int, :string]
+        end
+      end
+    end
+    let(:test_class) do
+      Avromatic::Model.model(schema: schema)
+    end
+
+    it "stores values in the member types" do
+      expect(test_class.new(u: 1).u).to eq(1)
+      expect(test_class.new(u: 'foo').u).to eq('foo')
+    end
+
+    context "string member first" do
+      let(:schema) do
+        Avro::Builder.build_schema do
+          record :with_simple_union do
+            required :u, :union, types: [:string, :int]
+          end
+        end
+      end
+
+      it "does not coerce if a value matches a member type " do
+        expect(test_class.new(u: 1).u).to eq(1)
+        expect(test_class.new(u: 'foo').u).to eq('foo')
+      end
+    end
+
+    context "array of unions" do
+      let(:schema) do
+        Avro::Builder.build_schema do
+          record :with_union_array do
+            required :ua, :array, items: union(:string, :int)
+          end
+        end
+      end
+
+      it "coerces stores union values in the array" do
+        expect(test_class.new(ua: ['foo', 2]).ua).to eq(['foo', 2])
+      end
+    end
+
+    context "array of unions with null" do
+      let(:schema) do
+        Avro::Builder.build_schema do
+          record :with_array_of_optional do
+            required :aoo, :array, items: union(:null, :string)
+          end
+        end
+      end
+
+      it "coerces values in the array" do
+        instance = test_class.new(aoo: [1, nil, 3])
+        expect(instance.aoo).to eq(['1', nil, '3'])
+      end
+    end
+
+    context "union of records" do
+      let(:schema_name) { 'test.real_union' }
+      let(:test_class) do
+        Avromatic::Model.model(schema_name: schema_name)
+      end
+
+      let(:value1) do
+        { header: 'A', message: { foo_message: 'foo' } }
+      end
+      let(:value2) do
+        { header: 'B', message: { bar_message: 'bar' } }
+      end
+
+      it "coerces record members" do
+        expect(test_class.new(value1).message.foo_message).to eq('foo')
+        expect(test_class.new(value2).message.bar_message).to eq('bar')
+      end
+    end
+
+    context "array of union of records with a custom type" do
+      let(:schema) do
+        Avro::Builder.build_schema do
+          record :rec_a do
+            required :str, :string
+          end
+
+          record :rec_b do
+            required :i, :int
+            required :c, :fixed, size: 6, type_name: :handshake
+          end
+
+          record :its_complicated do
+            required :top, :record do
+              required :a, :array, items: union(:rec_a, :rec_b)
+            end
+          end
+        end
+      end
+
+      before do
+        Avromatic.register_type('handshake', String) do |type|
+          type.from_avro = ->(value) { value.downcase }
+          # type.to_avro = ->(value) { value.upcase }
+        end
+      end
+
+      let(:data) do
+        {
+          top: { a: [{ str: 137 }, { i: '99', c: 'FooBar' }] }
+        }
+      end
+
+      it "performs the expected coercions" do
+        ary = test_class.new(data).top.a
+        aggregate_failures do
+          expect(ary.first.str).to eq('137')
+          expect(ary.last.i).to eq(99)
+          expect(ary.last.c).to eq('foobar')
+        end
+      end
+    end
+
+    context "unsupported" do
+      context "union with a custom type" do
+        let(:schema) do
+          Avro::Builder.build_schema do
+            fixed :handshake, size: 6
+            record :union_with_custom do
+              required :u, :union, types: [:string, :handshake]
+            end
+          end
+        end
+
+        before do
+          Avromatic.register_type('handshake', String) do |type|
+            type.from_avro = ->(value) { value.downcase }
+          end
+        end
+
+        it "raises an error" do
+          expect { test_class }
+            .to raise_error('custom types within unions are currently unsupported')
+        end
       end
     end
   end
