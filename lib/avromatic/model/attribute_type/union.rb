@@ -1,6 +1,10 @@
 module Avromatic
   module Model
     module AttributeType
+
+      # This class is used as the base class for Virtus attributes that
+      # represent unions. A subclass is generated using Union[*types]. This
+      # subclass is specified when defining a Virtus attribute.
       class Union
         class << self
           attr_reader :types

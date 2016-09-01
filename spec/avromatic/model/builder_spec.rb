@@ -396,8 +396,9 @@ describe Avromatic::Model::Builder do
           end
         end
 
-        xit "coerces the custom type in the union" do
-          expect(test_class.new(u: 'FooBar').u).to eq('foobar')
+        it "raises an error" do
+          expect { test_class }
+            .to raise_error('custom types within unions are currently unsupported')
         end
       end
     end

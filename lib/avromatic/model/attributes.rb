@@ -135,7 +135,7 @@ module Avromatic
         end
 
         def union_field_class(field_type)
-          field_classes = field_type.schemas.select { |schema| schema.type_sym != :null }
+          field_classes = field_type.schemas.reject { |schema| schema.type_sym == :null }
                             .map { |schema| avro_field_class(schema) }
 
           if field_classes.size == 1
@@ -148,13 +148,11 @@ module Avromatic
         def avro_field_options(field, field_class)
           options = {}
 
-          if field_class.is_a?(Class) && field_class < Avromatic::Model::AttributeType::Union
-            # TODO: pass coercer for member attributes in union
-          else
-            custom_type = Avromatic.type_registry.fetch(field, field_class)
-            coercer = custom_type.deserializer
-            options[:coercer] = coercer if coercer
-          end
+          prevent_union_including_custom_type!(field, field_class)
+
+          custom_type = Avromatic.type_registry.fetch(field, field_class)
+          coercer = custom_type.deserializer
+          options[:coercer] = coercer if coercer
 
           # See: https://github.com/dasch/avro_turf/pull/36
           if field.default != :no_default
@@ -165,7 +163,8 @@ module Avromatic
         end
 
         def add_serializer(field, field_class)
-          # TODO: handle serializer for custom type within union
+          prevent_union_including_custom_type!(field, field_class)
+
           custom_type = Avromatic.type_registry.fetch(field, field_class)
           serializer = custom_type.serializer
 
@@ -175,6 +174,24 @@ module Avromatic
         def default_for(value)
           value.duplicable? ? value.dup.deep_freeze : value
         end
+
+        # TODO: the methods below are temporary until support for custom types
+        # as union members are supported.
+        def member_uses_custom_type?(field)
+          field.type.schemas.any? do |klass|
+            Avromatic.type_registry.fetch(klass) != NullCustomType
+          end
+        end
+
+        def prevent_union_including_custom_type!(field, field_class)
+          if field_class.is_a?(Class) &&
+            field_class < Avromatic::Model::AttributeType::Union &&
+            member_uses_custom_type?(field)
+
+            raise 'custom types within unions are currently unsupported'
+          end
+        end
+
       end
 
     end

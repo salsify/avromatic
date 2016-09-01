@@ -3,6 +3,12 @@ require 'avromatic/model/attribute_type/union'
 module Avromatic
   module Model
     module Attribute
+
+      # This subclass of Virtus::Attribute is used for any unions that are
+      # defined as subclasses of the primitive Avromatic::Model::AttributeType::Union.
+      # Values are coerced by first checking if they already match one of the
+      # member types, and then by attempting to coerce to each member type in
+      # order.
       class Union < Virtus::Attribute
         primitive Avromatic::Model::AttributeType::Union
 
@@ -20,8 +26,8 @@ module Avromatic
           result = nil
           member_attributes.find do |union_attribute|
             begin
-              result = union_attribute.coerce(input)
-              result unless result.is_a?(Avromatic::Model::Attributes) && result.invalid?
+              coerced = union_attribute.coerce(input)
+              result = coerced unless coerced.is_a?(Avromatic::Model::Attributes) && coerced.invalid?
             rescue
               nil
             end
