@@ -6,6 +6,7 @@ require 'avromatic/model/value_object'
 require 'avromatic/model/configurable'
 require 'avromatic/model/attribute/union'
 require 'avromatic/model/attributes'
+require 'avromatic/model/attribute/record'
 require 'avromatic/model/raw_serialization'
 require 'avromatic/model/messaging_serialization'
 

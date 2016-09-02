@@ -211,13 +211,12 @@ describe Avromatic::Model::RawSerialization do
       let(:values) do
         { union_map: {
           'str' => { s: 'A' },
-          'int' => { i: 'C' }
+          'int' => { i: 22 }
         } }
       end
       let(:decoded) { test_class.avro_raw_decode(value: avro_raw_value) }
 
       it "encodes and decodes the model" do
-        puts instance.inspect
         expect(instance).to eq(decoded)
       end
     end

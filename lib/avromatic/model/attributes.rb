@@ -128,7 +128,9 @@ module Avromatic
           when :record
             # TODO: This should add the generated model to a module.
             # A hash of generated models should be kept by name for reuse.
-            Avromatic::Model.model(schema: field_type)
+            Avromatic::Model.model(schema: field_type).tap do |record_class|
+              Axiom::Types::Object.new { primitive(record_class) }
+            end
           else
             raise "Unsupported type #{field_type}"
           end

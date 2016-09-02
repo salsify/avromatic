@@ -9,9 +9,27 @@ module Avromatic
       extend ActiveSupport::Concern
 
       module Encode
+        extend ActiveSupport::Concern
+
         delegate :avro_serializer, :datum_writer, :datum_reader, :attribute_set,
                  to: :class
         private :avro_serializer, :datum_writer, :datum_reader
+
+        module ClassMethods
+          def recursive_serialize(value, key = nil)
+            if value.is_a?(Avromatic::Model::Attributes)
+              value.value_attributes_for_avro
+            elsif value.is_a?(Array)
+              value.map { |v| recursive_serialize(v) }
+            elsif value.is_a?(Hash)
+              value.each_with_object({}) do |(k, v), hash|
+                hash[k] = recursive_serialize(v)
+              end
+            else
+              avro_serializer[key].call(value)
+            end
+          end
+        end
 
         def avro_raw_value
           avro_raw_encode(value_attributes_for_avro, :value)
@@ -32,29 +50,9 @@ module Avromatic
           avro_hash(key_avro_field_names)
         end
 
-        def array_of_models?(key)
-          attribute_set[key].is_a?(Virtus::Attribute::Collection) &&
-            attribute_set[key].member_type.primitive.include?(Avromatic::Model::Attributes)
-        end
-
-        def hash_of_models?(key)
-          attribute_set[key].is_a?(Virtus::Attribute::Hash) &&
-            attribute_set[key].value_type.primitive.include?(Avromatic::Model::Attributes)
-        end
-
         def avro_hash(fields)
           attributes.slice(*fields).each_with_object(Hash.new) do |(key, value), result|
-            result[key.to_s] = if value.is_a?(Avromatic::Model::Attributes)
-                                 value.value_attributes_for_avro
-                               elsif array_of_models?(key)
-                                 value.map(&:value_attributes_for_avro)
-                               elsif hash_of_models?(key)
-                                 value.each_with_object({}) do |(k, v), hash|
-                                   hash[k] = v.value_attributes_for_avro
-                                 end
-                               else
-                                 avro_serializer[key].call(value)
-                               end
+            result[key.to_s] = self.class.recursive_serialize(value, key)
           end
         end
 
