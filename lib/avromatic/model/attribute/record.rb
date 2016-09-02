@@ -19,7 +19,7 @@ module Avromatic
         end
 
         def value_coerced?(value)
-          value.kind_of?(primitive)
+          value.is_a?(primitive)
         end
       end
     end

@@ -180,7 +180,7 @@ describe Avromatic::Model::RawSerialization do
         Avromatic::Model.model(schema: schema)
       end
       let(:values) do
-        { unions: [{ s: 'A'}, { i: 1 }, { s: 'C' }] }
+        { unions: [{ s: 'A' }, { i: 1 }, { s: 'C' }] }
       end
       let(:decoded) { test_class.avro_raw_decode(value: avro_raw_value) }
 
