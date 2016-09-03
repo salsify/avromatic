@@ -131,8 +131,95 @@ describe Avromatic::Model::RawSerialization do
   end
 
   it_behaves_like "logical type encoding and decoding" do
-    let(:encoded_value) { instance.avro_raw_value }
-    let(:decoded) { test_class.avro_raw_decode(value: encoded_value) }
+    let(:decoded) { test_class.avro_raw_decode(value: avro_raw_value) }
+  end
+
+  context "nested serialization" do
+    context "array of array of records" do
+      let(:schema) do
+        Avro::Builder.build_schema do
+          record :int_rec do
+            required :i, :int
+          end
+
+          record :transform do
+            required :matrix, :array, items: array(:int_rec)
+          end
+        end
+      end
+      let(:test_class) do
+        Avromatic::Model.model(schema: schema)
+      end
+      let(:values) do
+        { matrix: [[{ i: 1 }, { i: 2 }], [{ i: 3 }, { i: 4 }]] }
+      end
+      let(:decoded) { test_class.avro_raw_decode(value: avro_raw_value) }
+
+      it "encodes and decodes the model" do
+        expect(instance).to eq(decoded)
+      end
+    end
+
+    context "array of unions" do
+      let(:schema) do
+        Avro::Builder.build_schema do
+          record :str_rec do
+            required :s, :string
+          end
+
+          record :int_rec do
+            required :i, :int
+          end
+
+          record :mgmt do
+            required :unions, :array, items: union(:str_rec, :int_rec)
+          end
+        end
+      end
+      let(:test_class) do
+        Avromatic::Model.model(schema: schema)
+      end
+      let(:values) do
+        { unions: [{ s: 'A' }, { i: 1 }, { s: 'C' }] }
+      end
+      let(:decoded) { test_class.avro_raw_decode(value: avro_raw_value) }
+
+      it "encodes and decodes the model" do
+        expect(instance).to eq(decoded)
+      end
+    end
+
+    context "map of unions" do
+      let(:schema) do
+        Avro::Builder.build_schema do
+          record :str_rec do
+            required :s, :string
+          end
+
+          record :int_rec do
+            required :i, :int
+          end
+
+          record :mgmt do
+            required :union_map, :map, values: union(:str_rec, :int_rec)
+          end
+        end
+      end
+      let(:test_class) do
+        Avromatic::Model.model(schema: schema)
+      end
+      let(:values) do
+        { union_map: {
+          'str' => { s: 'A' },
+          'int' => { i: 22 }
+        } }
+      end
+      let(:decoded) { test_class.avro_raw_decode(value: avro_raw_value) }
+
+      it "encodes and decodes the model" do
+        expect(instance).to eq(decoded)
+      end
+    end
   end
 
   context "custom types" do

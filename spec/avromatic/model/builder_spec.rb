@@ -359,7 +359,6 @@ describe Avromatic::Model::Builder do
       before do
         Avromatic.register_type('handshake', String) do |type|
           type.from_avro = ->(value) { value.downcase }
-          # type.to_avro = ->(value) { value.upcase }
         end
       end
 
