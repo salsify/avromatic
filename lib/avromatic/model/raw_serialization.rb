@@ -16,7 +16,7 @@ module Avromatic
         private :avro_serializer, :datum_writer, :datum_reader
 
         module ClassMethods
-          def recursive_serialize(value, key = nil)
+          def recursive_serialize(value, attribute_name = nil)
             if value.is_a?(Avromatic::Model::Attributes)
               value.value_attributes_for_avro
             elsif value.is_a?(Array)
@@ -26,7 +26,7 @@ module Avromatic
                 hash[k] = recursive_serialize(v)
               end
             else
-              avro_serializer[key].call(value)
+              avro_serializer[attribute_name].call(value)
             end
           end
         end
