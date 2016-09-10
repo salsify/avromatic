@@ -26,6 +26,14 @@ module Avromatic
           @key_avro_fields_by_name ||= mapped_by_name(key_avro_schema)
         end
 
+        def module
+          config.module || Avromatic.module
+        end
+
+        def strip_namespace_prefix
+          config.strip_namespace_prefix || Avromatic.strip_namespace_prefix
+        end
+
         private
 
         def mapped_by_name(schema)

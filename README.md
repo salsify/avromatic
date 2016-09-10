@@ -37,6 +37,8 @@ Or install it yourself as:
   returns an `Avro::Schema` object. An `AvroTurf::SchemaStore` can be used.
   The `schema_store` is unnecessary if models are generated directly from 
   `Avro::Schema` objects. See [Models](#models).
+* **module**: A module that is used to collect the generated models that are
+  embedded within top-level models. By default a new, anonymous module is used.
   
 #### Using a Schema Registry/Messaging API
  

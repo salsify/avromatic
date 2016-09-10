@@ -6,11 +6,12 @@ require 'avro_turf/messaging'
 module Avromatic
   class << self
     attr_accessor :schema_registry, :registry_url, :schema_store, :logger,
-                  :messaging, :type_registry
+                  :messaging, :type_registry, :module, :strip_namespace_prefix
 
     delegate :register_type, to: :type_registry
   end
 
+  self.module = Module.new
   self.logger = Logger.new($stdout)
   self.type_registry = Avromatic::Model::TypeRegistry.new
 
