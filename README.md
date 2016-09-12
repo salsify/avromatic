@@ -39,6 +39,10 @@ Or install it yourself as:
   `Avro::Schema` objects. See [Models](#models).
 * **module**: A module that is used to collect the generated models that are
   embedded within top-level models. By default a new, anonymous module is used.
+* **strip_namespace_prefix**: A string or regexp that should be removed from the
+  full name of an embedded model when it is added to the module of generated
+  models. For example, if your namespace begins with `com.my_company` you may
+  want to remove that from the module namespace.
   
 #### Using a Schema Registry/Messaging API
  
@@ -110,6 +114,11 @@ constant:
 ```ruby
 MyModel = Avromatic::Model.model(schema_name :my_model)
 ```
+
+#### Embedded Models
+
+TODO Describe handling of embeded models and how they are namespaced and stored
+in a module.
 
 #### Custom Types
 
