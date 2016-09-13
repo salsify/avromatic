@@ -63,7 +63,7 @@ module Avromatic
             end
           end
 
-          name.split('.').reject(&:blank?).map(&:classify)
+          name.split('.').reject(&:blank?).map(&:camelize)
         end
       end
     end
