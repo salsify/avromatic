@@ -1,6 +1,3 @@
-require 'spec_helper'
-require 'avro/builder'
-
 describe Avromatic::Model::Builder do
   let(:schema_store) { Avromatic.schema_store }
   let(:schema) { schema_store.find(schema_name) }

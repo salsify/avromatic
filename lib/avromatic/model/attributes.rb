@@ -126,14 +126,7 @@ module Avromatic
           when :union
             union_field_class(field_type)
           when :record
-            # TODO: This should add the generated model to a module.
-            # A hash of generated models should be kept by name for reuse.
-            Avromatic::Model.model(schema: field_type).tap do |record_class|
-              # Register the generated model with Axiom to prevent it being
-              # treated as a BasicObject.
-              # See https://github.com/solnic/virtus/issues/284#issuecomment-56405137
-              Axiom::Types::Object.new { primitive(record_class) }
-            end
+            build_nested_model(field_type)
           else
             raise "Unsupported type #{field_type}"
           end

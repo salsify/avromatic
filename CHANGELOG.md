@@ -1,7 +1,8 @@
 # avromatic changelog
 
 ## v0.9.0 (unreleased)
-- Add support for more than one non-null type in a union.
+- Experimental: Add support for more than one non-null type in a union.
+- Allow nested models to be referenced and reused.
 - Fix the serialization of nested complex types.
 
 ## v0.8.0

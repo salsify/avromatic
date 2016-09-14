@@ -26,6 +26,10 @@ module Avromatic
           @key_avro_fields_by_name ||= mapped_by_name(key_avro_schema)
         end
 
+        def nested_models
+          config.nested_models || Avromatic.nested_models
+        end
+
         private
 
         def mapped_by_name(schema)

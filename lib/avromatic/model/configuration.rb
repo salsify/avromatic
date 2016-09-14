@@ -4,7 +4,7 @@ module Avromatic
     # This class holds configuration for a model built from Avro schema(s).
     class Configuration
 
-      attr_reader :avro_schema, :key_avro_schema
+      attr_reader :avro_schema, :key_avro_schema, :nested_models
       delegate :schema_store, to: Avromatic
 
       # Either schema(_name) or value_schema(_name), but not both, must be
@@ -17,10 +17,12 @@ module Avromatic
       # @option options [String, Symbol] :value_schema_name
       # @option options [Avro::Schema] :key_schema
       # @option options [String, Symbol] :key_schema_name
+      # @option options [Hash] :nested_models
       def initialize(**options)
         @avro_schema = find_avro_schema(**options)
         raise ArgumentError.new('value_schema(_name) or schema(_name) must be specified') unless avro_schema
         @key_avro_schema = find_schema_by_option(:key_schema, **options)
+        @nested_models = options[:nested_models]
       end
 
       alias_method :value_avro_schema, :avro_schema
@@ -39,7 +41,6 @@ module Avromatic
         schema_name_option = :"#{option_name}_name"
         options[option_name] ||
           (options[schema_name_option] && schema_store.find(options[schema_name_option]))
-
       end
     end
   end
