@@ -6,6 +6,7 @@ SimpleCov.start do
   minimum_coverage 98
 end
 
+require 'avro/builder'
 require 'avromatic'
 
 Dir["#{File.dirname(__FILE__)}/support/**/*.rb"].each { |f| require f }
@@ -19,6 +20,7 @@ RSpec.configure do |config|
     Avromatic.schema_store = AvroTurf::SchemaStore.new(path: 'spec/avro/schema')
     Avromatic.build_messaging!
     Avromatic.type_registry.clear
+    Avromatic.nested_models = Avromatic::ModelRegistry.new
   end
 end
 

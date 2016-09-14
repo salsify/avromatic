@@ -1,16 +1,18 @@
 require 'avromatic/version'
 require 'avromatic/model'
+require 'avromatic/model_registry'
 require 'avro_turf'
 require 'avro_turf/messaging'
 
 module Avromatic
   class << self
     attr_accessor :schema_registry, :registry_url, :schema_store, :logger,
-                  :messaging, :type_registry
+                  :messaging, :type_registry, :nested_models
 
     delegate :register_type, to: :type_registry
   end
 
+  self.nested_models = ModelRegistry.new
   self.logger = Logger.new($stdout)
   self.type_registry = Avromatic::Model::TypeRegistry.new
 

@@ -37,7 +37,11 @@ Or install it yourself as:
   returns an `Avro::Schema` object. An `AvroTurf::SchemaStore` can be used.
   The `schema_store` is unnecessary if models are generated directly from 
   `Avro::Schema` objects. See [Models](#models).
-  
+* **nested_models**: An optional [ModelRegistry](https://github.com/salsify/avromatic/blob/master/lib/avromatic/model_registry.rb)
+  that is used to store, by full schema name, the generated models that are
+  embedded within top-level models. By default a new `Avromatic::ModelRegistry`
+  is created.
+
 #### Using a Schema Registry/Messaging API
  
 The configuration options below are required when using a schema registry 
@@ -108,6 +112,72 @@ constant:
 ```ruby
 MyModel = Avromatic::Model.model(schema_name :my_model)
 ```
+
+#### Experimental: Union Support
+
+Avromatic contains experimental support for unions containing more than one
+non-null member type. This feature is experimental because Virtus attributes
+may attempt to coerce between types too aggressively.
+
+For now, if a union contains [nested models](#nested-models) then it is
+recommended that you assign model instances.
+
+Some combination of the ordering of member types in the union and relying on
+model validation may be required so that the correct member is selected,
+especially when deserializing from Avro.
+
+In the future, the type coercion used in the gem will be replaced to better
+support the union use case.
+
+#### Nested Models
+
+Nested models are models that are embedded within top-level models generated
+using Avromatic. Normally these nested models are automatically generated.
+
+By default, nested models are stored in `Avromatic.nested_models`. This is an
+`Avromatic::ModelRegistry` instance that provides access to previously generated
+nested models by the full name of their Avro schema.
+
+```ruby
+Avromatic.nested_models['com.my_company.test.example']
+#=> <model class>
+```
+
+The `ModelRegistry` can be customized to remove a namespace prefix:
+
+```ruby
+Avromatic.nested_models =
+  Avromatic::ModelRegistry.new(remove_namespace_prefix: 'com.my_company'
+```
+
+The `:remove_namespace_prefix` value can be a string or a regexp.
+
+By default, top-level generated models reuse `Avromatic.nested_models`. This
+allows nested models to be shared across different generated models.
+A `:nested_models` option can be specified when generating a model. This allows
+the reuse of nested models to be scoped:
+
+```ruby
+Avromatic::Model.model(schema_name, :my_model
+                       nested_models: ModelRegistry.new)
+```
+
+It is also possible to explicitly generate a nested model that should be reused
+and add it to the registry. This is useful when the nested model is extended:
+
+```ruby
+class UsefulSubrecord
+  include Avromatic::Model.build(schema_name: 'useful_subrecord')
+
+  def do_something_custom
+    ...
+  end
+end
+Avromatic.nested_models.register(UsefulSubrecord)
+```
+
+With Rails, it may be necessary to perform this explicit registration in an
+initializer so that lazy class loading works correctly in development.
 
 #### Custom Types
 
