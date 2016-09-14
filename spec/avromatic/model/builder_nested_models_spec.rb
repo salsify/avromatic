@@ -48,7 +48,7 @@ describe Avromatic::Model::Builder, 'nested_models' do
     it "uses the specified registry for nested models" do
       aggregate_failures do
         expect(model.nested_models['test.bar.sub_rec']).to equal(model.attribute_set['sub'].primitive)
-        expect(Avromatic.nested_models.model?('test.bar.sub_rec')).to eql(false)
+        expect(Avromatic.nested_models.registered?('test.bar.sub_rec')).to eql(false)
       end
     end
 

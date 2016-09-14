@@ -119,11 +119,15 @@ Avromatic contains experimental support for unions containing more than one
 non-null member type. This feature is experimental because Virtus attributes
 may attempt to coerce between types too aggressively.
 
+For now, if a union contains [nested models](#nested-models) then it is
+recommended that you assign model instances.
+
+Some combination of the ordering of member types in the union and relying on
+model validation may be required so that the correct member is selected,
+especially when deserializing from Avro.
+
 In the future, the type coercion used in the gem will be replaced to better
 support the union use case.
-
-For now, if a union contains nested models then it is recommended that you
-assign instances
 
 #### Nested Models
 
@@ -145,6 +149,8 @@ The `ModelRegistry` can be customized to remove a namespace prefix:
 Avromatic.nested_models =
   Avromatic::ModelRegistry.new(remove_namespace_prefix: 'com.my_company'
 ```
+
+The `:remove_namespace_prefix` value can be a string or a regexp.
 
 By default, top-level generated models reuse `Avromatic.nested_models`. This
 allows nested models to be shared across different generated models.
@@ -169,6 +175,9 @@ class UsefulSubrecord
 end
 Avromatic.nested_models.register(UsefulSubrecord)
 ```
+
+With Rails, it may be necessary to perform this explicit registration in an
+initializer so that lazy class loading works correctly in development.
 
 #### Custom Types
 

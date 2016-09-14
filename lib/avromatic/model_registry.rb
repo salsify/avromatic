@@ -1,3 +1,5 @@
+require 'active_support/core_ext/string/access'
+
 module Avromatic
   # The ModelRegistry class is used to store and fetch nested models by
   # their fullname. An optional namespace prefix can be removed from the full
@@ -20,7 +22,7 @@ module Avromatic
       @hash[name] = model
     end
 
-    def model?(fullname)
+    def registered?(fullname)
       @hash.key?(fullname)
     end
 
@@ -30,14 +32,14 @@ module Avromatic
       value =
         case @prefix
         when String
-          name[@prefix.length..-1] if name.start_with?(@prefix)
+          name.from(@prefix.length) if name.start_with?(@prefix)
         when Regexp
           name.sub(@prefix, '')
         else
           raise "unsupported `remove_namespace_prefix` value: #{@prefix}"
         end
 
-      value.start_with?('.') ? value[1..-1] : value
+      value.start_with?('.') ? value.from(1) : value
     end
   end
 end

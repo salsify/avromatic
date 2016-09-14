@@ -1,7 +1,5 @@
 module Avromatic
   module Model
-    extend ActiveSupport::Concern
-
     # This module is used to override the comparisons defined by
     # Virtus::Equalizer which is pulled in by Virtus::ValueObject.
     module ValueObject

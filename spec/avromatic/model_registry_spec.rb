@@ -1,20 +1,20 @@
 describe Avromatic::ModelRegistry do
   let(:model) { Avromatic::Model.model(schema_name: 'test.nested_record') }
 
-  describe "#model?" do
+  describe "#registered?" do
     let(:instance) { described_class.new }
 
     context "for a model that has not been registered" do
       it "returns false" do
-        expect(instance.model?('test.nested_record')).to eql(false)
+        expect(instance.registered?('test.nested_record')).to eql(false)
       end
     end
 
-    context "for  model that has been registered" do
+    context "for model that has been registered" do
       before { instance.register(model) }
 
       it "returns true" do
-        expect(instance.model?('test.nested_record')).to eql(true)
+        expect(instance.registered?('test.nested_record')).to eql(true)
       end
     end
   end

@@ -17,7 +17,7 @@ module Avromatic
       # @option options [String, Symbol] :value_schema_name
       # @option options [Avro::Schema] :key_schema
       # @option options [String, Symbol] :key_schema_name
-      # @option options [Hash] :nested_models
+      # @option options [Avromatic::ModelRegistry] :nested_models
       def initialize(**options)
         @avro_schema = find_avro_schema(**options)
         raise ArgumentError.new('value_schema(_name) or schema(_name) must be specified') unless avro_schema
