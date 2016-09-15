@@ -4,6 +4,7 @@
 - Experimental: Add support for more than one non-null type in a union.
 - Allow nested models to be referenced and reused.
 - Fix the serialization of nested complex types.
+- Add support for recursive models.
 
 ## v0.8.0
 - Add support for logical types. Currently this requires using the

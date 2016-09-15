@@ -197,6 +197,12 @@ describe Avromatic::Model::Builder do
 
       it_behaves_like "a generated model"
     end
+
+    context "recursive models" do
+      let(:schema_name) { 'test.recursive' }
+
+      it_behaves_like "a generated model"
+    end
   end
 
   context "validation" do

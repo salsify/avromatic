@@ -18,7 +18,7 @@ module Avromatic
     def register(model)
       raise 'models with a key schema are not supported' if model.key_avro_schema
       name = model.avro_schema.fullname
-      name = remove_prefix(name) if @prefix
+      name = remove_prefix(name)
       @hash[name] = model
     end
 
@@ -26,13 +26,13 @@ module Avromatic
       @hash.key?(fullname)
     end
 
-    private
-
     def remove_prefix(name)
+      return name if @prefix.nil?
+
       value =
         case @prefix
         when String
-          name.from(@prefix.length) if name.start_with?(@prefix)
+          name.start_with?(@prefix) ? name.from(@prefix.length) : name
         when Regexp
           name.sub(@prefix, '')
         else

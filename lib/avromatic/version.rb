@@ -1,3 +1,3 @@
 module Avromatic
-  VERSION = '0.9.0.rc2'.freeze
+  VERSION = '0.9.0.rc3'.freeze
 end

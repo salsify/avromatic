@@ -69,6 +69,15 @@ describe Avromatic::ModelRegistry do
         instance.register(multilevel_model)
         expect(instance['sub.rec']).to equal(multilevel_model)
       end
+
+      context "for a model that does not match the prefix" do
+        let(:instance) { described_class.new(remove_namespace_prefix: 'test.sub') }
+
+        it "stores the model by its fullname" do
+          instance.register(model)
+          expect(instance['test.nested_record']).to equal(model)
+        end
+      end
     end
 
     context "with a Regexp prefix" do
