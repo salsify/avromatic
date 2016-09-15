@@ -23,6 +23,32 @@ module Avromatic
             nested_models.register(nested_model)
           end
         end
+
+        def method_missing(name, *_args)
+          fullname = registered_model_fullname(name)
+          fullname ? define_nested_model_method(name, fullname) : super
+        end
+
+        def respond_to_missing?(name, _include_all)
+          !!registered_model_fullname(name) || super
+        end
+
+        private
+
+        def define_nested_model_method(method_name, fullname)
+          nested_models[fullname].tap do |nested_model|
+            define_singleton_method(method_name) { nested_model }
+          end
+        end
+
+        def registered_model_fullname(name)
+          fullname = fullname_from_method(name)
+          fullname if fullname && nested_models.registered?(fullname)
+        end
+
+        def fullname_from_method(name)
+          name.to_s.gsub('__', '.').sub!(/_model$/, '')
+        end
       end
     end
   end
