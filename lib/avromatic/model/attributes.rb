@@ -21,6 +21,8 @@ module Avromatic
 
       module ClassMethods
         def add_avro_fields
+          register!
+
           if key_avro_schema
             check_for_field_conflicts!
             define_avro_attributes(key_avro_schema)
