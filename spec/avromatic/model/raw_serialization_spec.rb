@@ -160,6 +160,41 @@ describe Avromatic::Model::RawSerialization do
       end
     end
 
+    context "array of pre-registed nested models" do
+      let(:nested_schema) do
+        Avro::Builder.build_schema do
+          record :int_rec do
+            required :i, :int
+          end
+        end
+      end
+      let!(:nested_model) do
+        Avromatic::Model.model(schema: nested_schema)
+      end
+      let(:schema) do
+        Avro::Builder.build_schema do
+          record :int_rec do
+            required :i, :int
+          end
+
+          record :transform do
+            required :a, :array, items: :int_rec
+          end
+        end
+      end
+      let(:test_class) do
+        Avromatic::Model.model(schema: schema)
+      end
+      let(:values) do
+        { a: [{ i: 1 }, { i: 2 }] }
+      end
+      let(:decoded) { test_class.avro_raw_decode(value: avro_raw_value) }
+
+      it "encodes and decodes the model" do
+        expect(instance).to eq(decoded)
+      end
+    end
+
     context "array of unions" do
       let(:schema) do
         Avro::Builder.build_schema do
