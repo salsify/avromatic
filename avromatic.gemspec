@@ -34,6 +34,6 @@ Gem::Specification.new do |spec|
   # For FakeSchemaRegistryServer
   spec.add_development_dependency 'sinatra'
   spec.add_development_dependency 'salsify_rubocop', '~> 0.42.0'
-  spec.add_development_dependency 'overcommit'
+  spec.add_development_dependency 'overcommit', '0.35.0'
   spec.add_development_dependency 'appraisal'
 end

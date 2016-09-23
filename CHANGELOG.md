@@ -5,6 +5,8 @@
 - Allow nested models to be referenced and reused.
 - Fix the serialization of nested complex types.
 - Add support for recursive models.
+- Allow required array and map fields to be empty. Only nil values for required
+  array and map fields are now considered invalid.
 
 ## v0.8.0
 - Add support for logical types. Currently this requires using the
