@@ -77,9 +77,22 @@ module Avromatic
                       inclusion: { in: Set.new(field.type.symbols.map(&:freeze)).freeze })
           when :fixed
             validates(field.name, length: { is: field.type.size })
+          when :record
+            validate_record(field.name)
           end
 
           add_required_validation(field)
+        end
+
+        def validate_record(field_name)
+          validate do |instance|
+            record = instance.send(field_name)
+            if record && record.invalid?
+              record.errors.each do |key, message|
+                errors.add(field_name.to_sym, "invalid: #{key} #{message}")
+              end
+            end
+          end
         end
 
         def add_required_validation(field)
