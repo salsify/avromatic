@@ -33,9 +33,19 @@ describe Avromatic::Model::Builder, 'validation' do
 
       it "validates that required fields must be present" do
         instance = test_class.new
-        expect(instance).to be_invalid
-        expect(instance.errors[:s]).to include("can't be blank")
-        expect(instance.errors.keys.map(&:to_s)).to match_array(attribute_names)
+        aggregate_failures do
+          expect(instance).to be_invalid
+          expect(instance.errors[:s]).to include("can't be blank")
+          expect(instance.errors[:tf]).to include("can't be nil")
+          expect(instance.errors.keys.map(&:to_s)).to match_array(attribute_names)
+        end
+      end
+
+      context "boolean" do
+        it "allows a boolean field to be false" do
+          instance = test_class.new(tf: false)
+          expect(instance.errors.keys).not_to include(:tf)
+        end
       end
     end
 
