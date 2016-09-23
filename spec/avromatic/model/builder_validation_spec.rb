@@ -93,6 +93,27 @@ describe Avromatic::Model::Builder, 'validation' do
         expect(instance).to be_valid
       end
     end
+
+    context "nested records" do
+      let(:schema) do
+        Avro::Builder.build_schema do
+          record :has_record do
+            required :sub, :record, type_name: 'sub_type' do
+              required :i, :int
+              required :s, :string
+            end
+          end
+        end
+      end
+      let(:test_class) { described_class.model(schema: schema) }
+
+      it "validates nested records" do
+        instance = test_class.new(sub: test_class.nested_models['sub_type'].new)
+        expect(instance).to be_invalid
+        expect(instance.errors[:sub]).to include("invalid: i can't be blank")
+        expect(instance.errors[:sub]).to include("invalid: s can't be blank")
+      end
+    end
   end
 
   context "optional" do
