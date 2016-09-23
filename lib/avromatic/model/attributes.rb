@@ -84,7 +84,12 @@ module Avromatic
 
         def add_required_validation(field)
           if required?(field) && field.default == :no_default
-            validates(field.name, presence: true)
+            case field.type.type_sym
+            when :array, :map, :boolean
+              validates(field.name, exclusion: { in: [nil], message: "can't be nil" })
+            else
+              validates(field.name, presence: true)
+            end
           end
         end
 

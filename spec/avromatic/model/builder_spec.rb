@@ -205,47 +205,6 @@ describe Avromatic::Model::Builder do
     end
   end
 
-  context "validation" do
-    context "fixed" do
-      let(:schema_name) { 'test.named_fields' }
-
-      it "validates the length of a fixed field" do
-        instance = test_class.new(f: '12345678')
-        expect(instance).to be_invalid
-        expect(instance.errors[:f]).to include('is the wrong length (should be 7 characters)')
-      end
-    end
-
-    context "enum" do
-      let(:schema_name) { 'test.named_fields' }
-
-      it "validates that an enum is a valid symbol" do
-        instance = test_class.new(e: :C)
-        expect(instance).to be_invalid
-        expect(instance.errors[:e]).to include('is not included in the list')
-      end
-    end
-
-    context "required" do
-      let(:schema_name) { 'test.primitive_types' }
-
-      it "validates that required fields must be present" do
-        instance = test_class.new
-        expect(instance).to be_invalid
-        expect(instance.errors[:s]).to include('can\'t be blank')
-        expect(instance.errors.keys.map(&:to_s)).to match_array(attribute_names)
-      end
-    end
-
-    context "optional" do
-      let(:schema_name) { 'test.with_union' }
-
-      it "does not require optional fields to be present" do
-        expect(test_class.new).to be_valid
-      end
-    end
-  end
-
   context "coercion" do
     # This is important for the eventual encoding of a model to Avro
 
