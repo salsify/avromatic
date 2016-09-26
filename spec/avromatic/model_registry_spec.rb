@@ -27,6 +27,16 @@ describe Avromatic::ModelRegistry do
       expect(instance['test.nested_record']).to equal(model)
     end
 
+    context "with a previously registered model" do
+      before { instance.register(model) }
+
+      it "raises an error" do
+        expect do
+          instance.register(model)
+        end.to raise_error("'test.nested_record' has already been registered")
+      end
+    end
+
     context "for a model with a key schema" do
       let(:model) do
         Avromatic::Model.model(key_schema_name: 'test.encode_key',
