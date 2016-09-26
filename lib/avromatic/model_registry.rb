@@ -19,6 +19,7 @@ module Avromatic
       raise 'models with a key schema are not supported' if model.key_avro_schema
       name = model.avro_schema.fullname
       name = remove_prefix(name)
+      raise "'#{name}' has already been registered" if registered?(name)
       @hash[name] = model
     end
 
