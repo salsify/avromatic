@@ -110,8 +110,147 @@ describe Avromatic::Model::Builder, 'validation' do
       it "validates nested records" do
         instance = test_class.new(sub: test_class.nested_models['sub_type'].new)
         expect(instance).to be_invalid
-        expect(instance.errors[:sub]).to include("invalid: i can't be blank")
-        expect(instance.errors[:sub]).to include("invalid: s can't be blank")
+        aggregate_failures do
+          expect(instance.errors[:sub]).to include(".i can't be blank")
+          expect(instance.errors[:sub]).to include(".s can't be blank")
+        end
+      end
+
+      context "doubly nested record" do
+        let(:schema) do
+          Avro::Builder.build_schema do
+            record :outer do
+              required :sub, :record, type_name: 'level1' do
+                required :sub_sub, :record, type_name: 'level2' do
+                  required :l, :long
+                end
+              end
+            end
+          end
+        end
+
+        it "validates multiple levels of nesting" do
+          level1 = test_class.nested_models['level1']
+          level2 = test_class.nested_models['level2']
+          instance = test_class.new(sub: level1.new(sub_sub: level2.new))
+          expect(instance).to be_invalid
+          expect(instance.errors[:sub]).to include(".sub_sub.l can't be blank")
+        end
+      end
+
+      context "array of records" do
+        let(:schema) do
+          Avro::Builder.build_schema do
+            record :x_and_y do
+              required :x, :int
+              required :y, :int
+            end
+
+            record :array_of_records do
+              required :ary, :array, items: :x_and_y
+            end
+          end
+        end
+
+        it "validates records in an array" do
+          nested_model = test_class.nested_models['x_and_y']
+          data = [nested_model.new,
+                  nested_model.new(x: 1),
+                  nested_model.new(y: 2)]
+          instance = test_class.new(ary: data)
+          expect(instance).to be_invalid
+          aggregate_failures do
+            expect(instance.errors[:ary]).to include("[0].x can't be blank")
+            expect(instance.errors[:ary]).to include("[0].y can't be blank")
+            expect(instance.errors[:ary]).to include("[1].y can't be blank")
+            expect(instance.errors[:ary]).to include("[2].x can't be blank")
+          end
+        end
+      end
+
+      context "nested arrays of records" do
+        let(:schema) do
+          Avro::Builder.build_schema do
+            record :elt do
+              required :s, :string
+            end
+
+            record :with_matrix do
+              required :m, array(array(:elt))
+            end
+          end
+        end
+        let(:nested_model) { test_class.nested_models['elt'] }
+
+        it "validates deeply nested records" do
+          data = [
+            [nested_model.new(s: 'a'), nested_model.new],
+            [nested_model.new(s: 'c'), nested_model.new, nested_model.new(s: 'b')]
+          ]
+          instance = test_class.new(m: data)
+          expect(instance).to be_invalid
+          aggregate_failures do
+            expect(instance.errors[:m]).to include("[0][1].s can't be blank")
+            expect(instance.errors[:m]).to include("[1][1].s can't be blank")
+          end
+        end
+      end
+
+      context "map of records" do
+        let(:schema) do
+          Avro::Builder.build_schema do
+            record :x_and_y do
+              required :x, :int
+              required :y, :int
+            end
+
+            record :array_of_records do
+              required :map, :map, values: :x_and_y
+            end
+          end
+        end
+
+        it "validates records in a map" do
+          nested_model = test_class.nested_models['x_and_y']
+          data = {
+            a: nested_model.new(y: 3),
+            b: nested_model.new,
+            c: nested_model.new(x: 4)
+          }
+          instance = test_class.new(map: data)
+          expect(instance).to be_invalid
+          aggregate_failures do
+            expect(instance.errors[:map]).to include("['a'].x can't be blank")
+            expect(instance.errors[:map]).to include("['b'].y can't be blank")
+            expect(instance.errors[:map]).to include("['b'].y can't be blank")
+            expect(instance.errors[:map]).to include("['c'].y can't be blank")
+          end
+        end
+      end
+
+      context "record in a union" do
+        let(:schema) do
+          Avro::Builder.build_schema do
+            record :x_and_y do
+              required :x, :int
+              required :y, :int
+            end
+
+            record :with_union do
+              required :u, :union, types: [:x_and_y, :string]
+            end
+          end
+        end
+
+        it "validates a record in a union" do
+          expect(test_class.new(u: 'foo')).to be_valid
+          instance = test_class.new(u: test_class.nested_models['x_and_y'].new)
+          expect(instance).to be_invalid
+          aggregate_failures do
+            expect(instance.errors[:u]).to include(".x can't be blank")
+            expect(instance.errors[:u]).to include(".y can't be blank")
+          end
+        end
       end
     end
   end
