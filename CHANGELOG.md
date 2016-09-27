@@ -7,6 +7,8 @@
 - Add support for recursive models.
 - Allow required array and map fields to be empty. Only nil values for required
   array and map fields are now considered invalid.
+- Validate nested models. This includes models embedded within other complex
+  types (array, map, and union).
 - Truncate values for timestamps to the precision supported by the logical type.
 
 ## v0.8.0
