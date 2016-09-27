@@ -11,18 +11,22 @@ module Avromatic
           when Avromatic::Model::Attributes
             validate_record_value(value)
           when Array
-            value.map.with_index do |element, index|
+            value.flat_map.with_index do |element, index|
               validate_nested_value(element).map do |message|
                 "[#{index}]#{message}"
               end
-            end.flatten
+            end
           when Hash
-            value.map do |key, map_value|
+            value.flat_map do |key, map_value|
+              # keys for the Avro map type are always strings and do not require
+              # validation
               validate_nested_value(map_value).map do |message|
                 "['#{key}']#{message}"
               end
-            end.flatten
-          end || []
+            end
+          else
+            []
+          end
         end
 
         private
@@ -40,6 +44,8 @@ module Avromatic
             record.errors.map do |key, message|
               ".#{key} #{message}".gsub(' .', '.')
             end
+          else
+            []
           end
         end
       end
