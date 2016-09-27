@@ -12,13 +12,13 @@ module Avromatic
         end
 
         def value_coerced?(_value)
-          raise 'subclass must implement `value_coerced?`'
+          raise "#{__method__} must be overridden by #{self.class.name}"
         end
 
         private
 
         def coerce_time(_value)
-          raise 'subclass must implement `coerce_time`'
+          raise "#{__method__} must be overridden by #{self.class.name}"
         end
       end
     end

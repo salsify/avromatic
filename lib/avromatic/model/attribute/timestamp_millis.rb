@@ -14,6 +14,9 @@ module Avromatic
         private
 
         def coerce_time(value)
+          # value is coerced to a local Time
+          # The Avro representation of a timestamp is Epoch seconds, independent
+          # of time zone.
           Time.at(value.to_i, value.usec / 1000 * 1000)
         end
 
