@@ -5,6 +5,7 @@ require 'avromatic/model/configuration'
 require 'avromatic/model/value_object'
 require 'avromatic/model/configurable'
 require 'avromatic/model/nested_models'
+require 'avromatic/model/validation'
 require 'avromatic/model/attribute/union'
 require 'avromatic/model/attributes'
 require 'avromatic/model/attribute/record'
@@ -44,6 +45,7 @@ module Avromatic
           Virtus.value_object,
           Avromatic::Model::Configurable,
           Avromatic::Model::NestedModels,
+          Avromatic::Model::Validation,
           Avromatic::Model::Attributes,
           Avromatic::Model::ValueObject,
           Avromatic::Model::RawSerialization,
