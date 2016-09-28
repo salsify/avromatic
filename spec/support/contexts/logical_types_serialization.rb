@@ -6,14 +6,22 @@ shared_examples_for "logical type encoding and decoding" do
     let(:test_class) do
       Avromatic::Model.model(schema_name: schema_name)
     end
-    let(:now) { Time.now }
+    let(:now) do
+      # ensure that the Time value has nanoseconds
+      time = Time.now
+      if time.nsec % 1000 == 0
+        Time.at(time.to_i, (time.nsec + rand(999) + 1) / 1000.0)
+      else
+        time
+      end
+    end
 
     with_logical_types do
       context "supported" do
         let(:values) do
           {
             date: Date.today,
-            ts_msec: Time.at(now.to_i, now.usec / 1000 * 1000),
+            ts_msec: now,
             ts_usec: now,
             unknown: 42
           }

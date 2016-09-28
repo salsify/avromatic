@@ -9,6 +9,7 @@
   array and map fields are now considered invalid.
 - Validate nested models. This includes models embedded within other complex
   types (array, map, and union).
+- Truncate values for timestamps to the precision supported by the logical type.
 
 ## v0.8.0
 - Add support for logical types. Currently this requires using the

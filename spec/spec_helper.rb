@@ -3,7 +3,12 @@ require 'simplecov'
 
 SimpleCov.start do
   add_filter 'spec'
-  minimum_coverage 98
+  begin
+    Gem::Specification.find_by_name('avro-salsify-fork')
+    minimum_coverage 99
+  rescue Gem::LoadError
+    minimum_coverage 97
+  end
 end
 
 require 'avro/builder'

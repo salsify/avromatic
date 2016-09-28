@@ -7,3 +7,5 @@ AllCops:
 Style/MultilineBlockChain:
   Enabled: false
 
+Style/NumericPredicate:
+  Enabled: false
