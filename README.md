@@ -162,22 +162,16 @@ Avromatic::Model.model(schema_name, :my_model
                        nested_models: ModelRegistry.new)
 ```
 
-It is also possible to explicitly generate a nested model that should be reused
-and add it to the registry. This is useful when the nested model is extended:
+Only models without a key schema can be used as nested models. When a model is
+generated with just a value schema then it is automatically registered so that
+it can be used as a nested model.
 
-```ruby
-class UsefulSubrecord
-  include Avromatic::Model.build(schema_name: 'useful_subrecord')
+To extend a model that will be used as a nested model, you must ensure that it
+is defined, which will register it, prior it being referenced by another model.
 
-  def do_something_custom
-    ...
-  end
-end
-Avromatic.nested_models.register(UsefulSubrecord)
-```
-
-With Rails, it may be necessary to perform this explicit registration in an
-initializer so that lazy class loading works correctly in development.
+With Rails for example, it may be necessary to reference in an initializer
+models that are extended and will be used as nested models so that classes load
+in the correct order.
 
 #### Custom Types
 
@@ -315,15 +309,16 @@ The following validations are supported:
 
 - The size of the value for a fixed type field.
 - The value for an enum type field is in the declared set of values.
-- Presence of a value for required fields.
+- Presence of a value for required fields. Empty arrays and maps are considered
+  valid for required fields.
+- Validity of nested records, including records embedded in array, maps, and
+  unions.
 
 ### Unsupported/Future
 
 The following types/features are not supported for generated models:
 
 - Custom types for members within a union.
-- Reused models for nested records: Currently an anonymous model class is
-  generated for each subrecord.
 
 ## Development
 
