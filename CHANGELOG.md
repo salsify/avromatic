@@ -1,6 +1,6 @@
 # avromatic changelog
 
-## v0.10.0
+## v0.10.0 (unreleased)
 - Add `Avromatic.on_initialize` proc that is called in Rails applications after
   the initializers run and on code reloading.
 
