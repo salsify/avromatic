@@ -7,7 +7,7 @@ require 'avro_turf/messaging'
 module Avromatic
   class << self
     attr_accessor :schema_registry, :registry_url, :schema_store, :logger,
-                  :messaging, :type_registry, :nested_models
+                  :messaging, :type_registry, :nested_models, :on_initialize
 
     delegate :register_type, to: :type_registry
   end
@@ -38,6 +38,11 @@ module Avromatic
 
   def self.build_messaging!
     self.messaging = build_messaging
+  end
+
+  def self.prepare!
+    nested_models.clear
+    on_initialize.call if on_initialize
   end
 end
 
