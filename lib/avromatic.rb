@@ -18,6 +18,7 @@ module Avromatic
 
   def self.configure
     yield self
+    on_initialize.call if on_initialize
   end
 
   def self.build_schema_registry
