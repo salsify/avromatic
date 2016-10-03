@@ -11,6 +11,10 @@ module Avromatic
       @hash = Hash.new
     end
 
+    def clear
+      @hash.clear
+    end
+
     def [](fullname)
       @hash.fetch(fullname)
     end

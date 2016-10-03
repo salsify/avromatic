@@ -1,5 +1,9 @@
 # avromatic changelog
 
+## v0.10.0
+- Add `Avromatic.on_initialize` proc that is called in Rails applications after
+  the initializers run and on code reloading.
+
 ## v0.9.0
 - Experimental: Add support for more than one non-null type in a union.
 - Allow nested models to be referenced and reused.
