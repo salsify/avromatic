@@ -1,8 +1,8 @@
 # avromatic changelog
 
-## v0.10.0 (unreleased)
-- Add `Avromatic.on_initialize` proc that is called in Rails applications at the
-  end of `.configure` and on Rails reloading.
+## v0.10.0
+- Add `Avromatic.on_initialize` proc that is called at the end of `.configure`
+  and on code reloading in Rails applications.
 
 ## v0.9.0
 - Experimental: Add support for more than one non-null type in a union.

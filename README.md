@@ -41,6 +41,10 @@ Or install it yourself as:
   that is used to store, by full schema name, the generated models that are
   embedded within top-level models. By default a new `Avromatic::ModelRegistry`
   is created.
+* **on_initialize**: An optional Proc that runs at the end of
+  `Avromatic.configure` and during code reloading in Rails applications. This
+  option is useful for defining models that will be extended and when the load
+  order is important.
 
 #### Using a Schema Registry/Messaging API
  
@@ -169,9 +173,18 @@ it can be used as a nested model.
 To extend a model that will be used as a nested model, you must ensure that it
 is defined, which will register it, prior it being referenced by another model.
 
-With Rails for example, it may be necessary to reference in an initializer
-models that are extended and will be used as nested models so that classes load
-in the correct order.
+Using the `Avromatic.on_initialize` option allows models that are extended and
+will be used as nested models to be defined at the end of `.configure`. In Rails
+applications, this Proc will also be executed after `nested_models` is cleared
+when code reloads to ensure that classes load in the correct order:
+
+```ruby
+Avromatic.configure do |config|
+  config.on_initialize do
+    # reference any extended models that should be defined first
+    MyNestedModel
+  end
+end
 
 #### Custom Types
 
