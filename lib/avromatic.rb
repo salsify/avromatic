@@ -3,11 +3,12 @@ require 'avromatic/model'
 require 'avromatic/model_registry'
 require 'avro_turf'
 require 'avro_turf/messaging'
+require 'active_support/core_ext/string/inflections'
 
 module Avromatic
   class << self
     attr_accessor :schema_registry, :registry_url, :schema_store, :logger,
-                  :messaging, :type_registry, :nested_models, :preregister_models
+                  :messaging, :type_registry, :nested_models
 
     delegate :register_type, to: :type_registry
   end
@@ -15,7 +16,6 @@ module Avromatic
   self.nested_models = ModelRegistry.new
   self.logger = Logger.new($stdout)
   self.type_registry = Avromatic::Model::TypeRegistry.new
-  self.preregister_models = []
 
   def self.configure
     yield self
@@ -47,9 +47,13 @@ module Avromatic
     preregister_models!
   end
 
+  def self.preregister_models=(value)
+    @preregister_model_names = Array(value).map { |model| model.is_a?(Class) ? model.name : model }
+  end
+
   def self.preregister_models!
-    preregister_models.each do |model|
-      nested_models.register_if_missing(model)
+    (@preregister_model_names || []).each do |model_name|
+      nested_models.register_if_missing(model_name.constantize)
     end
   end
   private_class_method :preregister_models!

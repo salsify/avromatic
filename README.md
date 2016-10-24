@@ -41,10 +41,11 @@ Or install it yourself as:
   that is used to store, by full schema name, the generated models that are
   embedded within top-level models. By default a new `Avromatic::ModelRegistry`
   is created.
-* **preregister_models**: An optional array of models that are added to
-  `nested_models` at the end of `Avromatic.configure` and during code reloading
-  in Rails applications. This option is useful for defining models that will
-  be extended when the load order is important.
+* **preregister_models**: An optional array of models, or strings with class
+  names for models, that are added to `nested_models` at the end of
+  `Avromatic.configure` and during code reloading in Rails applications. This
+  option is useful for defining models that will be extended when the load order
+  is important.
 
 #### Using a Schema Registry/Messaging API
  

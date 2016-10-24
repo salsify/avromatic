@@ -1,9 +1,8 @@
 describe Avromatic::ModelRegistry do
   let(:model) { Avromatic::Model.model(schema_name: 'test.nested_record') }
+  let(:instance) { described_class.new }
 
   describe "#registered?" do
-    let(:instance) { described_class.new }
-
     context "for a model that has not been registered" do
       it "returns false" do
         expect(instance.registered?('test.nested_record')).to eql(false)
@@ -19,9 +18,24 @@ describe Avromatic::ModelRegistry do
     end
   end
 
-  context "without a namespace prefix to remove" do
-    let(:instance) { described_class.new }
+  describe "#register_if_missing" do
+    context "for a model that has not been registered" do
+      it "registers the model" do
+        instance.register_if_missing(model)
+        expect(instance.registered?('test.nested_record')).to eql(true)
+      end
+    end
 
+    context "for model that has been registered" do
+      before { instance.register(model) }
+
+      it "does not raise an error" do
+        expect { instance.register_if_missing(model) }.not_to raise_error
+      end
+    end
+  end
+
+  context "without a namespace prefix to remove" do
     it "stores a model by its fullname" do
       instance.register(model)
       expect(instance['test.nested_record']).to equal(model)
