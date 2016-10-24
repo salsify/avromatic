@@ -7,7 +7,7 @@ require 'avro_turf/messaging'
 module Avromatic
   class << self
     attr_accessor :schema_registry, :registry_url, :schema_store, :logger,
-                  :messaging, :type_registry, :nested_models, :on_initialize
+                  :messaging, :type_registry, :nested_models, :preregister_models
 
     delegate :register_type, to: :type_registry
   end
@@ -15,10 +15,11 @@ module Avromatic
   self.nested_models = ModelRegistry.new
   self.logger = Logger.new($stdout)
   self.type_registry = Avromatic::Model::TypeRegistry.new
+  self.preregister_models = []
 
   def self.configure
     yield self
-    on_initialize.call if on_initialize
+    preregister_models!
   end
 
   def self.build_schema_registry
@@ -43,8 +44,15 @@ module Avromatic
 
   def self.prepare!
     nested_models.clear
-    on_initialize.call if on_initialize
+    preregister_models!
   end
+
+  def self.preregister_models!
+    preregister_models.each do |model|
+      nested_models.register_if_missing(model)
+    end
+  end
+  private_class_method :preregister_models!
 end
 
 require 'avromatic/railtie' if defined?(Rails)

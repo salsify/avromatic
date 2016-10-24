@@ -5,9 +5,9 @@ SimpleCov.start do
   add_filter 'spec'
   begin
     Gem::Specification.find_by_name('avro-salsify-fork')
-    minimum_coverage 98
-  rescue Gem::LoadError
     minimum_coverage 97
+  rescue Gem::LoadError
+    minimum_coverage 96
   end
 end
 

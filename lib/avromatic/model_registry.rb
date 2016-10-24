@@ -31,6 +31,12 @@ module Avromatic
       @hash.key?(fullname)
     end
 
+    def register_if_missing(model)
+      name = model.avro_schema.fullname
+      name = remove_prefix(name)
+      @hash[name] = model unless registered?(name)
+    end
+
     def remove_prefix(name)
       return name if @prefix.nil?
 
