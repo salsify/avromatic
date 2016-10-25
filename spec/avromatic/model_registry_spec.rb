@@ -18,26 +18,43 @@ describe Avromatic::ModelRegistry do
     end
   end
 
-  describe "#register_if_missing" do
-    context "for a model that has not been registered" do
-      it "registers the model" do
-        instance.register_if_missing(model)
-        expect(instance.registered?('test.nested_record')).to eql(true)
+  describe "#ensure_registered_model" do
+    context "when the model is already registered" do
+      before do
+        instance.register(model)
+      end
+
+      it "does not raise an error" do
+        expect { instance.ensure_registered_model(model) }.not_to raise_error
+      end
+
+      context "when a different copy of the model is registered" do
+
+        it "raises an error" do
+          expect do
+            instance.ensure_registered_model(model.dup)
+          end.to raise_error(including('attempted to replace existing model'))
+        end
       end
     end
 
-    context "for model that has been registered" do
-      let(:model_copy) { model.dup }
-      before { instance.register(model) }
-
-      it "does not raise an error" do
-        expect { instance.register_if_missing(model_copy) }.not_to raise_error
+    context "when the model is not already registered" do
+      before do
+        instance.clear
+        instance.ensure_registered_model(model)
       end
 
-      it "does not replace the registered version of the model" do
-        instance.register_if_missing(model_copy)
-        expect(instance['test.nested_record']).to equal(model)
+      it "registers the model" do
+        expect(instance.registered?('test.nested_record')).to eql(true)
       end
+    end
+  end
+
+  context "#model_fullname" do
+    let(:instance) { described_class.new(remove_namespace_prefix: 'test') }
+
+    it "returns the value schema fullname with the prefix removed" do
+      expect(instance.model_fullname(model)).to eq('nested_record')
     end
   end
 

@@ -33,15 +33,16 @@ describe Avromatic do
     end
   end
 
-  context "preregistering models" do
+  context "eager loading models" do
     before do
       stub_const('NestedRecord', Avromatic::Model.model(schema_name: 'test.nested_record'))
+      described_class.nested_models.clear
     end
 
     context "at the end of configure" do
       it "registers models" do
         described_class.configure do |config|
-          config.preregister_models = NestedRecord
+          config.eager_load_models = NestedRecord
         end
         expect(described_class.nested_models.registered?('test.nested_record')).to eql(true)
       end
@@ -58,7 +59,7 @@ describe Avromatic do
       end
 
       it "registers models" do
-        described_class.preregister_models = %w(NestedRecord)
+        described_class.eager_load_models = %w(NestedRecord)
         described_class.prepare!
         expect(described_class.nested_models.registered?('test.value')).to eql(false)
       end

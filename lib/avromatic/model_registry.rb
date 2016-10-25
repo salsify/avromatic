@@ -18,11 +18,11 @@ module Avromatic
     def [](fullname)
       @hash.fetch(fullname)
     end
+    alias_method :fetch, :[]
 
     def register(model)
       raise 'models with a key schema are not supported' if model.key_avro_schema
-      name = model.avro_schema.fullname
-      name = remove_prefix(name)
+      name = model_fullname(model)
       raise "'#{name}' has already been registered" if registered?(name)
       @hash[name] = model
     end
@@ -31,10 +31,20 @@ module Avromatic
       @hash.key?(fullname)
     end
 
-    def register_if_missing(model)
+    def model_fullname(model)
       name = model.avro_schema.fullname
-      name = remove_prefix(name)
-      @hash[name] = model unless registered?(name)
+      remove_prefix(name)
+    end
+
+    def ensure_registered_model(model)
+      name = model_fullname(model)
+      if registered?(name)
+        unless fetch(name).equal?(model)
+          raise "attempted to replace existing model #{fetch(name)} with new model #{model} as '#{name}'"
+        end
+      else
+        register(model)
+      end
     end
 
     def remove_prefix(name)

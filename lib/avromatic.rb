@@ -19,7 +19,7 @@ module Avromatic
 
   def self.configure
     yield self
-    preregister_models!
+    eager_load_models!
   end
 
   def self.build_schema_registry
@@ -42,21 +42,23 @@ module Avromatic
     self.messaging = build_messaging
   end
 
+  # This method is called as a Rails to_prepare block after the application
+  # first initializes and prior to each code reloading.
   def self.prepare!
     nested_models.clear
-    preregister_models!
+    eager_load_models!
   end
 
-  def self.preregister_models=(models)
-    @preregister_model_names = Array(models).map { |model| model.is_a?(Class) ? model.name : model }
+  def self.eager_load_models=(models)
+    @eager_load_model_names = Array(models).map { |model| model.is_a?(Class) ? model.name : model }
   end
 
-  def self.preregister_models!
-    (@preregister_model_names || []).each do |model_name|
-      nested_models.register_if_missing(model_name.constantize)
+  def self.eager_load_models!
+    (@eager_load_model_names || []).each do |model_name|
+      nested_models.ensure_registered_model(model_name.constantize)
     end
   end
-  private_class_method :preregister_models!
+  private_class_method :eager_load_models!
 end
 
 require 'avromatic/railtie' if defined?(Rails)

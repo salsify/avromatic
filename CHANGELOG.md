@@ -1,7 +1,7 @@
 # avromatic changelog
 
 ## v0.11.0
-- Replace `Avromatic.on_initialize` proc with `Avromatic.preregister_models`
+- Replace `Avromatic.on_initialize` proc with `Avromatic.eager_load_models`
   array. The models listed by this configuration are added to the registry
   at the end of `.configure` and prior to code reloading in Rails applications.
   This is a compatibility breaking change.
