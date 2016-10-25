@@ -21,6 +21,8 @@ module Avromatic
 
       module ClassMethods
         def add_avro_fields
+          # models are registered in Avromatic.nested_models at this point to
+          # ensure that they are available as fields for recursive models.
           register!
 
           if key_avro_schema

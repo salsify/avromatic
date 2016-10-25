@@ -1,9 +1,8 @@
 describe Avromatic::ModelRegistry do
   let(:model) { Avromatic::Model.model(schema_name: 'test.nested_record') }
+  let(:instance) { described_class.new }
 
   describe "#registered?" do
-    let(:instance) { described_class.new }
-
     context "for a model that has not been registered" do
       it "returns false" do
         expect(instance.registered?('test.nested_record')).to eql(false)
@@ -19,9 +18,47 @@ describe Avromatic::ModelRegistry do
     end
   end
 
-  context "without a namespace prefix to remove" do
-    let(:instance) { described_class.new }
+  describe "#ensure_registered_model" do
+    context "when the model is already registered" do
+      before do
+        instance.register(model)
+      end
 
+      it "does not raise an error" do
+        expect { instance.ensure_registered_model(model) }.not_to raise_error
+      end
+
+      context "when a different copy of the model is registered" do
+
+        it "raises an error" do
+          expect do
+            instance.ensure_registered_model(model.dup)
+          end.to raise_error(including('attempted to replace existing model'))
+        end
+      end
+    end
+
+    context "when the model is not already registered" do
+      before do
+        instance.clear
+        instance.ensure_registered_model(model)
+      end
+
+      it "registers the model" do
+        expect(instance.registered?('test.nested_record')).to eql(true)
+      end
+    end
+  end
+
+  context "#model_fullname" do
+    let(:instance) { described_class.new(remove_namespace_prefix: 'test') }
+
+    it "returns the value schema fullname with the prefix removed" do
+      expect(instance.model_fullname(model)).to eq('nested_record')
+    end
+  end
+
+  context "without a namespace prefix to remove" do
     it "stores a model by its fullname" do
       instance.register(model)
       expect(instance['test.nested_record']).to equal(model)

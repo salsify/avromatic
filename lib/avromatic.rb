@@ -3,11 +3,12 @@ require 'avromatic/model'
 require 'avromatic/model_registry'
 require 'avro_turf'
 require 'avro_turf/messaging'
+require 'active_support/core_ext/string/inflections'
 
 module Avromatic
   class << self
     attr_accessor :schema_registry, :registry_url, :schema_store, :logger,
-                  :messaging, :type_registry, :nested_models, :on_initialize
+                  :messaging, :type_registry, :nested_models
 
     delegate :register_type, to: :type_registry
   end
@@ -18,7 +19,7 @@ module Avromatic
 
   def self.configure
     yield self
-    on_initialize.call if on_initialize
+    eager_load_models!
   end
 
   def self.build_schema_registry
@@ -41,10 +42,23 @@ module Avromatic
     self.messaging = build_messaging
   end
 
+  # This method is called as a Rails to_prepare block after the application
+  # first initializes and prior to each code reloading.
   def self.prepare!
     nested_models.clear
-    on_initialize.call if on_initialize
+    eager_load_models!
   end
+
+  def self.eager_load_models=(models)
+    @eager_load_model_names = Array(models).map { |model| model.is_a?(Class) ? model.name : model }
+  end
+
+  def self.eager_load_models!
+    (@eager_load_model_names || []).each do |model_name|
+      nested_models.ensure_registered_model(model_name.constantize)
+    end
+  end
+  private_class_method :eager_load_models!
 end
 
 require 'avromatic/railtie' if defined?(Rails)
