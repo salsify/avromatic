@@ -27,10 +27,16 @@ describe Avromatic::ModelRegistry do
     end
 
     context "for model that has been registered" do
+      let(:model_copy) { model.dup }
       before { instance.register(model) }
 
       it "does not raise an error" do
-        expect { instance.register_if_missing(model) }.not_to raise_error
+        expect { instance.register_if_missing(model_copy) }.not_to raise_error
+      end
+
+      it "does not replace the registered version of the model" do
+        instance.register_if_missing(model_copy)
+        expect(instance['test.nested_record']).to equal(model)
       end
     end
   end

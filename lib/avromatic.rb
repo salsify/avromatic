@@ -47,8 +47,8 @@ module Avromatic
     preregister_models!
   end
 
-  def self.preregister_models=(value)
-    @preregister_model_names = Array(value).map { |model| model.is_a?(Class) ? model.name : model }
+  def self.preregister_models=(models)
+    @preregister_model_names = Array(models).map { |model| model.is_a?(Class) ? model.name : model }
   end
 
   def self.preregister_models!
