@@ -42,8 +42,9 @@ module Avromatic
     self.messaging = build_messaging
   end
 
-  # This method is called as a Rails to_prepare block after the application
-  # first initializes and prior to each code reloading.
+  # This method is called as a Rails to_prepare hook after the application
+  # first initializes during boot-up and prior to each code reloading.
+  # For the first call during boot-up we do not want to clear the nested_models.
   def self.prepare!(skip_clear: false)
     nested_models.clear unless skip_clear
     eager_load_models!
