@@ -1,5 +1,9 @@
 # avromatic changelog
 
+## v0.11.1
+- Another fix for Rails initialization and reloading. Do not clear the nested
+  models registry the first time that the `to_prepare` hook is called.
+
 ## v0.11.0
 - Replace `Avromatic.on_initialize` proc with `Avromatic.eager_load_models`
   array. The models listed by this configuration are added to the registry

@@ -58,6 +58,13 @@ describe Avromatic do
         expect(described_class.nested_models.registered?('test.value')).to eql(false)
       end
 
+      context "when skip_clear is true" do
+        it "does not clear the registry" do
+          described_class.prepare!(skip_clear: true)
+          expect(described_class.nested_models.registered?('test.value')).to eql(true)
+        end
+      end
+
       it "registers models" do
         described_class.eager_load_models = %w(NestedRecord)
         described_class.prepare!
