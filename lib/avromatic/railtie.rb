@@ -5,8 +5,11 @@ module Avromatic
         config.logger = Rails.logger
       end
 
+      first_prepare = true
+
       Rails.configuration.to_prepare do
-        Avromatic.prepare!
+        Avromatic.prepare!(skip_clear: first_prepare)
+        first_prepare = false
       end
     end
   end

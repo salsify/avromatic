@@ -44,8 +44,8 @@ module Avromatic
 
   # This method is called as a Rails to_prepare block after the application
   # first initializes and prior to each code reloading.
-  def self.prepare!
-    nested_models.clear
+  def self.prepare!(skip_clear: false)
+    nested_models.clear unless skip_clear
     eager_load_models!
   end
 
