@@ -101,6 +101,32 @@ describe Avromatic::Model::Builder do
       it_behaves_like 'a generated model'
     end
 
+    context "with an optional array" do
+      let(:schema) do
+        Avro::Builder.build_schema do
+          record :with_optional_array do
+            optional :maybe_array, array(:string)
+          end
+        end
+      end
+      let(:test_class) { Avromatic::Model.model(schema: schema) }
+
+      it_behaves_like 'a generated model'
+    end
+
+    context "with an optional map" do
+      let(:schema) do
+        Avro::Builder.build_schema do
+          record :with_optional_map do
+            optional :maybe_map, map(:int)
+          end
+        end
+      end
+      let(:test_class) { Avromatic::Model.model(schema: schema) }
+
+      it_behaves_like 'a generated model'
+    end
+
     context "with a map" do
       let(:schema_name) { 'test.with_map' }
 

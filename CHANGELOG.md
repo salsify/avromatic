@@ -1,5 +1,8 @@
 # avromatic changelog
 
+## v0.11.2
+- Fix for models containing optional array and map fields.
+
 ## v0.11.1
 - Another fix for Rails initialization and reloading. Do not clear the nested
   models registry the first time that the `to_prepare` hook is called.
