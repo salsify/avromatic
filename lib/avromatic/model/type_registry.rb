@@ -27,7 +27,7 @@ module Avromatic
       def fetch(object, field_class = nil)
         field_type = object.is_a?(Avro::Schema::Field) ? object.type : object
 
-        if field_class && field_type.type_sym == :union && !(field_class < Avromatic::Model::AttributeType::Union)
+        if field_class && field_type.type_sym == :union && !union_attribute?(field_class)
           field_type = Avromatic::Model::Attributes.first_union_schema(field_type)
         end
 
@@ -38,6 +38,10 @@ module Avromatic
       private
 
       attr_reader :custom_types
+
+      def union_attribute?(attribute_type)
+        attribute_type.is_a?(Class) && attribute_type < Avromatic::Model::AttributeType::Union
+      end
     end
   end
 end
