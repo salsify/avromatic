@@ -75,7 +75,7 @@ describe Avromatic::Model::MessageDecoder do
         expect do
           instance.decode(message_value)
         end.to raise_error(described_class::UnexpectedKeyError,
-                           "Unexpected schemas [nil, \"test.defaults\"]")
+                           'Unexpected schemas [nil, "test.defaults"]')
       end
     end
 
