@@ -5,7 +5,7 @@ describe Avromatic::ModelRegistry do
   describe "#registered?" do
     context "for a model that has not been registered" do
       it "returns false" do
-        expect(instance.registered?('test.nested_record')).to eql(false)
+        expect(instance.registered?('test.nested_record')).to be(false)
       end
     end
 
@@ -13,7 +13,7 @@ describe Avromatic::ModelRegistry do
       before { instance.register(model) }
 
       it "returns true" do
-        expect(instance.registered?('test.nested_record')).to eql(true)
+        expect(instance.registered?('test.nested_record')).to be(true)
       end
     end
   end
@@ -45,7 +45,7 @@ describe Avromatic::ModelRegistry do
       end
 
       it "registers the model" do
-        expect(instance.registered?('test.nested_record')).to eql(true)
+        expect(instance.registered?('test.nested_record')).to be(true)
       end
     end
   end

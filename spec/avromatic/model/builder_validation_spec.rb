@@ -60,7 +60,7 @@ describe Avromatic::Model::Builder, 'validation' do
       let(:test_class) { described_class.model(schema: schema) }
 
       it "validates that a required array is not nil" do
-        pending 'Virtus coerces nil values to an empty array'
+        pending "Virtus coerces nil values to an empty array"
         instance = test_class.new(a: nil)
         expect(instance).to be_invalid
         expect(instance.errors[:a]).to include("can't be nil")

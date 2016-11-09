@@ -60,7 +60,7 @@ describe Avromatic::Model::Builder do
       end
     end
 
-    shared_examples_for 'a generated model' do
+    shared_examples_for "a generated model" do
       it "defines a model with the expected attributes" do
         expect(attribute_names)
           .to match_array(schema.fields.map(&:name))
@@ -70,7 +70,7 @@ describe Avromatic::Model::Builder do
     context "primitive types" do
       let(:schema_name) { 'test.primitive_types' }
 
-      it_behaves_like 'a generated model'
+      it_behaves_like "a generated model"
     end
 
     context "with a schema" do
@@ -80,25 +80,25 @@ describe Avromatic::Model::Builder do
         Avromatic::Model.model(schema: schema)
       end
 
-      it_behaves_like 'a generated model'
+      it_behaves_like "a generated model"
     end
 
     context "named fields" do
       let(:schema_name) { 'test.named_fields' }
 
-      it_behaves_like 'a generated model'
+      it_behaves_like "a generated model"
     end
 
     context "with repeated references to a named type" do
       let(:schema_name) { 'test.repeated_name' }
 
-      it_behaves_like 'a generated model'
+      it_behaves_like "a generated model"
     end
 
     context "with an array" do
       let(:schema_name) { 'test.with_array' }
 
-      it_behaves_like 'a generated model'
+      it_behaves_like "a generated model"
     end
 
     context "with an optional array" do
@@ -111,7 +111,7 @@ describe Avromatic::Model::Builder do
       end
       let(:test_class) { Avromatic::Model.model(schema: schema) }
 
-      it_behaves_like 'a generated model'
+      it_behaves_like "a generated model"
     end
 
     context "with an optional map" do
@@ -124,19 +124,19 @@ describe Avromatic::Model::Builder do
       end
       let(:test_class) { Avromatic::Model.model(schema: schema) }
 
-      it_behaves_like 'a generated model'
+      it_behaves_like "a generated model"
     end
 
     context "with a map" do
       let(:schema_name) { 'test.with_map' }
 
-      it_behaves_like 'a generated model'
+      it_behaves_like "a generated model"
     end
 
     context "with a union" do
       let(:schema_name) { 'test.with_union' }
 
-      it_behaves_like 'a generated model'
+      it_behaves_like "a generated model"
     end
 
     context "simple union" do
@@ -151,13 +151,13 @@ describe Avromatic::Model::Builder do
         Avromatic::Model.model(schema: schema)
       end
 
-      it_behaves_like 'a generated model'
+      it_behaves_like "a generated model"
     end
 
     context "unsupported union" do
       let(:schema_name) { 'test.real_union' }
 
-      it_behaves_like 'a generated model'
+      it_behaves_like "a generated model"
     end
 
     context "top-level union" do
