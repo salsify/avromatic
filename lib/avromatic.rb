@@ -46,7 +46,10 @@ module Avromatic
   # first initializes during boot-up and prior to each code reloading.
   # For the first call during boot-up we do not want to clear the nested_models.
   def self.prepare!(skip_clear: false)
-    nested_models.clear unless skip_clear
+    unless skip_clear
+      nested_models.clear
+      schema_store.public_send(:clear) if schema_store && schema_store.respond_to?(:clear)
+    end
     eager_load_models!
   end
 
