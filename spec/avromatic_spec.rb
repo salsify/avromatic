@@ -51,6 +51,7 @@ describe Avromatic do
     describe "#prepare!" do
       before do
         stub_const('ValueModel', Avromatic::Model.model(schema_name: 'test.value'))
+        allow(Avromatic.schema_store).to receive(:clear)
       end
 
       it "clears the registry" do
@@ -58,10 +59,20 @@ describe Avromatic do
         expect(described_class.nested_models.registered?('test.value')).to be(false)
       end
 
+      it "clears the schema store" do
+        described_class.prepare!
+        expect(Avromatic.schema_store).to have_received(:clear)
+      end
+
       context "when skip_clear is true" do
+        before { described_class.prepare!(skip_clear: true) }
+
         it "does not clear the registry" do
-          described_class.prepare!(skip_clear: true)
           expect(described_class.nested_models.registered?('test.value')).to be(true)
+        end
+
+        it "does not clear the schema store" do
+          expect(Avromatic.schema_store).not_to have_received(:clear)
         end
       end
 

@@ -1,5 +1,10 @@
 # avromatic changelog
 
+## v0.12.0
+- Clear the schema store, if it supports it, prior to code reloading in Rails
+  applications. This allows schema changes to be picked up during code
+  reloading.
+
 ## v0.11.2
 - Fix for models containing optional array and map fields.
 
