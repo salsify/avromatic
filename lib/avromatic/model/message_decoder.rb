@@ -49,16 +49,14 @@ module Avromatic
 
       # @return [Avromatic model]
       def decode(*args)
-        with_decode_args(*args) do |model, message_key, message_value|
-          model.avro_message_decode(message_key, message_value)
-        end
+        model, message_key, message_value = extract_decode_args(*args)
+        model.avro_message_decode(message_key, message_value)
       end
 
       # @return [Hash]
       def decode_hash(*args)
-        with_decode_args(*args) do |model, message_key, message_value|
-          model.avro_message_attributes(message_key, message_value)
-        end
+        model, message_key, message_value = extract_decode_args(*args)
+        model.avro_message_attributes(message_key, message_value)
       end
 
       private
@@ -78,11 +76,11 @@ module Avromatic
       # If two arguments are specified then the first is interpreted as the
       # message key and the second is the message value. If there is only one
       # arg then it is used as the message value.
-      def with_decode_args(*args)
+      def extract_decode_args(*args)
         message_key, message_value = extract_key_and_value(*args)
         model_key = model_key_for_message(message_key, message_value)
         raise UnexpectedKeyError.new(model_key) unless model_map.key?(model_key)
-        yield(model_map[model_key], message_key, message_value)
+        [model_map[model_key], message_key, message_value]
       end
 
       def schema_name_for_data(data)
