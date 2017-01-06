@@ -47,24 +47,42 @@ module Avromatic
           Avromatic.build_schema_registry
       end
 
-      # If two arguments are specified then the first is interpreted as the
-      # message key and the second is the message value. If there is only one
-      # arg then it is used as the message value.
       # @return [Avromatic model]
       def decode(*args)
-        message_key, message_value = args.size > 1 ? args : [nil, args.first]
-        value_schema_name = schema_name_for_data(message_value)
-        key_schema_name = schema_name_for_data(message_key) if message_key
-        deserialize([key_schema_name, value_schema_name], message_key, message_value)
+        with_decode_args(*args) do |model, message_key, message_value|
+          model.avro_message_decode(message_key, message_value)
+        end
+      end
+
+      # @return [Hash]
+      def decode_hash(*args)
+        with_decode_args(*args) do |model, message_key, message_value|
+          model.avro_message_attributes(message_key, message_value)
+        end
       end
 
       private
 
       attr_reader :schema_names_by_id, :model_map, :schema_registry
 
-      def deserialize(model_key, message_key, message_value)
+      def extract_key_and_value(*args)
+        args.size > 1 ? args.take(2) : [nil, args.first]
+      end
+
+      def model_key_for_message(message_key, message_value)
+        value_schema_name = schema_name_for_data(message_value)
+        key_schema_name = schema_name_for_data(message_key) if message_key
+        [key_schema_name, value_schema_name]
+      end
+
+      # If two arguments are specified then the first is interpreted as the
+      # message key and the second is the message value. If there is only one
+      # arg then it is used as the message value.
+      def with_decode_args(*args)
+        message_key, message_value = extract_key_and_value(*args)
+        model_key = model_key_for_message(message_key, message_value)
         raise UnexpectedKeyError.new(model_key) unless model_map.key?(model_key)
-        model_map[model_key].avro_message_decode(message_key, message_value)
+        yield(model_map[model_key], message_key, message_value)
       end
 
       def schema_name_for_data(data)

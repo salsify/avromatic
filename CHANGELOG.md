@@ -1,5 +1,8 @@
 # avromatic changelog
 
+## v0.13.0
+- Add interfaces to deserialize as a hash of attributes instead of a model.
+
 ## v0.12.0
 - Clear the schema store, if it supports it, prior to code reloading in Rails
   applications. This allows schema changes to be picked up during code
