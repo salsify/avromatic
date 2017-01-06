@@ -170,6 +170,34 @@ describe Avromatic::Model::MessagingSerialization do
     end
   end
 
+  describe ".avro_message_attributes" do
+    let(:test_class) do
+      Avromatic::Model.model(value_schema_name: 'test.encode_value')
+    end
+    let(:values) { { str1: 'a', str2: 'b' } }
+    let(:attributes) { values.stringify_keys }
+
+    it "deserializes attributes for a model" do
+      decoded = test_class.avro_message_attributes(avro_message_value)
+      expect(decoded).to eq(attributes)
+    end
+
+    context "when a value and a key are specified" do
+      let(:test_class) do
+        Avromatic::Model.model(
+          value_schema_name: 'test.encode_value',
+          key_schema_name: 'test.encode_key'
+        )
+      end
+      let(:values) { { id: rand(99), str1: 'a', str2: 'b' } }
+
+      it "deserializes attributes for a model" do
+        decoded = test_class.avro_message_attributes(avro_message_key, avro_message_value)
+        expect(decoded).to eq(attributes)
+      end
+    end
+  end
+
   it_behaves_like "logical type encoding and decoding" do
     let(:encoded_value) { instance.avro_message_value }
     let(:decoded) { test_class.avro_message_decode(encoded_value) }

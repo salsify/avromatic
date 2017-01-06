@@ -38,6 +38,33 @@ describe Avromatic::Model::MessageDecoder do
     end
   end
 
+  shared_examples_for "decoding failure cases" do |method_name|
+    context "when the message_value does not begin with the magic byte" do
+      it "raises an error" do
+        expect do
+          instance.send(method_name, 'X')
+        end.to raise_error(described_class::MagicByteError,
+                           "Expected data to begin with a magic byte, got 'X'")
+      end
+    end
+
+    context "when the schema name is not known by the decoder" do
+      let(:unknown_model) do
+        Avromatic::Model.model(schema_name: 'test.defaults')
+      end
+      let(:message_value) do
+        unknown_model.new.avro_message_value
+      end
+
+      it "raises an error" do
+        expect do
+          instance.send(method_name, message_value)
+        end.to raise_error(described_class::UnexpectedKeyError,
+                           'Unexpected schemas [nil, "test.defaults"]')
+      end
+    end
+  end
+
   describe "#decode" do
     let(:models) { [model1, model2] }
     let(:model1_instance) { model1.new(str1: 'A', str2: 'B', id: 99) }
@@ -54,30 +81,7 @@ describe Avromatic::Model::MessageDecoder do
       expect(instance.decode(model2_value)).to be_a(model2)
     end
 
-    context "when the message_value does not begin with the magic byte" do
-      it "raises an error" do
-        expect do
-          instance.decode('X')
-        end.to raise_error(described_class::MagicByteError,
-                           "Expected data to begin with a magic byte, got 'X'")
-      end
-    end
-
-    context "when the schema name is not known by the decoder" do
-      let(:unknown_model) do
-        Avromatic::Model.model(schema_name: 'test.defaults')
-      end
-      let(:message_value) do
-        unknown_model.new.avro_message_value
-      end
-
-      it "raises an error" do
-        expect do
-          instance.decode(message_value)
-        end.to raise_error(described_class::UnexpectedKeyError,
-                           'Unexpected schemas [nil, "test.defaults"]')
-      end
-    end
+    it_behaves_like "decoding failure cases", :decode
 
     context "when the decoder is initialized with a schema registry" do
       let(:schema_registry) { Avromatic.build_schema_registry }
@@ -92,5 +96,26 @@ describe Avromatic::Model::MessageDecoder do
         expect(schema_registry).to have_received(:fetch).at_least(1).times
       end
     end
+  end
+
+  describe "#decode_hash" do
+    let(:models) { [model1, model2] }
+    let(:model1_attributes) { { str1: 'A', str2: 'B', id: 99 } }
+    let(:model1_instance) { model1.new(model1_attributes) }
+    let(:model1_value) do
+      model1_instance.avro_message_value
+    end
+    let(:model1_key) do
+      model1_instance.avro_message_key
+    end
+    let(:model2_attributes) { { id: 100, action: 'CREATE' } }
+    let(:model2_value) { model2.new(model2_attributes).avro_message_value }
+
+    it "decodes message value and key pairs to registered models" do
+      expect(instance.decode_hash(model1_key, model1_value)).to eq(model1_attributes.stringify_keys)
+      expect(instance.decode_hash(model2_value)).to eq(model2_attributes.stringify_keys)
+    end
+
+    it_behaves_like "decoding failure cases", :decode_hash
   end
 end

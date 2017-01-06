@@ -38,13 +38,17 @@ module Avromatic
         # message key and the second is the message value. If there is only one
         # arg then it is used as the message value.
         def avro_message_decode(*args)
+          new(avro_message_attributes(*args))
+        end
+
+        def avro_message_attributes(*args)
           message_key, message_value = args.size > 1 ? args : [nil, args.first]
           key_attributes = message_key &&
             avro_messaging.decode(message_key, schema_name: key_avro_schema.fullname)
           value_attributes = avro_messaging
             .decode(message_value, schema_name: avro_schema.fullname)
 
-          new(value_attributes.merge!(key_attributes || {}))
+          value_attributes.merge!(key_attributes || {})
         end
       end
 
