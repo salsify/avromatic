@@ -1,5 +1,3 @@
-require 'avro_turf/messaging'
-
 module Avromatic
   module Model
 

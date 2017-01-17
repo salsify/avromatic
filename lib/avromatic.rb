@@ -1,14 +1,15 @@
 require 'avromatic/version'
+require 'avro_turf'
 require 'avromatic/model'
 require 'avromatic/model_registry'
-require 'avro_turf'
-require 'avro_turf/messaging'
+require 'avromatic/messaging'
 require 'active_support/core_ext/string/inflections'
 
 module Avromatic
   class << self
     attr_accessor :schema_registry, :registry_url, :schema_store, :logger,
-                  :messaging, :type_registry, :nested_models
+                  :messaging, :type_registry, :nested_models,
+                  :use_custom_datum_reader
 
     delegate :register_type, to: :type_registry
   end
@@ -16,6 +17,7 @@ module Avromatic
   self.nested_models = ModelRegistry.new
   self.logger = Logger.new($stdout)
   self.type_registry = Avromatic::Model::TypeRegistry.new
+  self.use_custom_datum_reader = true
 
   def self.configure
     yield self
@@ -31,7 +33,7 @@ module Avromatic
 
   def self.build_messaging
     raise 'Avromatic must be configured with a schema_store' unless schema_store
-    AvroTurf::Messaging.new(
+    Avromatic::Messaging.new(
       registry: schema_registry || build_schema_registry,
       schema_store: schema_store,
       logger: logger
