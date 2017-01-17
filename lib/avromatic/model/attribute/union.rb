@@ -27,7 +27,7 @@ module Avromatic
           return input if value_coerced?(input)
 
           result = nil
-          if input.key?(MEMBER_INDEX)
+          if input && input.key?(MEMBER_INDEX)
             result = safe_coerce(member_attributes[input.delete(MEMBER_INDEX)], input)
           else
             member_attributes.find do |union_attribute|
