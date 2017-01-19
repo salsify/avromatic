@@ -160,7 +160,7 @@ describe Avromatic::Model::RawSerialization do
       end
     end
 
-    context "array of pre-registed nested models" do
+    context "array of pre-registered nested models" do
       let(:nested_schema) do
         Avro::Builder.build_schema do
           record :int_rec do

@@ -1,5 +1,9 @@
 # avromatic changelog
 
+## v0.14.0
+- Add `Avromatic::Messaging` and `Avromatic::IO::DatumReader` classes to
+  optimize the decoding of Avro unions to Avromatic models.
+
 ## v0.13.0
 - Add interfaces to deserialize as a hash of attributes instead of a model.
 
