@@ -45,7 +45,7 @@ describe Avromatic::IO::DatumReader do
         allow(Avromatic).to receive(:use_custom_datum_reader).and_return(false)
       end
 
-      it "includes the member index in the decoded hash" do
+      it "does not include the member index in the decoded hash" do
         expect(attributes['message']).not_to have_key(described_class::UNION_MEMBER_INDEX)
       end
     end
