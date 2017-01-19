@@ -1,4 +1,5 @@
 require 'avromatic/model/attribute_type/union'
+require 'avromatic/io/datum_reader'
 
 module Avromatic
   module Model
@@ -12,6 +13,8 @@ module Avromatic
       class Union < Virtus::Attribute
         primitive Avromatic::Model::AttributeType::Union
 
+        MEMBER_INDEX = ::Avromatic::IO::DatumReader::UNION_MEMBER_INDEX
+
         def initialize(*)
           super
 
@@ -24,12 +27,11 @@ module Avromatic
           return input if value_coerced?(input)
 
           result = nil
-          member_attributes.find do |union_attribute|
-            begin
-              coerced = union_attribute.coerce(input)
-              result = coerced unless coerced.is_a?(Avromatic::Model::Attributes) && coerced.invalid?
-            rescue
-              nil
+          if input && input.key?(MEMBER_INDEX)
+            result = safe_coerce(member_attributes[input.delete(MEMBER_INDEX)], input)
+          else
+            member_attributes.find do |union_attribute|
+              result = safe_coerce(union_attribute, input)
             end
           end
           result
@@ -42,6 +44,13 @@ module Avromatic
         end
 
         private
+
+        def safe_coerce(member_attribute, input)
+          coerced = member_attribute.coerce(input)
+          coerced unless coerced.is_a?(Avromatic::Model::Attributes) && coerced.invalid?
+        rescue
+          nil
+        end
 
         def member_attributes
           @member_attributes ||= Array.new

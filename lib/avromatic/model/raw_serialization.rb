@@ -88,11 +88,14 @@ module Avromatic
         end
 
         def custom_datum_reader(schema, key_or_value)
-          Avro::IO::DatumReader.new(schema, send("#{key_or_value}_avro_schema"))
+          datum_reader_class.new(schema, send("#{key_or_value}_avro_schema"))
         end
       end
 
       module ClassMethods
+        def datum_reader_class
+          Avromatic::IO::DatumReader
+        end
 
         # Store a hash of Procs by field name (as a symbol) to convert
         # the value before Avro serialization.
@@ -111,8 +114,8 @@ module Avromatic
 
         def datum_reader
           @datum_reader ||= begin
-            hash = { value: Avro::IO::DatumReader.new(value_avro_schema) }
-            hash[:key] = Avro::IO::DatumReader.new(key_avro_schema) if key_avro_schema
+            hash = { value: datum_reader_class.new(value_avro_schema) }
+            hash[:key] = datum_reader_class.new(key_avro_schema) if key_avro_schema
             hash
           end
         end
