@@ -16,10 +16,9 @@ describe AvroTurf::SchemaRegistry, 'schema registry patch' do
   let(:registry) { described_class.new(Avromatic.registry_url, logger: logger) }
 
   describe "#register" do
-    it "does not allow registration of an Avro JSON schema" do
-      expect do
-        registry.register(subject_name, schema)
-      end.to raise_error('schema must be an Avro::Schema')
+    it "allows registration of an Avro JSON schema" do
+      id = registry.register(subject_name, schema)
+      expect(registry.fetch(id)).to eq(avro_schema.to_s)
     end
 
     it "allows the registration of an Avro::Schema" do
