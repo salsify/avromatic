@@ -2,7 +2,8 @@
 module Avromatic
   module IO
     # Subclass DatumReader to include additional information about the union
-    # index used.
+    # member index used. The code modified below is based on salsify/avro,
+    # branch 'salsify-master' with the tag 'v1.9.0.3'
     class DatumReader < Avro::IO::DatumReader
 
       UNION_MEMBER_INDEX = '__avromatic_member_index'.freeze
@@ -25,8 +26,7 @@ module Avromatic
           raise SchemaMatchException.new(writers_schema, readers_schema)
         end
 
-        # function dispatch for reading data based on type of writer's
-        # schema
+        # function dispatch for reading data based on type of writer's schema
         datum = case writers_schema.type_sym
                 when :null;    decoder.read_null
                 when :boolean; decoder.read_boolean
@@ -46,6 +46,8 @@ module Avromatic
                   raise AvroError.new("Cannot read unknown schema type: #{writers_schema.type}")
                 end
 
+        # Allow this code to be used with an official Avro release or the
+        # avro-salsify-fork that includes logical_type support.
         if readers_schema.respond_to?(:logical_type)
           readers_schema.type_adapter.decode(datum)
         else
@@ -53,7 +55,7 @@ module Avromatic
         end
       end
 
-      # Override to specify initial record that may contain union index
+      # Override to specify an initial record that may contain union index
       def read_record(writers_schema, readers_schema, decoder, initial_record = {})
         readers_fields_hash = readers_schema.fields_hash
         read_record = Avromatic.use_custom_datum_reader ? initial_record : {}

@@ -2,7 +2,7 @@ require 'avro_turf/messaging'
 require 'avromatic/io/datum_reader'
 
 module Avromatic
-  # Subclass AvroTurf::Messaging to use a custom DatumReader
+  # Subclass AvroTurf::Messaging to use a custom DatumReader for decode.
   class Messaging < AvroTurf::Messaging
     def decode(data, schema_name: nil, namespace: @namespace)
       readers_schema = schema_name && @schema_store.find(schema_name, namespace)
@@ -24,7 +24,7 @@ module Avromatic
         @schemas_by_id[schema_id] = Avro::Schema.parse(schema_json)
       end
 
-      # The following line was changed to use a custom DatumReader
+      # The following line differs from the parent class to use a custom DatumReader
       reader = Avromatic::IO::DatumReader.new(writers_schema, readers_schema)
       reader.read(decoder)
     end

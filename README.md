@@ -59,8 +59,8 @@ and the [Messaging API](#messaging-api).
 * **registry_url**: URL for the schema registry. Either `schema_registry` or 
   `registry_url` must be configured.
 * **messaging**: An `AvroTurf::Messaging` object to be shared by all generated models.
-  The `build_messaging!` method may be used to create a `Messaging` instance based
-  on the other configuration values.
+  The `build_messaging!` method may be used to create a `Avromatic::Messaging`
+  instance based on the other configuration values.
 * **logger**: The logger to use for the schema registry client.
 * [Custom Types](#custom-types)
 
@@ -73,6 +73,15 @@ Avromatic.configure do |config|
   config.build_messaging!
 end
 ```
+
+#### Decoding
+
+* **use_custom_datum_reader**: `Avromatic` includes a modified subclass of
+  `Avro::IO::DatumReader`. This subclass returns additional information about
+  the index of union members when decoding Avro messages. This information is
+  used to optimize model creation when decoding. By default this information
+  is included in the hash returned by the `DatumReader` but can be omitted by
+  setting this option to `false`.
 
 ### Models
 
