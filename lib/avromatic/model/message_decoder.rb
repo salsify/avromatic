@@ -1,4 +1,4 @@
-require 'avro_turf/schema_registry'
+require 'avromatic/schema_registry_patch'
 
 module Avromatic
   module Model
