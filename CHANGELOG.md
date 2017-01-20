@@ -1,5 +1,12 @@
 # avromatic changelog
 
+## v0.15.0
+- Add patch to `AvroTurf::SchemaRegistry` to lookup existing schema ids using
+  `GET /subjects/:subject/fingerprints/:fingerprint` from `#register`.
+  This endpoint is supported in the avro-schema-registry.
+- Add patch to the `FakeSchemaRegistryServer` from `AvroTurf` to support the
+  fingerprint endpoint.
+
 ## v0.14.0
 - Add `Avromatic::Messaging` and `Avromatic::IO::DatumReader` classes to
   optimize the decoding of Avro unions to Avromatic models.
