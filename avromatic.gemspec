@@ -33,7 +33,7 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency 'avro-builder', '>= 0.12.0'
   # For FakeSchemaRegistryServer
   spec.add_development_dependency 'sinatra'
-  spec.add_development_dependency 'salsify_rubocop', '0.45.0'
+  spec.add_development_dependency 'salsify_rubocop', '~> 0.47.0'
   spec.add_development_dependency 'overcommit', '0.35.0'
   spec.add_development_dependency 'appraisal'
 end
