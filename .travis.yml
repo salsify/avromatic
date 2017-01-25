@@ -3,6 +3,9 @@ rvm:
   - 2.4.0
   - 2.3.3
   - 2.2.6
+before_install:
+  # Workaround for https://github.com/sickill/rainbow/issues/48
+  - gem update --system
 before_script:
   - bundle exec appraisal install --jobs=3
 script:
