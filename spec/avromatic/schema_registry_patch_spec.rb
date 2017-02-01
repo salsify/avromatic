@@ -45,4 +45,26 @@ describe AvroTurf::SchemaRegistry, 'schema registry patch' do
       end
     end
   end
+
+  describe "#lookup_subject_schema" do
+    context "when the schema does not exist" do
+      it "raises an error" do
+        expect do
+          registry.lookup_subject_schema(subject_name, schema)
+        end.to raise_error(Excon::Errors::NotFound)
+      end
+    end
+
+    context "with a previously registered schema" do
+      let!(:id) { registry.register(subject_name, schema) }
+
+      it "allows lookup using an Avro JSON schema" do
+        expect(registry.lookup_subject_schema(subject_name, schema)).to eq(id)
+      end
+
+      it "allows lookup using an Avro::Schema object" do
+        expect(registry.lookup_subject_schema(subject_name, avro_schema)).to eq(id)
+      end
+    end
+  end
 end

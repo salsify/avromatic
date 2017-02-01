@@ -65,7 +65,7 @@ and the [Messaging API](#messaging-api).
   The use of this additional endpoint can be disabled by setting this option to
   `false` and this is recommended if using a Schema Registry that does not support
   the endpoint.
-* **messaging**: An `AvroTurf::Messaging` object to be shared by all generated models.
+* **messaging**: An `AvroTurf::Messaging` object to be shared by all generated models
   The `build_messaging!` method may be used to create a `Avromatic::Messaging`
   instance based on the other configuration values.
 * **logger**: The logger to use for the schema registry client.
