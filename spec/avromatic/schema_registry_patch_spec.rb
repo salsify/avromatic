@@ -28,9 +28,9 @@ describe AvroTurf::SchemaRegistry, 'schema registry patch' do
 
     it "makes a request to check if the schema exists before attempting to register" do
       id = registry.register(subject_name, avro_schema)
-      allow(FakeSchemaRegistryServer).to receive(:post)
+      allow(registry).to receive(:post)
       expect(registry.register(subject_name, avro_schema)).to eq(id)
-      expect(FakeSchemaRegistryServer).not_to have_received(:post)
+      expect(registry).not_to have_received(:post)
     end
 
     context "when use_cacheable_schema_registration is false" do
@@ -42,6 +42,18 @@ describe AvroTurf::SchemaRegistry, 'schema registry patch' do
         allow(registry).to receive(:get).and_call_original
         registry.register(subject_name, avro_schema)
         expect(registry).not_to have_received(:get)
+      end
+    end
+
+    context "when the check prior to registration raises an error other than NotFound" do
+      before do
+        allow(registry).to receive(:get).and_raise(Excon::Errors::InternalServerError.new('error'))
+      end
+
+      it "raises the error" do
+        expect do
+          registry.register(subject_name, schema)
+        end.to raise_error(Excon::Errors::InternalServerError)
       end
     end
   end

@@ -9,7 +9,7 @@ module Avromatic
 
       begin
         lookup_subject_schema(subject, schema)
-      rescue
+      rescue Excon::Errors::NotFound
         data = post("/subjects/#{subject}/versions", body: { schema: schema.to_s }.to_json)
         id = data.fetch('id')
         @logger.info("Registered schema for subject `#{subject}`; id = #{id}")
