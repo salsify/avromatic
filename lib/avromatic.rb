@@ -9,7 +9,7 @@ module Avromatic
   class << self
     attr_accessor :schema_registry, :registry_url, :schema_store, :logger,
                   :messaging, :type_registry, :nested_models,
-                  :use_custom_datum_reader
+                  :use_custom_datum_reader, :use_cacheable_schema_registration
 
     delegate :register_type, to: :type_registry
   end
@@ -18,6 +18,7 @@ module Avromatic
   self.logger = Logger.new($stdout)
   self.type_registry = Avromatic::Model::TypeRegistry.new
   self.use_custom_datum_reader = true
+  self.use_cacheable_schema_registration = true
 
   def self.configure
     yield self

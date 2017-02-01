@@ -1,5 +1,9 @@
 # avromatic changelog
 
+## v0.15.1
+- Add `Avromatic.use_cacheable_schema_registration` option to control the lookup
+  of existing schema ids by fingerprint.
+
 ## v0.15.0
 - Add patch to `AvroTurf::SchemaRegistry` to lookup existing schema ids using
   `GET /subjects/:subject/fingerprints/:fingerprint` from `#register`.

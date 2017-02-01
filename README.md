@@ -58,6 +58,13 @@ and the [Messaging API](#messaging-api).
   `registry_url` must be configured.
 * **registry_url**: URL for the schema registry. Either `schema_registry` or 
   `registry_url` must be configured.
+* **use_cacheable_schema_registration**: Avromatic supports a Schema Registry
+  [extension](https://github.com/salsify/avro-schema-registry#extensions) that
+  provides an endpoint to lookup existing schema ids by fingerprint.
+  A successful response from this GET request can be cached indefinitely.
+  The use of this additional endpoint can be disabled by setting this option to
+  `false` and this is recommended if using a Schema Registry that does not support
+  the endpoint.
 * **messaging**: An `AvroTurf::Messaging` object to be shared by all generated models.
   The `build_messaging!` method may be used to create a `Avromatic::Messaging`
   instance based on the other configuration values.
