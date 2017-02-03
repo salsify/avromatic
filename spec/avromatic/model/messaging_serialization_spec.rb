@@ -357,4 +357,45 @@ describe Avromatic::Model::MessagingSerialization do
       end
     end
   end
+
+  describe ".register_schemas!" do
+    let(:registry) { Avromatic.build_schema_registry }
+
+    shared_examples_for "value schema registration" do
+      it "registers the value schema" do
+        expect(test_class.register_schemas!).to be_nil
+        registered = registry.subject_version(test_class.value_avro_schema.fullname)
+        aggregate_failures do
+          expect(registered['version']).to eq(1)
+          expect(registered['schema']).to eq(test_class.value_avro_schema.to_s)
+        end
+      end
+    end
+
+    context "a model without a key" do
+      let(:test_class) do
+        Avromatic::Model.model(value_schema_name: 'test.encode_value')
+      end
+
+      it_behaves_like "value schema registration"
+    end
+
+    context "a model with a key and value" do
+      let(:test_class) do
+        Avromatic::Model.model(value_schema_name: 'test.encode_value',
+                               key_schema_name: 'test.encode_key')
+      end
+
+      it_behaves_like "value schema registration"
+
+      it "registers the key schema" do
+        expect(test_class.register_schemas!).to be_nil
+        registered = registry.subject_version(test_class.key_avro_schema.fullname)
+        aggregate_failures do
+          expect(registered['version']).to eq(1)
+          expect(registered['schema']).to eq(test_class.key_avro_schema.to_s)
+        end
+      end
+    end
+  end
 end

@@ -319,6 +319,13 @@ Or just a value if only one schema is used:
 MyValue.avro_message_decode(message_value)
 ```
 
+The schemas associated with a model can also be added to a schema registry without
+encoding a message:
+
+```ruby
+MyTopic.register_schemas!
+```
+
 #### Avromatic::Model::MessageDecoder
 
 A stream of messages encoded from various models using the messaging approach

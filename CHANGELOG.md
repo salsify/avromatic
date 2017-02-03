@@ -1,5 +1,9 @@
 # avromatic changelog
 
+## v0.17.0
+- Add `.register_schemas!` method to generated models to register the associated
+  schemas in a schema registry.
+
 ## v0.16.0
 - Add `#lookup_subject_schema` method to `AvroTurf::SchemaRegistry` patch to
   directly support looking up existing schema ids by fingerprint.

@@ -4,6 +4,8 @@ require 'avromatic/io/datum_reader'
 module Avromatic
   # Subclass AvroTurf::Messaging to use a custom DatumReader for decode.
   class Messaging < AvroTurf::Messaging
+    attr_reader :registry
+
     def decode(data, schema_name: nil, namespace: @namespace)
       readers_schema = schema_name && @schema_store.find(schema_name, namespace)
       stream = StringIO.new(data)

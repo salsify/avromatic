@@ -50,6 +50,20 @@ module Avromatic
         end
       end
 
+      module Registration
+        def register_schemas!
+          register_schema(key_avro_schema) if key_avro_schema
+          register_schema(value_avro_schema)
+          nil
+        end
+
+        private
+
+        def register_schema(schema)
+          avro_messaging.registry.register(schema.fullname, schema)
+        end
+      end
+
       module ClassMethods
         # The messaging object acts as an intermediary talking to the schema
         # registry and using returned/specified schemas to decode/encode.
@@ -58,6 +72,7 @@ module Avromatic
         end
 
         include Decode
+        include Registration
       end
     end
   end
