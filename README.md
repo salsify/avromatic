@@ -352,6 +352,20 @@ The following validations are supported:
 - Validity of nested records, including records embedded in array, maps, and
   unions.
 
+### Logical Types
+
+Currently the Ruby Avro library provided by Apache [does not support logical types](https://issues.apache.org/jira/browse/AVRO-1695).
+That feature is in progress, will hopefully be merged soon.
+
+Avromatic supports logical types as implemented in the pull request referenced in AVRO-1695.
+
+While you wait for that to be merged into the official library, you can use our avro-salsify-fork gem that includes the changes in that pull request.
+To use this gem, reference it in your Gemfile:
+
+```rb
+gem 'avro-salsify-fork', require: 'avro'
+````
+
 ### Unsupported/Future
 
 The following types/features are not supported for generated models:
