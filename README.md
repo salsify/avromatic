@@ -24,6 +24,9 @@ Or install it yourself as:
 
     $ gem install avromatic
 
+See the [Logical Types](#logical-types) section below for details on using
+Avromatic with unreleased Avro features.
+
 ## Usage
 
 ### Configuration
@@ -47,6 +50,10 @@ Or install it yourself as:
   option is useful for defining models that will be extended when the load order
   is important.
 
+#### Custom Types
+
+See the section below on configuring [Custom Types](#custom-type-configuration).
+
 #### Using a Schema Registry/Messaging API
  
 The configuration options below are required when using a schema registry 
@@ -69,7 +76,6 @@ and the [Messaging API](#messaging-api).
   The `build_messaging!` method may be used to create a `Avromatic::Messaging`
   instance based on the other configuration values.
 * **logger**: The logger to use for the schema registry client.
-* [Custom Types](#custom-types)
 
 Example using a schema registry:
 
@@ -203,8 +209,9 @@ Avromatic.configure do |config|
     MyNestedModel
   ]
 end
+```
 
-#### Custom Types
+#### Custom Type Configuration
 
 Custom types can be configured for fields of named types (record, enum, fixed).
 These customizations are registered on the `Avromatic` module. Once a custom type
@@ -351,6 +358,23 @@ The following validations are supported:
   valid for required fields.
 - Validity of nested records, including records embedded in array, maps, and
   unions.
+
+### Logical Types
+
+Currently the official Apache Avro Ruby library does not support logical types ([AVRO-1695](https://issues.apache.org/jira/browse/AVRO-1695)).
+That feature is in progress and will hopefully be merged soon.
+
+Avromatic supports logical types as implemented in the [pull request](https://github.com/apache/avro/pull/116) referenced in AVRO-1695.
+
+Until that change is included in the official library, you can
+use [avro-salsify-fork gem](https://github.com/salsify/avro) which includes
+the changes from the above pull request.
+
+To use this gem, reference it in your Gemfile:
+
+```ruby
+gem 'avro-salsify-fork', require: 'avro'
+````
 
 ### Unsupported/Future
 
