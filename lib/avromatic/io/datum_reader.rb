@@ -11,7 +11,7 @@ module Avromatic
       def read_data(writers_schema, readers_schema, decoder, initial_record = {})
         # schema matching
         unless self.class.match_schemas(writers_schema, readers_schema)
-          raise SchemaMatchException.new(writers_schema, readers_schema)
+          raise Avro::IO::SchemaMatchException.new(writers_schema, readers_schema)
         end
 
         # schema resolution: reader's schema is a union, writer's schema is not
@@ -23,7 +23,7 @@ module Avromatic
           union_info = { UNION_MEMBER_INDEX => rs_index }
 
           return read_data(writers_schema, readers_schema.schemas[rs_index], decoder, union_info) if rs_index
-          raise SchemaMatchException.new(writers_schema, readers_schema)
+          raise Avro::IO::SchemaMatchException.new(writers_schema, readers_schema)
         end
 
         # function dispatch for reading data based on type of writer's schema
@@ -43,7 +43,7 @@ module Avromatic
                 when :union;   read_union(writers_schema, readers_schema, decoder)
                 when :record, :error, :request; read_record(writers_schema, readers_schema, decoder, initial_record)
                 else
-                  raise AvroError.new("Cannot read unknown schema type: #{writers_schema.type}")
+                  raise Avro::AvroError.new("Cannot read unknown schema type: #{writers_schema.type}")
                 end
 
         # Allow this code to be used with an official Avro release or the
