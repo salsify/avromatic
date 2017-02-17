@@ -1,5 +1,8 @@
 # avromatic changelog
 
+## v0.17.1
+- Correctly namespace Avro errors raised by `Avromatic::IO::DatumReader`.
+
 ## v0.17.0
 - Add `.register_schemas!` method to generated models to register the associated
   schemas in a schema registry.
