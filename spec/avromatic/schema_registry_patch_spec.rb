@@ -1,6 +1,6 @@
 # rubocop:disable RSpec/FilePath
 
-describe AvroTurf::SchemaRegistry, 'schema registry patch' do
+describe AvroTurf::ConfluentSchemaRegistry, 'schema registry patch' do
   let(:logger) { Logger.new(StringIO.new) }
   let(:subject_name) { 'some-subject' }
   let(:schema) do

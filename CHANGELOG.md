@@ -1,5 +1,10 @@
 # avromatic changelog
 
+## v0.18.0
+- Compatibility with `avro_turf` v0.8.0. `avromatic/test/fake_schema_registry_server`
+  is now deprecated and will be removed in a future release.
+  Use `avromatic/test/fake_confluent_schema_registry_server` instead.
+
 ## v0.17.1
 - Correctly namespace Avro errors raised by `Avromatic::IO::DatumReader`.
 

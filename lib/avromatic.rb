@@ -27,8 +27,8 @@ module Avromatic
 
   def self.build_schema_registry
     raise 'Avromatic must be configured with a registry_url' unless registry_url
-    AvroTurf::CachedSchemaRegistry.new(
-      AvroTurf::SchemaRegistry.new(registry_url, logger: logger)
+    AvroTurf::CachedConfluentSchemaRegistry.new(
+      AvroTurf::ConfluentSchemaRegistry.new(registry_url, logger: logger)
     )
   end
 
