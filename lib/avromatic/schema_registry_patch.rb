@@ -1,5 +1,5 @@
 require 'avro_turf'
-require 'avro_turf/schema_registry'
+require 'avro_turf/confluent_schema_registry'
 
 module Avromatic
   module CacheableSchemaRegistration
@@ -32,4 +32,4 @@ module Avromatic
   end
 end
 
-AvroTurf::SchemaRegistry.prepend(Avromatic::CacheableSchemaRegistration)
+AvroTurf::ConfluentSchemaRegistry.prepend(Avromatic::CacheableSchemaRegistration)

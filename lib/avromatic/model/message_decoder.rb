@@ -35,7 +35,7 @@ module Avromatic
       delegate :model_key, to: :class
 
       # @param *models [generated models] Models to register for decoding.
-      # @param schema_registry [Avromatic::SchemaRegistryClient] Optional schema
+      # @param schema_registry [AvroTurf::ConfluentSchemaRegistry] Optional schema
       #   registry client.
       # @param registry_url [String] Optional URL for schema registry server.
       def initialize(*models, schema_registry: nil, registry_url: nil)
@@ -43,7 +43,7 @@ module Avromatic
         @schema_names_by_id = {}
         @schema_registry = schema_registry ||
           Avromatic.schema_registry ||
-          (registry_url && AvroTurf::SchemaRegistry.new(registry_url, logger: Avromatic.logger)) ||
+          (registry_url && AvroTurf::ConfluentSchemaRegistry.new(registry_url, logger: Avromatic.logger)) ||
           Avromatic.build_schema_registry
       end
 
