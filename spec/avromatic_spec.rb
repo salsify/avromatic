@@ -20,10 +20,10 @@ describe Avromatic do
         Avromatic.registry_url = registry_url
       end
 
-      it "returns a CachedSchemaRegistryClient" do
-        allow(AvroTurf::SchemaRegistry).to receive(:new).and_call_original
-        expect(Avromatic.build_schema_registry).to be_a(AvroTurf::CachedSchemaRegistry)
-        expect(AvroTurf::SchemaRegistry).to have_received(:new)
+      it "returns a CachedConfluentSchemaRegistry client" do
+        allow(AvroTurf::ConfluentSchemaRegistry).to receive(:new).and_call_original
+        expect(Avromatic.build_schema_registry).to be_a(AvroTurf::CachedConfluentSchemaRegistry)
+        expect(AvroTurf::ConfluentSchemaRegistry).to have_received(:new)
           .with(Avromatic.registry_url, logger: Avromatic.logger)
       end
 
