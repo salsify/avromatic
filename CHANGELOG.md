@@ -1,5 +1,8 @@
 # avromatic changelog
 
+## v0.18.1
+- Replace another reference to `avromatic/test/fake_schema_registry_server`.
+
 ## v0.18.0
 - Compatibility with `avro_turf` v0.8.0. `avromatic/test/fake_schema_registry_server`
   is now deprecated and will be removed in a future release.
