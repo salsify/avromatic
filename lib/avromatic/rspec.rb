@@ -1,5 +1,5 @@
 require 'webmock/rspec'
-require 'avromatic/test/fake_schema_registry_server'
+require 'avromatic/test/fake_confluent_schema_registry_server'
 
 RSpec.configure do |config|
   config.before(:each) do
