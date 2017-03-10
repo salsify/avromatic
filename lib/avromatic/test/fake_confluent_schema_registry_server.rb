@@ -1,4 +1,5 @@
 require 'avro_turf/test/fake_confluent_schema_registry_server'
+require 'avro-resolution_canonical_form'
 
 # Add support for endpoint to lookup subject schema id by fingerprint.
 FakeConfluentSchemaRegistryServer.class_eval do
@@ -14,7 +15,7 @@ FakeConfluentSchemaRegistryServer.class_eval do
     fingerprint = fingerprint.to_i.to_s(16) if /^\d+$/ =~ fingerprint
 
     schema_id = SCHEMAS.find_index do |schema|
-      Avro::Schema.parse(schema).sha256_fingerprint.to_s(16) == fingerprint
+      Avro::Schema.parse(schema).sha256_resolution_fingerprint.to_s(16) == fingerprint
     end
 
     halt(404, SCHEMA_NOT_FOUND) unless schema_id && SUBJECTS[subject].include?(schema_id)
