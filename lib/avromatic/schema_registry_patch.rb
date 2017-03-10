@@ -1,5 +1,6 @@
 require 'avro_turf'
 require 'avro_turf/confluent_schema_registry'
+require 'avro-resolution_canonical_form'
 
 module Avromatic
   module CacheableSchemaRegistration
@@ -24,7 +25,7 @@ module Avromatic
                         schema
                       end
 
-      data = get("/subjects/#{subject}/fingerprints/#{schema_object.sha256_fingerprint.to_s(16)}")
+      data = get("/subjects/#{subject}/fingerprints/#{schema_object.sha256_resolution_fingerprint.to_s(16)}")
       id = data.fetch('id')
       @logger.info("Found schema for subject `#{subject}`; id = #{id}")
       id

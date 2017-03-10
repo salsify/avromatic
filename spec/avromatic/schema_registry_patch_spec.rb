@@ -8,7 +8,7 @@ describe AvroTurf::ConfluentSchemaRegistry, 'schema registry patch' do
       type: 'record',
       name: 'person',
       fields: [
-        { name: 'name', type: 'string' }
+        { name: 'name', type: 'string', default: 'unknown' }
       ]
     }.to_json
   end
