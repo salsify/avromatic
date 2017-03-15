@@ -24,6 +24,7 @@ Gem::Specification.new do |spec|
   spec.add_runtime_dependency 'activesupport'
   spec.add_runtime_dependency 'activemodel'
   spec.add_runtime_dependency 'avro_turf', '>= 0.8.0'
+  spec.add_runtime_dependency 'avro-resolution_canonical_form'
 
   spec.add_development_dependency 'bundler', '~> 1.11'
   spec.add_development_dependency 'rake', '~> 10.0'

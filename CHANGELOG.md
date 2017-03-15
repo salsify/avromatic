@@ -1,5 +1,8 @@
 # avromatic changelog
 
+## v0.19.0
+- Use a fingerprint based on `avro-resolution_canonical_form`.
+
 ## v0.18.1
 - Replace another reference to `avromatic/test/fake_schema_registry_server`.
 

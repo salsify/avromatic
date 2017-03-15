@@ -11,7 +11,7 @@ appraise 'rails4_2' do
 end
 
 appraise 'avro-salsify-fork' do
-  gem 'avro-salsify-fork', '1.9.0.3', require: 'avro'
+  gem 'avro-salsify-fork', '1.9.0.5', require: 'avro'
   gem 'activesupport', '~> 4.2.7.1'
   gem 'activemodel', '~> 4.2.7.1'
 end
