@@ -1,5 +1,8 @@
 # avromatic changelog
 
+## v0.20.0
+- Support schema stores with a `#clear_schemas` method.
+
 ## v0.19.0
 - Use a fingerprint based on `avro-resolution_canonical_form`.
 

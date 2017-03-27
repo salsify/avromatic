@@ -51,7 +51,13 @@ module Avromatic
   def self.prepare!(skip_clear: false)
     unless skip_clear
       nested_models.clear
-      schema_store.public_send(:clear) if schema_store && schema_store.respond_to?(:clear)
+      if schema_store
+        if schema_store.respond_to?(:clear_schemas)
+          schema_store.clear_schemas
+        elsif schema_store.respond_to?(:clear)
+          schema_store.clear
+        end
+      end
     end
     eager_load_models!
   end
