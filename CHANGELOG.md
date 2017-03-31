@@ -1,5 +1,9 @@
 # avromatic changelog
 
+## v0.21.0
+- Add support for additional parameters to
+  `AvroTurf::ConfluentSchemaRegistry#compatible?`.
+
 ## v0.20.0
 - Support schema stores with a `#clear_schemas` method.
 

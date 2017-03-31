@@ -79,4 +79,24 @@ describe AvroTurf::ConfluentSchemaRegistry, 'schema registry patch' do
       end
     end
   end
+
+  describe "#compatible?" do
+    let(:compatibility) { 'BACKWARD' }
+
+    before do
+      # The fake schema registry does not support the compatibility endpoint
+      WebMock.stub_request(
+        :post,
+        "#{Avromatic.registry_url}/compatibility/subjects/#{subject_name}/versions/latest"
+      ).with(body: { schema: schema, with_compatibility: compatibility }.to_json)
+        .to_return(status: 200, body: { is_compatible: true }.to_json)
+    end
+
+    it "allows additional parameters to be specified" do
+      expect(registry.compatible?(subject_name,
+                                  schema,
+                                  'latest',
+                                  with_compatibility: compatibility)).to eq(true)
+    end
+  end
 end

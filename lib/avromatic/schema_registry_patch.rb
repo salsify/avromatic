@@ -30,6 +30,14 @@ module Avromatic
       @logger.info("Found schema for subject `#{subject}`; id = #{id}")
       id
     end
+
+    # Override to add support for additional params
+    def compatible?(subject, schema, version = 'latest', **params)
+      data = post("/compatibility/subjects/#{subject}/versions/#{version}",
+                  expects: [200, 404],
+                  body: { schema: schema.to_s }.merge!(params).to_json)
+      data.fetch('is_compatible', false) unless data.key?('error_code')
+    end
   end
 end
 
