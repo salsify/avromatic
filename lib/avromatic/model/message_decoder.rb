@@ -1,5 +1,3 @@
-require 'avromatic/schema_registry_patch'
-
 module Avromatic
   module Model
 

@@ -1,5 +1,5 @@
 require 'avromatic/version'
-require 'avro_turf'
+require 'avro_schema_registry-client'
 require 'avromatic/model'
 require 'avromatic/model_registry'
 require 'avromatic/messaging'
@@ -27,9 +27,15 @@ module Avromatic
 
   def self.build_schema_registry
     raise 'Avromatic must be configured with a registry_url' unless registry_url
-    AvroTurf::CachedConfluentSchemaRegistry.new(
-      AvroTurf::ConfluentSchemaRegistry.new(registry_url, logger: logger)
-    )
+    if use_cacheable_schema_registration
+      AvroSchemaRegistry::CachedClient.new(
+        AvroSchemaRegistry::Client.new(registry_url, logger: logger)
+      )
+    else
+      AvroTurf::CachedConfluentSchemaRegistry.new(
+        AvroTurf::ConfluentSchemaRegistry.new(registry_url, logger: logger)
+      )
+    end
   end
 
   def self.build_messaging

@@ -60,8 +60,9 @@ The configuration options below are required when using a schema registry
 (see [Confluent Schema Registry](http://docs.confluent.io/2.0.1/schema-registry/docs/intro.html))
 and the [Messaging API](#messaging-api).
   
-* **schema_registry**: An `AvroTurf::ConfluentSchemaRegistry` object used to store Avro schemas
-  so that they can be referenced by id. Either `schema_registry` or 
+* **schema_registry**: An `AvroSchemaRegistry::Client` or
+  `AvroTurf::ConfluentSchemaRegistry` object used to store Avro schemas
+  so that they can be referenced by id. Either `schema_registry` or
   `registry_url` must be configured.
 * **registry_url**: URL for the schema registry. Either `schema_registry` or 
   `registry_url` must be configured.

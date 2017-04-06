@@ -20,11 +20,24 @@ describe Avromatic do
         Avromatic.registry_url = registry_url
       end
 
-      it "returns a CachedConfluentSchemaRegistry client" do
-        allow(AvroTurf::ConfluentSchemaRegistry).to receive(:new).and_call_original
-        expect(Avromatic.build_schema_registry).to be_a(AvroTurf::CachedConfluentSchemaRegistry)
-        expect(AvroTurf::ConfluentSchemaRegistry).to have_received(:new)
+      it "returns an AvroSchemaRegistry::CachedClient", :aggregate_failures do
+        allow(AvroSchemaRegistry::Client).to receive(:new).and_call_original
+        expect(Avromatic.build_schema_registry).to be_a(AvroSchemaRegistry::CachedClient)
+        expect(AvroSchemaRegistry::Client).to have_received(:new)
           .with(Avromatic.registry_url, logger: Avromatic.logger)
+      end
+
+      context "when use_cacheable schema registry is false" do
+        before { Avromatic.use_cacheable_schema_registration = false }
+
+        it "returns a CachedConfluentSchemaRegistry client", :aggregate_failures do
+          allow(AvroTurf::ConfluentSchemaRegistry).to receive(:new).and_call_original
+          schema_registry = Avromatic.build_schema_registry
+          expect(schema_registry).to be_a(AvroTurf::CachedConfluentSchemaRegistry)
+          expect(schema_registry).not_to be_a(AvroSchemaRegistry::CachedClient)
+          expect(AvroTurf::ConfluentSchemaRegistry).to have_received(:new)
+            .with(Avromatic.registry_url, logger: Avromatic.logger)
+        end
       end
 
       it "does not cache the schema registry client" do
