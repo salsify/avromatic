@@ -27,8 +27,8 @@ describe Avromatic do
           .with(Avromatic.registry_url, logger: Avromatic.logger)
       end
 
-      context "when use_cacheable schema registry is false" do
-        before { Avromatic.use_cacheable_schema_registration = false }
+      context "when use_schema_fingerprint_lookup is false" do
+        before { Avromatic.use_schema_fingerprint_lookup = false }
 
         it "returns a CachedConfluentSchemaRegistry client", :aggregate_failures do
           allow(AvroTurf::ConfluentSchemaRegistry).to receive(:new).and_call_original

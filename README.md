@@ -66,7 +66,7 @@ and the [Messaging API](#messaging-api).
   `registry_url` must be configured.
 * **registry_url**: URL for the schema registry. Either `schema_registry` or 
   `registry_url` must be configured.
-* **use_cacheable_schema_registration**: Avromatic supports a Schema Registry
+* **use_schema_fingerprint_lookup**: Avromatic supports a Schema Registry
   [extension](https://github.com/salsify/avro-schema-registry#extensions) that
   provides an endpoint to lookup existing schema ids by fingerprint.
   A successful response from this GET request can be cached indefinitely.

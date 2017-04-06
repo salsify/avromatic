@@ -4,6 +4,8 @@
 - Remove monkey-patches for `AvroTurf::ConfluentSchemaRegistry` and
   `FakeConfluentSchemaRegistryServer` and depend on `avro_schema_registry-client`
   instead.
+- Rename the configuration option `use_cacheable_schema_registration` to
+  `use_schema_fingerprint_lookup`.
 
 ## v0.20.0
 - Support schema stores with a `#clear_schemas` method.
