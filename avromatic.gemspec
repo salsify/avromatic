@@ -21,10 +21,10 @@ Gem::Specification.new do |spec|
 
   spec.add_runtime_dependency 'avro', '>= 1.7.7'
   spec.add_runtime_dependency 'virtus'
-  spec.add_runtime_dependency 'activesupport'
-  spec.add_runtime_dependency 'activemodel'
-  spec.add_runtime_dependency 'avro_turf', '>= 0.8.0'
-  spec.add_runtime_dependency 'avro-resolution_canonical_form'
+  spec.add_runtime_dependency 'activesupport', '>= 4.1', '< 5.1'
+  spec.add_runtime_dependency 'activemodel', '>= 4.1', '< 5.1'
+  spec.add_runtime_dependency 'avro_turf'
+  spec.add_runtime_dependency 'avro_schema_registry-client'
 
   spec.add_development_dependency 'bundler', '~> 1.11'
   spec.add_development_dependency 'rake', '~> 10.0'
@@ -32,7 +32,7 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency 'simplecov'
   spec.add_development_dependency 'webmock'
   spec.add_development_dependency 'avro-builder', '>= 0.12.0'
-  # For FakeSchemaRegistryServer
+  # For AvroSchemaRegistry::FakeServer
   spec.add_development_dependency 'sinatra'
   spec.add_development_dependency 'salsify_rubocop', '~> 0.47.0'
   spec.add_development_dependency 'overcommit', '0.35.0'

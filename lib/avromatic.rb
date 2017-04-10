@@ -1,5 +1,5 @@
 require 'avromatic/version'
-require 'avro_turf'
+require 'avro_schema_registry-client'
 require 'avromatic/model'
 require 'avromatic/model_registry'
 require 'avromatic/messaging'
@@ -9,7 +9,7 @@ module Avromatic
   class << self
     attr_accessor :schema_registry, :registry_url, :schema_store, :logger,
                   :messaging, :type_registry, :nested_models,
-                  :use_custom_datum_reader, :use_cacheable_schema_registration
+                  :use_custom_datum_reader, :use_schema_fingerprint_lookup
 
     delegate :register_type, to: :type_registry
   end
@@ -18,7 +18,7 @@ module Avromatic
   self.logger = Logger.new($stdout)
   self.type_registry = Avromatic::Model::TypeRegistry.new
   self.use_custom_datum_reader = true
-  self.use_cacheable_schema_registration = true
+  self.use_schema_fingerprint_lookup = true
 
   def self.configure
     yield self
@@ -27,9 +27,15 @@ module Avromatic
 
   def self.build_schema_registry
     raise 'Avromatic must be configured with a registry_url' unless registry_url
-    AvroTurf::CachedConfluentSchemaRegistry.new(
-      AvroTurf::ConfluentSchemaRegistry.new(registry_url, logger: logger)
-    )
+    if use_schema_fingerprint_lookup
+      AvroSchemaRegistry::CachedClient.new(
+        AvroSchemaRegistry::Client.new(registry_url, logger: logger)
+      )
+    else
+      AvroTurf::CachedConfluentSchemaRegistry.new(
+        AvroTurf::ConfluentSchemaRegistry.new(registry_url, logger: logger)
+      )
+    end
   end
 
   def self.build_messaging

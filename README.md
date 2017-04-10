@@ -60,12 +60,13 @@ The configuration options below are required when using a schema registry
 (see [Confluent Schema Registry](http://docs.confluent.io/2.0.1/schema-registry/docs/intro.html))
 and the [Messaging API](#messaging-api).
   
-* **schema_registry**: An `AvroTurf::ConfluentSchemaRegistry` object used to store Avro schemas
-  so that they can be referenced by id. Either `schema_registry` or 
+* **schema_registry**: An `AvroSchemaRegistry::Client` or
+  `AvroTurf::ConfluentSchemaRegistry` object used to store Avro schemas
+  so that they can be referenced by id. Either `schema_registry` or
   `registry_url` must be configured.
 * **registry_url**: URL for the schema registry. Either `schema_registry` or 
   `registry_url` must be configured.
-* **use_cacheable_schema_registration**: Avromatic supports a Schema Registry
+* **use_schema_fingerprint_lookup**: Avromatic supports a Schema Registry
   [extension](https://github.com/salsify/avro-schema-registry#extensions) that
   provides an endpoint to lookup existing schema ids by fingerprint.
   A successful response from this GET request can be cached indefinitely.
