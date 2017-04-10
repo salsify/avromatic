@@ -1,9 +1,9 @@
 require 'webmock/rspec'
-require 'avromatic/test/fake_confluent_schema_registry_server'
+require 'avro_schema_registry/test/fake_server'
 
 RSpec.configure do |config|
   config.before(:each) do
-    WebMock.stub_request(:any, /^#{Avromatic.registry_url}/).to_rack(FakeConfluentSchemaRegistryServer)
-    FakeConfluentSchemaRegistryServer.clear
+    WebMock.stub_request(:any, /^#{Avromatic.registry_url}/).to_rack(AvroSchemaRegistry::FakeServer)
+    AvroSchemaRegistry::FakeServer.clear
   end
 end
