@@ -1,4 +1,5 @@
 # coding: utf-8
+
 lib = File.expand_path('../lib', __FILE__)
 $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
 require 'avromatic/version'
@@ -34,7 +35,7 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency 'avro-builder', '>= 0.12.0'
   # For AvroSchemaRegistry::FakeServer
   spec.add_development_dependency 'sinatra'
-  spec.add_development_dependency 'salsify_rubocop', '~> 0.47.0'
+  spec.add_development_dependency 'salsify_rubocop', '~> 0.48.0'
   spec.add_development_dependency 'overcommit', '0.35.0'
   spec.add_development_dependency 'appraisal'
 end

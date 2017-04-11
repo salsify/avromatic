@@ -343,17 +343,16 @@ describe Avromatic::Model::Builder do
           end
         end
       end
+      let(:data) do
+        {
+          top: { a: [{ str: 137 }, { i: '99', c: 'FooBar' }] }
+        }
+      end
 
       before do
         Avromatic.register_type('handshake', String) do |type|
           type.from_avro = ->(value) { value.downcase }
         end
-      end
-
-      let(:data) do
-        {
-          top: { a: [{ str: 137 }, { i: '99', c: 'FooBar' }] }
-        }
       end
 
       it "performs the expected coercions" do
