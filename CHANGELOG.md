@@ -1,5 +1,8 @@
 # avromatic changelog
 
+## v0.21.1
+- Fix a bug in the optimization of optional union decoding.
+
 ## v0.21.0
 - Remove monkey-patches for `AvroTurf::ConfluentSchemaRegistry` and
   `FakeConfluentSchemaRegistryServer` and depend on `avro_schema_registry-client`

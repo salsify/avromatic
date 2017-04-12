@@ -32,7 +32,6 @@ describe Avromatic::IO::DatumReader do
         expect { reader.read(decoder) }.to raise_error(Avro::AvroError)
       end
     end
-
   end
 
   context "primitive types" do
@@ -67,6 +66,58 @@ describe Avromatic::IO::DatumReader do
 
     it "includes the member index in the decoded hash" do
       expect(attributes['message'][described_class::UNION_MEMBER_INDEX]).to eq(1)
+    end
+
+    it "can decode a message" do
+      expect(test_class.avro_message_decode(avro_message_value)).to eq(instance)
+    end
+
+    context "a record with an optional union" do
+      let(:schema_name) { 'test.optional_union' }
+
+      it "includes the member index in the decoded hash" do
+        puts instance.value_attributes_for_avro
+        expect(attributes['message'][described_class::UNION_MEMBER_INDEX]).to eq(1)
+      end
+
+      it "can decode a message" do
+        expect(test_class.avro_message_decode(avro_message_value)).to eq(instance)
+      end
+    end
+
+    context "with an optional field" do
+      let(:schema_name) { 'test.with_union' }
+      let(:values) { { s: 'foo' } }
+
+      it "does not include a member index in the decoded hash" do
+        expect(attributes).not_to have_key(described_class::UNION_MEMBER_INDEX)
+      end
+    end
+
+    context "with null in a union" do
+      let(:schema_name) { 'test.null_in_union' }
+      let(:values) do
+        {
+          values: [
+            { i: 123 },
+            nil,
+            { s: 'abc' }
+          ]
+        }
+      end
+
+      it "includes the member index in the decoded hash" do
+        pending "a null type in the middle of union member types is currently broken/unsupported"
+
+        expect(attributes['values'][0][described_class::UNION_MEMBER_INDEX]).to eq(0)
+        expect(attributes['values'][2][described_class::UNION_MEMBER_INDEX]).to eq(2)
+      end
+
+      it "can decode a message" do
+        pending "a null type in the middle of union member types is currently broken/unsupported"
+
+        expect(test_class.avro_message_decode(avro_message_value)).to eq(instance)
+      end
     end
 
     context "when use_custom_datum_reader is false" do

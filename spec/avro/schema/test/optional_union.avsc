@@ -1,0 +1,40 @@
+{
+  "type": "record",
+  "name": "optional_union",
+  "namespace": "test",
+  "fields": [
+    {
+      "name": "header",
+      "type": "string"
+    },
+    {
+      "name": "message",
+      "type": [
+        "null",
+        {
+          "type": "record",
+          "name": "foo",
+          "namespace": "test",
+          "fields": [
+            {
+              "name": "foo_message",
+              "type": "string"
+            }
+          ]
+        },
+        {
+          "type": "record",
+          "name": "bar",
+          "namespace": "test",
+          "fields": [
+            {
+              "name": "bar_message",
+              "type": "string"
+            }
+          ]
+        }
+      ],
+      "default": null
+    }
+  ]
+}

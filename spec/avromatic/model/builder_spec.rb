@@ -387,6 +387,18 @@ describe Avromatic::Model::Builder do
             .to raise_error('custom types within unions are currently unsupported')
         end
       end
+
+      context "null after the first union member type" do
+        let(:schema_name) { 'test.null_in_union' }
+        let(:test_class) do
+          described_class.model(schema_name: schema_name)
+        end
+
+        it "raises an error" do
+          expect { test_class }
+            .to raise_error('a null type in a union must be the first member')
+        end
+      end
     end
   end
 
