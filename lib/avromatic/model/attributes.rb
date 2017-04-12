@@ -144,6 +144,9 @@ module Avromatic
         end
 
         def union_field_class(field_type)
+          null_index = field_type.schemas.index { |schema| schema.type_sym == :null }
+          raise 'a null type in a union must be the first member' if null_index && null_index > 0
+
           field_classes = field_type.schemas.reject { |schema| schema.type_sym == :null }
                             .map { |schema| avro_field_class(schema) }
 

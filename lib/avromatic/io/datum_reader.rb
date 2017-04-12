@@ -20,7 +20,16 @@ module Avromatic
             self.class.match_schemas(writers_schema, s)
           end
 
-          union_info = { UNION_MEMBER_INDEX => rs_index }
+          optional = readers_schema.schemas.first.type_sym == :null
+          union_info = if readers_schema.schemas.size == 2 && optional
+                         # Avromatic does not treat the union of null and 1 other type as a union
+                         {}
+                       elsif optional
+                         # Avromatic does not treat the null of an optional field as part of the union
+                         { UNION_MEMBER_INDEX => rs_index - 1 }
+                       else
+                         { UNION_MEMBER_INDEX => rs_index }
+                       end
 
           return read_data(writers_schema, readers_schema.schemas[rs_index], decoder, union_info) if rs_index
           raise Avro::IO::SchemaMatchException.new(writers_schema, readers_schema)

@@ -1,0 +1,38 @@
+{
+  "type": "record",
+  "name": "null_in_union",
+  "namespace": "test",
+  "fields": [
+    {
+      "name": "values",
+      "type": {
+        "type": "array",
+        "items": [
+          {
+            "type": "record",
+            "name": "i_rec",
+            "namespace": "test",
+            "fields": [
+              {
+                "name": "i",
+                "type": "int"
+              }
+            ]
+          },
+          "null",
+          {
+            "type": "record",
+            "name": "s_rec",
+            "namespace": "test",
+            "fields": [
+              {
+                "name": "s",
+                "type": "string"
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}
