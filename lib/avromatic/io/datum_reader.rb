@@ -56,7 +56,7 @@ module Avromatic
                 end
 
         # Allow this code to be used with an official Avro release or the
-        # avro-salsify-fork that includes logical_type support.
+        # avro-patches gem that includes logical_type support.
         if readers_schema.respond_to?(:logical_type)
           readers_schema.type_adapter.decode(datum)
         else
