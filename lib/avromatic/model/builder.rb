@@ -42,7 +42,7 @@ module Avromatic
       def inclusions
         [
           ActiveModel::Validations,
-          Virtus.value_object,
+          config.mutable ? Virtus.model : Virtus.value_object,
           Avromatic::Model::Configurable,
           Avromatic::Model::NestedModels,
           Avromatic::Model::Validation,

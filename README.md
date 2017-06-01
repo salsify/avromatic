@@ -118,7 +118,15 @@ end
 ```
 
 Models are generated as [Virtus](https://github.com/solnic/virtus) value
-objects. `Virtus` attributes are added for each field in the Avro schema
+objects by default, but can optionally be defined as mutable:
+
+```ruby
+class MyModel
+  include Avromatic::Model.build(schema_name :my_model, mutable: true)
+end
+```
+
+`Virtus` attributes are added for each field in the Avro schema
 including any default values defined in the schema. `ActiveModel` validations
 are used to define validations on certain types of fields ([see below](#validations)).
 
