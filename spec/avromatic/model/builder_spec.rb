@@ -6,6 +6,10 @@ describe Avromatic::Model::Builder do
     described_class.model(schema_name: schema_name)
   end
 
+  let(:mutable_test_class) do
+    described_class.model(schema_name: schema_name, immutable: false)
+  end
+
   let(:attribute_names) do
     test_class.attribute_set.map(&:name).map(&:to_s)
   end
@@ -453,14 +457,24 @@ describe Avromatic::Model::Builder do
     let(:model1) { test_class.new(values) }
     let(:model2) { test_class.new(values) }
     let(:model3) { test_class.new(values.merge(s: 'bar')) }
+    let(:model4) { mutable_test_class.new(values) }
     let(:subclass) { Class.new(test_class) }
     let(:submodel) { subclass.new(values) }
+
 
     context "immutability" do
       it "prevents changes to models" do
         expect do
           model1.s = 'new value'
         end.to raise_error(NoMethodError, /private method `s=' called for/)
+      end
+    end
+
+    context "mutability" do
+      it "allows changes to mutable models" do
+        expect do
+          model4.s = 'new value'
+        end.not_to raise_error(NoMethodError, /private method `s=' called for/)
       end
     end
 
