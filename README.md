@@ -368,13 +368,13 @@ That feature is in progress and will hopefully be merged soon.
 Avromatic supports logical types as implemented in the [pull request](https://github.com/apache/avro/pull/116) referenced in AVRO-1695.
 
 Until that change is included in the official library, you can
-use [avro-salsify-fork gem](https://github.com/salsify/avro) which includes
+use the [avro-patches gem](https://github.com/salsify/avro-patches) which includes
 the changes from the above pull request.
 
-To use this gem, reference it in your Gemfile:
+To use this gem, reference it in your Gemfile instead of `avro`:
 
 ```ruby
-gem 'avro-salsify-fork', require: 'avro'
+gem 'avro-patches'
 ````
 
 ### Unsupported/Future

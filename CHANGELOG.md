@@ -1,5 +1,9 @@
 # avromatic changelog
 
+## v0.22.0
+- Require `avro_schema_registry_client` v0.3.0 or later to avoid
+  using `avro-salsify-fork`.
+
 ## v0.21.1
 - Fix a bug in the optimization of optional union decoding.
 
