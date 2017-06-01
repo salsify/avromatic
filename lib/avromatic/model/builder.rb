@@ -42,7 +42,7 @@ module Avromatic
       def inclusions
         [
           ActiveModel::Validations,
-          Virtus.value_object,
+          model_type_inclusion,
           Avromatic::Model::Configurable,
           Avromatic::Model::NestedModels,
           Avromatic::Model::Validation,
@@ -51,6 +51,10 @@ module Avromatic
           Avromatic::Model::RawSerialization,
           Avromatic::Model::MessagingSerialization
         ]
+      end
+
+      def model_type_inclusion
+        @config.immutable ? Virtus.value_object : Virtus.model
       end
 
       private
