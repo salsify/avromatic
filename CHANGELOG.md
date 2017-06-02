@@ -1,5 +1,8 @@
 # avromatic changelog
 
+## v0.23.0
+- Add mutable option when defining a model.
+
 ## v0.22.0
 - Require `avro_schema_registry_client` v0.3.0 or later to avoid
   using `avro-salsify-fork`.

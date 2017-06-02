@@ -5,6 +5,10 @@ describe Avromatic::Model::Builder do
   let(:test_class) do
     described_class.model(schema_name: schema_name)
   end
+  let(:mutable_test_class) do
+    described_class.model(schema_name: schema_name, mutable: true)
+  end
+  let(:values) { { s: 'foo', tf: true, i: 42 } }
 
   let(:attribute_names) do
     test_class.attribute_set.map(&:name).map(&:to_s)
@@ -447,9 +451,18 @@ describe Avromatic::Model::Builder do
     end
   end
 
+  context "mutable models" do
+    let(:mutable_model) { mutable_test_class.new(values) }
+
+    it "allows changes to models" do
+      expect do
+        mutable_model.s = 'new value'
+      end.not_to raise_error(NoMethodError, /private method `s=' called for/)
+    end
+  end
+
   context "value objects" do
     let(:schema_name) { 'test.primitive_types' }
-    let(:values) { { s: 'foo', tf: true, i: 42 } }
     let(:model1) { test_class.new(values) }
     let(:model2) { test_class.new(values) }
     let(:model3) { test_class.new(values.merge(s: 'bar')) }
