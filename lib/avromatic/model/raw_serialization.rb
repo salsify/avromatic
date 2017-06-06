@@ -44,11 +44,11 @@ module Avromatic
           avro_hash(value_avro_field_names)
         end
 
-        private
-
         def key_attributes_for_avro
           avro_hash(key_avro_field_names)
         end
+
+        private
 
         def avro_hash(fields)
           attributes.slice(*fields).each_with_object(Hash.new) do |(key, value), result|

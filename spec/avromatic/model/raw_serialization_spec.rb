@@ -12,6 +12,33 @@ describe Avromatic::Model::RawSerialization do
     Avromatic.messaging = nil
   end
 
+  describe "#value_attributes_for_avro" do
+    let(:test_class) do
+      Avromatic::Model.model(value_schema_name: 'test.encode_value')
+    end
+    let(:values) { { str1: 'a', str2: 'b' } }
+
+    it "returns a hash of attributes that will be encoded using avro" do
+      expected = values.stringify_keys
+      expect(instance.value_attributes_for_avro).to eq(expected)
+    end
+  end
+
+  describe "#key_attributes_for_avro" do
+    let(:test_class) do
+      Avromatic::Model.model(
+        value_schema_name: 'test.encode_value',
+        key_schema_name: 'test.encode_key'
+      )
+    end
+    let(:values) { super().merge!(str1: 'a', str2: 'b') }
+
+    it "returns a hash of the key attributes that will be encoded using avro" do
+      expected = { 'id' => values[:id] }
+      expect(instance.key_attributes_for_avro).to eq(expected)
+    end
+  end
+
   describe "#avro_raw_value" do
     let(:test_class) do
       Avromatic::Model.model(value_schema_name: 'test.encode_value')
