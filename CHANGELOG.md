@@ -1,5 +1,8 @@
 # avromatic changelog
 
+## v0.24.0 (unreleased)
+- Expose the `#key_attributes_for_avro` method on models.
+
 ## v0.23.0
 - Add mutable option when defining a model.
 

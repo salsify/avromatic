@@ -76,7 +76,6 @@ describe Avromatic::IO::DatumReader do
       let(:schema_name) { 'test.optional_union' }
 
       it "includes the member index in the decoded hash" do
-        puts instance.value_attributes_for_avro
         expect(attributes['message'][described_class::UNION_MEMBER_INDEX]).to eq(1)
       end
 
