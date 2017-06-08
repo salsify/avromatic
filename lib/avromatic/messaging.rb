@@ -39,9 +39,6 @@ module Avromatic
       schema_id = @registry.register(subject || schema.fullname, schema)
 
       stream = StringIO.new
-
-      # The following line differs from the parent class to use a custom DatumWriter
-      writer = Avromatic::IO::DatumWriter.new(schema)
       encoder = Avro::IO::BinaryEncoder.new(stream)
 
       # Always start with the magic byte.
@@ -49,6 +46,9 @@ module Avromatic
 
       # The schema id is encoded as a 4-byte big-endian integer.
       encoder.write([schema_id].pack('N'))
+
+      # The following line differs from the parent class to use a custom DatumWriter
+      writer = Avromatic::IO::DatumWriter.new(schema)
 
       # The actual message comes last.
       writer.write(message, encoder)
