@@ -9,7 +9,8 @@ module Avromatic
   class << self
     attr_accessor :schema_registry, :registry_url, :schema_store, :logger,
                   :messaging, :type_registry, :nested_models,
-                  :use_custom_datum_reader, :use_schema_fingerprint_lookup
+                  :use_custom_datum_reader, :use_custom_datum_writer,
+                  :use_schema_fingerprint_lookup
 
     delegate :register_type, to: :type_registry
   end
@@ -18,6 +19,7 @@ module Avromatic
   self.logger = Logger.new($stdout)
   self.type_registry = Avromatic::Model::TypeRegistry.new
   self.use_custom_datum_reader = true
+  self.use_custom_datum_writer = true
   self.use_schema_fingerprint_lookup = true
 
   def self.configure

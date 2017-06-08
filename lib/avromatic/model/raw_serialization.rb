@@ -15,18 +15,53 @@ module Avromatic
                  to: :class
         private :avro_serializer, :datum_writer, :datum_reader
 
+        EMPTY_ARRAY = [].freeze
+
+        included do
+          @attribute_member_types = {}
+        end
+
         module ClassMethods
-          def recursive_serialize(value, attribute_name = nil)
+          def recursive_serialize(value, name: nil, member_types: nil)
+            member_types = attribute_member_types(name) if name
+            member_types ||= EMPTY_ARRAY
+
             if value.is_a?(Avromatic::Model::Attributes)
-              value.value_attributes_for_avro
+              hash = value.value_attributes_for_avro
+              if Avromatic.use_custom_datum_writer
+                member_index = member_types.index(value.class) if member_types.any?
+                hash[Avromatic::IO::UNION_MEMBER_INDEX] = member_index if member_index
+              end
+              hash
             elsif value.is_a?(Array)
-              value.map { |v| recursive_serialize(v) }
+              value.map { |v| recursive_serialize(v, member_types: member_types) }
             elsif value.is_a?(Hash)
-              value.each_with_object({}) do |(k, v), hash|
-                hash[k] = recursive_serialize(v)
+              value.each_with_object({}) do |(k, v), map|
+                map[k] = recursive_serialize(v, member_types: member_types)
               end
             else
-              avro_serializer[attribute_name].call(value)
+              avro_serializer[name].call(value)
+            end
+          end
+
+          private
+
+          def attribute_member_types(name)
+            @attribute_member_types.fetch(name) do
+              member_types = nil
+              attribute = attribute_set[name] if name
+              if attribute
+                if attribute.primitive == Array &&
+                  attribute.member_type.is_a?(Avromatic::Model::Attribute::Union)
+                  member_types = attribute.member_type.primitive.types
+                elsif attribute.primitive == Hash &&
+                  attribute.value_type.is_a?(Avromatic::Model::Attribute::Union)
+                  member_types = attribute.value_type.primitive.types
+                elsif attribute.options[:primitive] == Avromatic::Model::AttributeType::Union
+                  member_types = attribute.primitive.types
+                end
+              end
+              @attribute_member_types[name] = member_types
             end
           end
         end
@@ -52,7 +87,7 @@ module Avromatic
 
         def avro_hash(fields)
           attributes.slice(*fields).each_with_object(Hash.new) do |(key, value), result|
-            result[key.to_s] = self.class.recursive_serialize(value, key)
+            result[key.to_s] = self.class.recursive_serialize(value, name: key)
           end
         end
 
@@ -94,7 +129,11 @@ module Avromatic
 
       module ClassMethods
         def datum_reader_class
-          Avromatic::IO::DatumReader
+          Avromatic.use_custom_datum_reader ? Avromatic::IO::DatumReader : Avro::IO::DatumReader
+        end
+
+        def datum_writer_class
+          Avromatic.use_custom_datum_writer ? Avromatic::IO::DatumWriter : Avro::IO::DatumWriter
         end
 
         # Store a hash of Procs by field name (as a symbol) to convert
@@ -106,8 +145,8 @@ module Avromatic
 
         def datum_writer
           @datum_writer ||= begin
-                              hash = { value: Avro::IO::DatumWriter.new(value_avro_schema) }
-                              hash[:key] = Avro::IO::DatumWriter.new(key_avro_schema) if key_avro_schema
+                              hash = { value: datum_writer_class.new(value_avro_schema) }
+                              hash[:key] = datum_writer_class.new(key_avro_schema) if key_avro_schema
                               hash
                             end
         end
