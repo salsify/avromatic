@@ -1,5 +1,5 @@
 require 'avromatic/model/attribute_type/union'
-require 'avromatic/io/datum_reader'
+require 'avromatic/io'
 
 module Avromatic
   module Model
