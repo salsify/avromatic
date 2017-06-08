@@ -1,8 +1,8 @@
 require 'avro_turf/messaging'
-require 'avromatic/io/datum_reader'
+require 'avromatic/io'
 
 module Avromatic
-  # Subclass AvroTurf::Messaging to use a custom DatumReader for decode.
+  # Subclass AvroTurf::Messaging to use a custom DatumReader and DatumWriter
   class Messaging < AvroTurf::Messaging
     attr_reader :registry
 
@@ -29,6 +29,31 @@ module Avromatic
       # The following line differs from the parent class to use a custom DatumReader
       reader = Avromatic::IO::DatumReader.new(writers_schema, readers_schema)
       reader.read(decoder)
+    end
+
+    def encode(message, schema_name: nil, namespace: @namespace, subject: nil)
+      schema = @schema_store.find(schema_name, namespace)
+
+      # Schemas are registered under the full name of the top level Avro record
+      # type, or `subject` if it's provided.
+      schema_id = @registry.register(subject || schema.fullname, schema)
+
+      stream = StringIO.new
+      encoder = Avro::IO::BinaryEncoder.new(stream)
+
+      # Always start with the magic byte.
+      encoder.write(MAGIC_BYTE)
+
+      # The schema id is encoded as a 4-byte big-endian integer.
+      encoder.write([schema_id].pack('N'))
+
+      # The following line differs from the parent class to use a custom DatumWriter
+      writer = Avromatic::IO::DatumWriter.new(schema)
+
+      # The actual message comes last.
+      writer.write(message, encoder)
+
+      stream.string
     end
   end
 end

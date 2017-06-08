@@ -13,6 +13,7 @@ end
 
 require 'avro/builder'
 require 'avromatic'
+require 'active_support/core_ext/hash/keys'
 
 Dir["#{File.dirname(__FILE__)}/support/**/*.rb"].each { |f| require f }
 

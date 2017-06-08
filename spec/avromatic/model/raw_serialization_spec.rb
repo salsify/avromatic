@@ -6,10 +6,13 @@ describe Avromatic::Model::RawSerialization do
   let(:instance) { test_class.new(values) }
   let(:avro_raw_value) { instance.avro_raw_value }
   let(:avro_raw_key) { instance.avro_raw_key }
+  let(:use_custom_datum_writer) { true }
+  let(:member_index) { Avromatic::IO::UNION_MEMBER_INDEX }
 
   before do
     # Ensure that there is no dependency on messaging
     Avromatic.messaging = nil
+    allow(Avromatic).to receive(:use_custom_datum_writer).and_return(use_custom_datum_writer)
   end
 
   describe "#value_attributes_for_avro" do
@@ -21,6 +24,33 @@ describe Avromatic::Model::RawSerialization do
     it "returns a hash of attributes that will be encoded using avro" do
       expected = values.stringify_keys
       expect(instance.value_attributes_for_avro).to eq(expected)
+    end
+
+    context "a record with a union" do
+      let(:test_class) do
+        Avromatic::Model.model(value_schema_name: 'test.real_union')
+      end
+      let(:values) do
+        {
+          header: 'has bar',
+          message: { bar_message: "I'm a bar" }
+        }
+      end
+
+      it "includes union member index in the hash of attributes" do
+        expected = values.deep_stringify_keys
+        expected['message'][member_index] = 1
+        expect(instance.value_attributes_for_avro).to eq(expected)
+      end
+
+      context "when use_custom_datum_writer is false" do
+        let(:use_custom_datum_writer) { false }
+
+        it "does not include union member index in the hash of attributes" do
+          expected = values.deep_stringify_keys
+          expect(instance.value_attributes_for_avro).to eq(expected)
+        end
+      end
     end
   end
 
@@ -246,6 +276,18 @@ describe Avromatic::Model::RawSerialization do
       end
       let(:decoded) { test_class.avro_raw_decode(value: avro_raw_value) }
 
+      it "includes union member index" do
+        expect(instance.value_attributes_for_avro['unions'].map { |v| v[member_index] }).to eq([0, 1, 0])
+      end
+
+      context "when use_custom_datum_writer is false" do
+        let(:use_custom_datum_writer) { false }
+
+        it "does not include union member index" do
+          expect(instance.value_attributes_for_avro['unions'].map { |v| v[member_index] }).to eq([nil] * 3)
+        end
+      end
+
       it "encodes and decodes the model" do
         expect(instance).to eq(decoded)
       end
@@ -277,6 +319,18 @@ describe Avromatic::Model::RawSerialization do
         } }
       end
       let(:decoded) { test_class.avro_raw_decode(value: avro_raw_value) }
+
+      it "includes union member index" do
+        expect(instance.value_attributes_for_avro['union_map'].values.map { |v| v[member_index] }).to eq([0, 1])
+      end
+
+      context "when use_custom_datum_writer is false" do
+        let(:use_custom_datum_writer) { false }
+
+        it "does not include union member index" do
+          expect(instance.value_attributes_for_avro['union_map'].values.map { |v| v[member_index] }).to eq([nil] * 2)
+        end
+      end
 
       it "encodes and decodes the model" do
         expect(instance).to eq(decoded)

@@ -1,6 +1,8 @@
 # avromatic changelog
 
 ## v0.24.0 (unreleased)
+- Add `Avromatic::IO::DatumWriter` to optimize the encoding of Avro unions
+  from Avromatic models.
 - Expose the `#key_attributes_for_avro` method on models.
 
 ## v0.23.0

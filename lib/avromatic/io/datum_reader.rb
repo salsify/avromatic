@@ -6,7 +6,7 @@ module Avromatic
     # branch 'salsify-master' with the tag 'v1.9.0.3'
     class DatumReader < Avro::IO::DatumReader
 
-      UNION_MEMBER_INDEX = '__avromatic_member_index'.freeze
+      UNION_MEMBER_INDEX = Avromatic::IO::UNION_MEMBER_INDEX
 
       def read_data(writers_schema, readers_schema, decoder, initial_record = {})
         # schema matching
