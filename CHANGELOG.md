@@ -1,5 +1,8 @@
 # avromatic changelog
 
+## v0.25.0
+- Disallow optional fields in schemas used for keys by default.
+
 ## v0.24.0
 - Add `Avromatic::IO::DatumWriter` to optimize the encoding of Avro unions
   from Avromatic models.

@@ -222,6 +222,34 @@ describe Avromatic::Model::Builder do
       end
     end
 
+    context "with a key containing an optional field" do
+      let(:key_schema_name) { 'test.key_with_optional' }
+      let(:schema_name) { 'test.value' }
+      let(:test_class) do
+        Avromatic::Model.model(value_schema_name: schema_name,
+                               key_schema_name: key_schema_name)
+      end
+
+      context "when allow_optional_key_fields is false (default)" do
+        it "raises an error" do
+          expect { test_class }.to raise_error("Optional field 'name' not allowed in key schema.")
+        end
+      end
+
+      context "when allow_optional_key_fields is true" do
+        let(:test_class) do
+          Avromatic::Model.model(value_schema_name: schema_name,
+                                 key_schema_name: key_schema_name,
+                                 allow_optional_key_fields: true)
+        end
+
+        it "defines a model with attributes for the key and value" do
+          expect(attribute_names)
+            .to match_array(schema.fields.map(&:name) | key_schema.fields.map(&:name))
+        end
+      end
+    end
+
     context "logical types" do
       let(:schema_name) { 'test.logical_types' }
 
