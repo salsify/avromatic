@@ -150,6 +150,21 @@ end
 When key and value schemas are both specified, attributes are added to the model
 for the union of the fields in the two schemas.
 
+By default, optional fields are not allowed in key schemas since their values may
+be accidentally omitted leading to problems if data is partitioned based on the
+key values.
+
+This behavior can be overridden by specifying the `:allow_optional_key_fields`
+option for the model:
+
+```ruby
+class MyTopic
+  include Avromatic::Model.build(value_schema_name: :topic_value,
+                                 key_schema_name: :topic_key,
+                                 allow_optional_key_fields: true)
+end
+```
+
 A model can also be generated as an anonymous class that can be assigned to a
 constant:
 

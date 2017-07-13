@@ -9,6 +9,15 @@ module Avromatic
     module Attributes
       extend ActiveSupport::Concern
 
+      class OptionalFieldError < StandardError
+        attr_reader :field
+
+        def initialize(field)
+          @field = field
+          super("Optional field not allowed: #{field}")
+        end
+      end
+
       def self.first_union_schema(field_type)
         # TODO: This is a hack until I find a better solution for unions with
         # Virtus. This only handles a union for an optional field with :null
@@ -27,7 +36,12 @@ module Avromatic
 
           if key_avro_schema
             check_for_field_conflicts!
-            define_avro_attributes(key_avro_schema)
+            begin
+              define_avro_attributes(key_avro_schema,
+                                     allow_optional: config.allow_optional_key_fields)
+            rescue OptionalFieldError => ex
+              raise "Optional field '#{ex.field.name}' not allowed in key schema."
+            end
           end
           define_avro_attributes(avro_schema)
         end
@@ -55,12 +69,14 @@ module Avromatic
             value_avro_fields_by_name[name].to_avro
         end
 
-        def define_avro_attributes(schema)
+        def define_avro_attributes(schema, allow_optional: true)
           if schema.type_sym != :record
             raise "Unsupported schema type '#{schema.type_sym}', only 'record' schemas are supported."
           end
 
           schema.fields.each do |field|
+            raise OptionalFieldError.new(field) if !allow_optional && optional?(field)
+
             field_class = avro_field_class(field.type)
 
             attribute(field.name,

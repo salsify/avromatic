@@ -1,0 +1,19 @@
+{
+  "type": "record",
+  "name": "key_with_optional",
+  "namespace": "test",
+  "fields": [
+    {
+      "name": "id",
+      "type": "long"
+    },
+    {
+      "name": "name",
+      "type": [
+        "null",
+        "string"
+      ],
+      "default": null
+    }
+  ]
+}
