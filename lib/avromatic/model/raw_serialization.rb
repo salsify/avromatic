@@ -76,7 +76,7 @@ module Avromatic
         end
 
         def value_attributes_for_avro
-          avro_hash(value_avro_field_names)
+          @value_attributes_for_avro ||= avro_hash(value_avro_field_names)
         end
 
         def key_attributes_for_avro

@@ -18,6 +18,12 @@ describe Avromatic::Model::MessagingSerialization do
       expect(decoded).to eq(instance)
     end
 
+    it "caches the value for the model" do
+      message_value = instance.avro_message_value
+      message_value2 = instance.avro_message_value
+      expect(message_value.object_id).to eq(message_value2.object_id)
+    end
+
     context "with a nested record" do
       let(:test_class) do
         Avromatic::Model.model(value_schema_name: 'test.nested_record')
@@ -128,6 +134,12 @@ describe Avromatic::Model::MessagingSerialization do
       message_key = instance.avro_message_key
       decoded = test_class.avro_message_decode(message_key, message_value)
       expect(decoded).to eq(instance)
+    end
+
+    it "caches the key for the model" do
+      message_key = instance.avro_message_key
+      message_key2 = instance.avro_message_key
+      expect(message_key.object_id).to eq(message_key2.object_id)
     end
 
     context "when a model does not have a key schema" do
