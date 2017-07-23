@@ -27,9 +27,9 @@ describe Avromatic::Model::RawSerialization do
     end
 
     it "caches a hash of attributes that will be encoded using avro" do
-      value_attributes = instance.value_attributes_for_avro
+      value_attributes1 = instance.value_attributes_for_avro
       value_attributes2 = instance.value_attributes_for_avro
-      expect(value_attributes.object_id).to eq(value_attributes2.object_id)
+      expect(value_attributes1.object_id).to eq(value_attributes2.object_id)
     end
 
     context "a record with a union" do
