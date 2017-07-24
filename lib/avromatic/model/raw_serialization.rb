@@ -76,7 +76,11 @@ module Avromatic
         end
 
         def value_attributes_for_avro
-          @value_attributes_for_avro ||= avro_hash(value_avro_field_names)
+          if self.class.config.mutable
+            avro_hash(value_avro_field_names)
+          else
+            @value_attributes_for_avro ||= avro_hash(value_avro_field_names)
+          end
         end
 
         def key_attributes_for_avro
