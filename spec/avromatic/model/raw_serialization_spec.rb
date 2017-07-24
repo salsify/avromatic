@@ -26,6 +26,28 @@ describe Avromatic::Model::RawSerialization do
       expect(instance.value_attributes_for_avro).to eq(expected)
     end
 
+    context "caching" do
+      context "immutable model" do
+        it "caches a hash of attributes that will be encoded using avro" do
+          value_attributes1 = instance.value_attributes_for_avro
+          value_attributes2 = instance.value_attributes_for_avro
+          expect(value_attributes1.object_id).to eq(value_attributes2.object_id)
+        end
+      end
+
+      context "mutable model" do
+        let(:test_class) do
+          Avromatic::Model.model(value_schema_name: 'test.encode_value', mutable: true)
+        end
+
+        it "caches a hash of attributes that will be encoded using avro" do
+          value_attributes1 = instance.value_attributes_for_avro
+          value_attributes2 = instance.value_attributes_for_avro
+          expect(value_attributes1.object_id).not_to eq(value_attributes2.object_id)
+        end
+      end
+    end
+
     context "a record with a union" do
       let(:test_class) do
         Avromatic::Model.model(value_schema_name: 'test.real_union')

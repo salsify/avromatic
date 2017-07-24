@@ -1,5 +1,8 @@
 # avromatic changelog
 
+## v0.26.0
+- Caches result of Avromatic::Model::RawSerialization#value_attributes_for_avro for immutable models
+
 ## v0.25.0
 - Disallow optional fields in schemas used for keys by default.
 
