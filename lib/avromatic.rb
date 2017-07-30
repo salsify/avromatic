@@ -1,3 +1,4 @@
+require 'avromatic/virtus_performance_patch'
 require 'avromatic/version'
 require 'avro_schema_registry-client'
 require 'avromatic/model'
