@@ -27,3 +27,9 @@ appraise 'avro-patches-5_0' do
   gem 'activesupport', '~> 5.0.3'
   gem 'activemodel', '~> 5.0.3'
 end
+
+appraise 'rails5_1' do
+  gem 'avro', '1.8.2'
+  gem 'activesupport', '~> 5.1.2'
+  gem 'activemodel', '~> 5.1.2'
+end
