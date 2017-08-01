@@ -10,5 +10,7 @@ script:
   - bundle exec appraisal rails4_1 rake spec
   - bundle exec appraisal rails4_2 rake spec
   - bundle exec appraisal rails5_0 rake spec
+  - bundle exec appraisal rails5_1 rake spec
   - bundle exec appraisal avro-patches-4_1 rake spec
   - bundle exec appraisal avro-patches-5_0 rake spec
+  - bundle exec appraisal avro-patches-5_1 rake spec

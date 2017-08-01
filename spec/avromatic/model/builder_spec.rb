@@ -481,7 +481,7 @@ describe Avromatic::Model::Builder do
 
   context "mutable models" do
     let(:schema_name) { 'test.primitive_types' }
-    let(:mutable_model) { mutable_test_class.new({s: 'old value'}) }
+    let(:mutable_model) { mutable_test_class.new(s: 'old value') }
 
     it "allows changes to models" do
       expect do
