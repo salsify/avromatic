@@ -1,6 +1,7 @@
 require 'virtus'
 require 'active_support/concern'
 require 'active_model'
+require 'avromatic/model/allowed_writer_methods_memoization'
 require 'avromatic/model/configuration'
 require 'avromatic/model/value_object'
 require 'avromatic/model/configurable'
@@ -22,8 +23,10 @@ module Avromatic
 
       # For options see Avromatic::Model.build
       def self.model(**options)
+        builder = Avromatic::Model::Builder.new(**options)
         Class.new do
-          include Avromatic::Model::Builder.new(**options).mod
+          include builder.mod
+          prepend builder.mod
 
           # Name is required for attribute validations on an anonymous class.
           def self.name
@@ -43,6 +46,7 @@ module Avromatic
         [
           ActiveModel::Validations,
           config.mutable ? Virtus.model : Virtus.value_object,
+          Avromatic::Model::AllowedWriterMethodsMemoization,
           Avromatic::Model::Configurable,
           Avromatic::Model::NestedModels,
           Avromatic::Model::Validation,
@@ -53,6 +57,12 @@ module Avromatic
         ]
       end
 
+      def prepends
+        [
+          Avromatic::Model::AllowedWriterMethodsMemoization
+        ].compact
+      end
+
       private
 
       def define_included_method
@@ -61,6 +71,10 @@ module Avromatic
             model_class.include(*builder.inclusions)
             model_class.config = builder.config
             model_class.add_avro_fields
+          end
+
+          mod.define_singleton_method(:prepended) do |model_class|
+            model_class.prepend(*builder.prepends)
           end
         end
       end
