@@ -15,21 +15,11 @@ describe Avromatic::Model::RawSerialization do
     allow(Avromatic).to receive(:use_custom_datum_writer).and_return(use_custom_datum_writer)
   end
 
-
-
   describe "#value_attributes_for_avro" do
     let(:test_class) do
       Avromatic::Model.model(value_schema_name: 'test.encode_value')
     end
     let(:values) { { str1: 'a', str2: 'b' } }
-
-    context "foo" do
-      let(:instance2) { test_class.new(values) }
-
-      specify do
-        expect(instance2.allowed_writer_methods.object_id).to eq(instance.allowed_writer_methods.object_id)
-      end
-    end
 
     it "returns a hash of attributes that will be encoded using avro" do
       expected = values.stringify_keys
