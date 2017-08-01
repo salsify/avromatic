@@ -6,4 +6,4 @@ gem "avro", "1.8.2"
 gem "activesupport", "~> 5.0.5"
 gem "activemodel", "~> 5.0.5"
 
-gemspec :path => "../"
+gemspec path: "../"
