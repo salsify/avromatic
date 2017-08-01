@@ -480,12 +480,13 @@ describe Avromatic::Model::Builder do
   end
 
   context "mutable models" do
-    let(:mutable_model) { mutable_test_class.new(values) }
+    let(:schema_name) { 'test.primitive_types' }
+    let(:mutable_model) { mutable_test_class.new({s: 'old value'}) }
 
     it "allows changes to models" do
       expect do
         mutable_model.s = 'new value'
-      end.not_to raise_error(NoMethodError, /private method `s=' called for/)
+      end.not_to raise_error
     end
   end
 
