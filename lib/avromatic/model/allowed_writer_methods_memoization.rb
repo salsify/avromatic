@@ -3,10 +3,10 @@ module Avromatic
     module AllowedWriterMethodsMemoization
       def self.included(base)
         base.class_attribute :virtus_object_allowed_writer_methods
-        base.prepend(ClassMethods)
+        base.prepend(InstanceMethods)
       end
 
-      module ClassMethods
+      module InstanceMethods
         def allowed_writer_methods
           self.class.virtus_object_allowed_writer_methods ||= super
         end
