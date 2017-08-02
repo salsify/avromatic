@@ -23,9 +23,8 @@ module Avromatic
 
       # For options see Avromatic::Model.build
       def self.model(**options)
-        builder = Avromatic::Model::Builder.new(**options)
         Class.new do
-          include builder.mod
+          include Avromatic::Model::Builder.new(**options).mod
 
           # Name is required for attribute validations on an anonymous class.
           def self.name
