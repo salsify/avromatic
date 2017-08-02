@@ -1,6 +1,7 @@
 require 'virtus'
 require 'active_support/concern'
 require 'active_model'
+require 'avromatic/model/allowed_writer_methods_memoization'
 require 'avromatic/model/configuration'
 require 'avromatic/model/value_object'
 require 'avromatic/model/configurable'
@@ -43,6 +44,7 @@ module Avromatic
         [
           ActiveModel::Validations,
           config.mutable ? Virtus.model : Virtus.value_object,
+          Avromatic::Model::AllowedWriterMethodsMemoization,
           Avromatic::Model::Configurable,
           Avromatic::Model::NestedModels,
           Avromatic::Model::Validation,

@@ -1,5 +1,8 @@
 # avromatic changelog
 
+## v0.27.0
+- Patches avromatic model classes to cache `Virtus::ValueObject::AllowedWriterMethods#allowed_writer_methods`
+
 ## v0.26.0
 - Caches result of Avromatic::Model::RawSerialization#value_attributes_for_avro for immutable models
 
