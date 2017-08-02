@@ -18,7 +18,7 @@ describe Avromatic::Model::AllowedWriterMethodsMemoization do
       let(:instance1) { test_class.new(str1: 'a', str2: 'b') }
       let(:instance2) { test_class.new(str1: 'c', str2: 'd') }
 
-      it "does not share the return value across instances" do
+      it "shares the return value across instances" do
         expect(instance1.allowed_writer_methods.object_id).to eq(instance2.allowed_writer_methods.object_id)
       end
     end

@@ -26,7 +26,6 @@ module Avromatic
         builder = Avromatic::Model::Builder.new(**options)
         Class.new do
           include builder.mod
-          prepend builder.mod
 
           # Name is required for attribute validations on an anonymous class.
           def self.name
@@ -57,12 +56,6 @@ module Avromatic
         ]
       end
 
-      def prepends
-        [
-          Avromatic::Model::AllowedWriterMethodsMemoization
-        ].compact
-      end
-
       private
 
       def define_included_method
@@ -71,10 +64,6 @@ module Avromatic
             model_class.include(*builder.inclusions)
             model_class.config = builder.config
             model_class.add_avro_fields
-          end
-
-          mod.define_singleton_method(:prepended) do |model_class|
-            model_class.prepend(*builder.prepends)
           end
         end
       end
