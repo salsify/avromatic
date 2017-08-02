@@ -3,7 +3,7 @@
 source "https://rubygems.org"
 
 gem "avro-patches"
-gem "activesupport", "~> 5.0.3"
-gem "activemodel", "~> 5.0.3"
+gem "activesupport", "~> 5.0.5"
+gem "activemodel", "~> 5.0.5"
 
-gemspec :path => "../"
+gemspec path: "../"

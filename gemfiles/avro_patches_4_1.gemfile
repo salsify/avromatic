@@ -6,4 +6,4 @@ gem "avro-patches"
 gem "activesupport", "~> 4.1.16"
 gem "activemodel", "~> 4.1.16"
 
-gemspec :path => "../"
+gemspec path: "../"
