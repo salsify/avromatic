@@ -50,4 +50,30 @@ describe Avromatic::IO::DatumWriter do
       end
     end
   end
+
+  describe "#write_record" do
+    let(:message) { datum }
+
+    before do
+      allow(message).to receive(:avro_raw_value)
+      allow(encoder).to receive(:write)
+      datum_writer.write_record(union_schema.schemas[1], datum, encoder)
+    end
+
+    context "when the datum includes an encoding provider" do
+      let(:message) { datum[Avromatic::IO::ENCODING_PROVIDER] }
+
+      it "delegates encoding to the model" do
+        expect(message).to have_received(:avro_raw_value)
+      end
+    end
+
+    context "when the datum doesn't include an encoding provider" do
+      let(:use_custom_datum_writer) { false }
+
+      it "doesn't delegate encoding to the model" do
+        expect(message).not_to have_received(:avro_raw_value)
+      end
+    end
+  end
 end

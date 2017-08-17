@@ -20,6 +20,14 @@ module Avromatic
         encoder.write_long(index_of_schema)
         write_data(writers_schema.schemas[index_of_schema], datum, encoder)
       end
+
+      def write_record(writers_schema, datum, encoder)
+        if datum.is_a?(Hash) && datum.key?(Avromatic::IO::ENCODING_PROVIDER)
+          encoder.write(datum[Avromatic::IO::ENCODING_PROVIDER].avro_raw_value)
+        else
+          super
+        end
+      end
     end
   end
 end

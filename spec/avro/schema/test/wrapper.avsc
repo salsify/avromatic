@@ -1,0 +1,39 @@
+{
+  "type": "record",
+  "name": "wrapper",
+  "namespace": "test",
+  "fields": [
+    {
+      "name": "sub1",
+      "type": {
+        "type": "record",
+        "name": "wrapped1",
+        "namespace": "test",
+        "fields": [
+          {
+            "name": "i",
+            "type": "int"
+          }
+        ]
+      }
+    },
+    {
+      "name": "sub2",
+      "type": "test.wrapped1"
+    },
+    {
+      "name": "sub3",
+      "type": {
+        "type": "record",
+        "name": "wrapped2",
+        "namespace": "test",
+        "fields": [
+          {
+            "name": "i",
+            "type": "int"
+          }
+        ]
+      }
+    }
+  ]
+}

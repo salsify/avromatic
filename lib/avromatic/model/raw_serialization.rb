@@ -29,6 +29,9 @@ module Avromatic
             if value.is_a?(Avromatic::Model::Attributes)
               hash = value.value_attributes_for_avro
               if Avromatic.use_custom_datum_writer
+                unless value.class.config.mutable
+                  hash = { Avromatic::IO::ENCODING_PROVIDER => value }
+                end
                 member_index = member_types.index(value.class) if member_types.any?
                 hash[Avromatic::IO::UNION_MEMBER_INDEX] = member_index if member_index
               end
@@ -67,7 +70,11 @@ module Avromatic
         end
 
         def avro_raw_value
-          avro_raw_encode(value_attributes_for_avro, :value)
+          if self.class.config.mutable
+            avro_raw_encode(value_attributes_for_avro, :value)
+          else
+            @avro_raw_value ||= avro_raw_encode(value_attributes_for_avro, :value)
+          end
         end
 
         def avro_raw_key
