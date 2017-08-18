@@ -99,10 +99,11 @@ end
 
 #### Encoding
 * **use_custom_datum_writer**: `Avromatic` includes a modified subclass of
-  `Avro::IO::DatumWriter`. This subclass uses additional information about
-  the index of union members to optimize the encoding of Avro messages.
-  By default this information is included in the hash passed to the encoder
-  but can be omitted by setting this option to `false`.
+  `Avro::IO::DatumWriter`. This subclass supports caching avro encodings for 
+  immutable models and uses additional information about the index of union 
+  members to optimize the encoding of Avro messages. By default this 
+  information is included in the hash passed to the encoder but can be omitted
+  by setting this option to `false`.
 
 
 ### Models

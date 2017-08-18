@@ -1,5 +1,8 @@
 # avromatic changelog
 
+## v0.28.0
+- Add support for caching avro encodings for immutable models
+
 ## v0.27.0
 - Patches avromatic model classes to cache `Virtus::ValueObject::AllowedWriterMethods#allowed_writer_methods`
 - Support Rails 5.1
