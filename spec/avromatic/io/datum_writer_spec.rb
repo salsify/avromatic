@@ -53,9 +53,10 @@ describe Avromatic::IO::DatumWriter do
 
   describe "#write_record" do
     let(:message) { datum }
+    let(:pre_encoded) { 'foo' }
 
     before do
-      allow(message).to receive(:avro_raw_value)
+      allow(message).to receive(:avro_raw_value).and_return(pre_encoded)
       allow(encoder).to receive(:write)
       datum_writer.write_record(union_schema.schemas[1], datum, encoder)
     end
@@ -64,7 +65,7 @@ describe Avromatic::IO::DatumWriter do
       let(:message) { datum[Avromatic::IO::ENCODING_PROVIDER] }
 
       it "delegates encoding to the model" do
-        expect(message).to have_received(:avro_raw_value)
+        expect(encoder).to have_received(:write).with(pre_encoded)
       end
     end
 
@@ -72,7 +73,9 @@ describe Avromatic::IO::DatumWriter do
       let(:use_custom_datum_writer) { false }
 
       it "doesn't delegate encoding to the model" do
-        expect(message).not_to have_received(:avro_raw_value)
+        union_schema.schemas[1].fields.each do |field|
+          expect(datum_writer).to have_received(:write_data).with(field.type, datum[field.name], encoder)
+        end
       end
     end
   end

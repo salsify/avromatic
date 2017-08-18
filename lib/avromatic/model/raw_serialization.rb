@@ -30,6 +30,8 @@ module Avromatic
               hash = value.value_attributes_for_avro
               if Avromatic.use_custom_datum_writer
                 unless value.class.config.mutable
+                  # n.b. Ideally we'd just return value here instead of wrapping it in a
+                  # hash but then we'd have no place to stash the union member index...
                   hash = { Avromatic::IO::ENCODING_PROVIDER => value }
                 end
                 member_index = member_types.index(value.class) if member_types.any?

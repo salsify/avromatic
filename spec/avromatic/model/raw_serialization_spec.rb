@@ -3,6 +3,7 @@ require 'avro/builder'
 
 describe Avromatic::Model::RawSerialization do
   let(:values) { { id: rand(99) } }
+  let(:test_class) { Avromatic::Model.model(value_schema_name: schema_name) }
   let(:instance) { test_class.new(values) }
   let(:avro_raw_value) { instance.avro_raw_value }
   let(:avro_raw_key) { instance.avro_raw_key }
@@ -17,9 +18,7 @@ describe Avromatic::Model::RawSerialization do
   end
 
   describe "#value_attributes_for_avro" do
-    let(:test_class) do
-      Avromatic::Model.model(value_schema_name: 'test.encode_value')
-    end
+    let(:schema_name) { 'test.encode_value' }
     let(:values) { { str1: 'a', str2: 'b' } }
 
     it "returns a hash of attributes that will be encoded using avro" do
@@ -28,10 +27,8 @@ describe Avromatic::Model::RawSerialization do
     end
 
     context "with a nested record" do
-      let!(:test_class) do
-        Avromatic::Model.model(value_schema_name: 'test.nested_record')
-      end
-      let(:sub) { Avromatic.nested_models['test.__nested_record_sub_record'].new(str: 'b', i: 1) }
+      let(:schema_name) { 'test.nested_record' }
+      let(:sub) { test_class.nested_models['test.__nested_record_sub_record'].new(str: 'b', i: 1) }
       let(:values) { { str: 'a', sub: sub } }
 
       it "reuses cacheable attributes" do
@@ -39,34 +36,30 @@ describe Avromatic::Model::RawSerialization do
         expected['sub'] = { encoding_provider => sub }
         actual = instance.value_attributes_for_avro
         expect(actual).to eq(expected)
-        expect(actual['sub'][encoding_provider].object_id).to eq(sub.object_id)
+        expect(actual['sub'][encoding_provider]).to equal(sub)
       end
     end
 
     context "with repeated references to a named type" do
-      let!(:test_class) do
-        Avromatic::Model.model(value_schema_name: 'test.wrapper')
-      end
-      let(:wrapped1) { Avromatic.nested_models['test.wrapped1'].new(i: 42) }
-      let(:wrapped2) { Avromatic.nested_models['test.wrapped2'].new(i: 78) }
+      let(:schema_name) { 'test.wrapper' }
+      let(:wrapped1) { test_class.nested_models['test.wrapped1'].new(i: 42) }
+      let(:wrapped2) { test_class.nested_models['test.wrapped2'].new(i: 78) }
       let(:values) { { sub1: wrapped1, sub2: wrapped1, sub3: wrapped2 } }
 
       it "reuses cacheable attributes" do
         expected = values.deep_stringify_keys.map { |k, v| [k, { encoding_provider => v }] }.to_h
         actual = instance.value_attributes_for_avro
         expect(actual).to eq(expected)
-        expect(actual['sub1'][encoding_provider].object_id).to eq(wrapped1.object_id)
-        expect(actual['sub2'][encoding_provider].object_id).to eq(wrapped1.object_id)
-        expect(actual['sub3'][encoding_provider].object_id).to eq(wrapped2.object_id)
+        expect(actual['sub1'][encoding_provider]).to equal(wrapped1)
+        expect(actual['sub2'][encoding_provider]).to equal(wrapped1)
+        expect(actual['sub3'][encoding_provider]).to equal(wrapped2)
       end
     end
 
     context "with reference to a mutable attribute" do
-      let!(:test_class) do
-        Avromatic::Model.model(value_schema_name: 'test.wrapper')
-      end
-      let(:wrapped1_class) { Avromatic.nested_models['test.wrapped1'] }
-      let(:wrapped2_class) { Avromatic.nested_models['test.wrapped2'] }
+      let(:schema_name) { 'test.wrapper' }
+      let(:wrapped1_class) { test_class.nested_models['test.wrapped1'] }
+      let(:wrapped2_class) { test_class.nested_models['test.wrapped2'] }
       let(:wrapped1) { wrapped1_class.new(i: 42) }
       let(:wrapped2) { wrapped1_class.new(i: 78) }
       let(:wrapped3) { wrapped2_class.new(i: 96) }
@@ -83,9 +76,9 @@ describe Avromatic::Model::RawSerialization do
         expected['sub3'] = { encoding_provider => wrapped3 }
         actual = instance.value_attributes_for_avro
         expect(actual).to eq(expected)
-        expect(actual['sub1'][encoding_provider].object_id).not_to eq(wrapped1.object_id)
-        expect(actual['sub2'][encoding_provider].object_id).not_to eq(wrapped2.object_id)
-        expect(actual['sub3'][encoding_provider].object_id).to eq(wrapped3.object_id)
+        expect(actual['sub1'][encoding_provider]).not_to equal(wrapped1)
+        expect(actual['sub2'][encoding_provider]).not_to equal(wrapped2)
+        expect(actual['sub3'][encoding_provider]).to equal(wrapped3)
       end
     end
 
@@ -94,13 +87,13 @@ describe Avromatic::Model::RawSerialization do
         it "caches a hash of attributes that will be encoded using avro" do
           value_attributes1 = instance.value_attributes_for_avro
           value_attributes2 = instance.value_attributes_for_avro
-          expect(value_attributes1.object_id).to eq(value_attributes2.object_id)
+          expect(value_attributes1).to equal(value_attributes2)
         end
 
         it "caches the avro encoding" do
           encoded1 = instance.avro_raw_value
           encoded2 = instance.avro_raw_value
-          expect(encoded1.object_id).to eq(encoded2.object_id)
+          expect(encoded1).to equal(encoded2)
         end
       end
 
@@ -112,22 +105,20 @@ describe Avromatic::Model::RawSerialization do
         it "doesn't cache hash of attributes that will be encoded using avro" do
           value_attributes1 = instance.value_attributes_for_avro
           value_attributes2 = instance.value_attributes_for_avro
-          expect(value_attributes1.object_id).not_to eq(value_attributes2.object_id)
+          expect(value_attributes1).not_to equal(value_attributes2)
         end
 
         it "doesn't cache the avro encoding" do
           encoded1 = instance.avro_raw_value
           encoded2 = instance.avro_raw_value
-          expect(encoded1.object_id).not_to eq(encoded2.object_id)
+          expect(encoded1).not_to equal(encoded2)
         end
       end
     end
 
     context "a record with a union" do
-      let!(:test_class) do
-        Avromatic::Model.model(value_schema_name: 'test.real_union')
-      end
-      let(:bar_message) { Avromatic.nested_models['test.bar'].new(bar_message: "I'm a bar") }
+      let(:schema_name) { 'test.real_union' }
+      let(:bar_message) { test_class.nested_models['test.bar'].new(bar_message: "I'm a bar") }
       let(:values) do
         {
           header: 'has bar',
@@ -140,7 +131,7 @@ describe Avromatic::Model::RawSerialization do
         expected['message'] = { encoding_provider => bar_message, member_index => 1 }
         actual = instance.value_attributes_for_avro
         expect(actual).to eq(expected)
-        expect(actual['message'][encoding_provider].object_id).to eq(bar_message.object_id)
+        expect(actual['message'][encoding_provider]).to equal(bar_message)
       end
 
       context "when use_custom_datum_writer is false" do
@@ -171,9 +162,7 @@ describe Avromatic::Model::RawSerialization do
   end
 
   describe "#avro_raw_value" do
-    let(:test_class) do
-      Avromatic::Model.model(value_schema_name: 'test.encode_value')
-    end
+    let(:schema_name) { 'test.encode_value' }
     let(:values) { { str1: 'a', str2: 'b' } }
 
     it "encodes the value for the model" do
@@ -183,9 +172,7 @@ describe Avromatic::Model::RawSerialization do
     end
 
     context "with a nested record" do
-      let(:test_class) do
-        Avromatic::Model.model(value_schema_name: 'test.nested_record')
-      end
+      let(:schema_name) { 'test.nested_record' }
       let(:values) { { str: 'a', sub: { str: 'b', i: 1 } } }
 
       it "encodes the value for the model" do
@@ -225,9 +212,7 @@ describe Avromatic::Model::RawSerialization do
   end
 
   describe ".raw_decode" do
-    let(:test_class) do
-      Avromatic::Model.model(value_schema_name: 'test.encode_value')
-    end
+    let(:schema_name) { 'test.encode_value' }
     let(:values) { { str1: 'a', str2: 'b' } }
 
     it "decodes a model" do
