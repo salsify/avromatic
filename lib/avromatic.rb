@@ -4,13 +4,14 @@ require 'avromatic/model'
 require 'avromatic/model_registry'
 require 'avromatic/messaging'
 require 'active_support/core_ext/string/inflections'
+require 'avromatic/patches'
 
 module Avromatic
   class << self
     attr_accessor :schema_registry, :registry_url, :schema_store, :logger,
                   :messaging, :type_registry, :nested_models,
                   :use_custom_datum_reader, :use_custom_datum_writer,
-                  :use_schema_fingerprint_lookup
+                  :use_schema_fingerprint_lookup, :use_encoding_providers
 
     delegate :register_type, to: :type_registry
   end
@@ -21,6 +22,7 @@ module Avromatic
   self.use_custom_datum_reader = true
   self.use_custom_datum_writer = true
   self.use_schema_fingerprint_lookup = true
+  self.use_encoding_providers = !defined?(Avromatic::Patches::SchemaValidatorPatch).nil?
 
   def self.configure
     yield self
