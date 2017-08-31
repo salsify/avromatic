@@ -11,7 +11,7 @@ module Avromatic
     attr_accessor :schema_registry, :registry_url, :schema_store, :logger,
                   :messaging, :type_registry, :nested_models,
                   :use_custom_datum_reader, :use_custom_datum_writer,
-                  :use_schema_fingerprint_lookup, :use_encoding_providers
+                  :use_schema_fingerprint_lookup
 
     delegate :register_type, to: :type_registry
   end
@@ -22,11 +22,14 @@ module Avromatic
   self.use_custom_datum_reader = true
   self.use_custom_datum_writer = true
   self.use_schema_fingerprint_lookup = true
-  self.use_encoding_providers = !defined?(Avromatic::Patches::SchemaValidatorPatch).nil?
 
   def self.configure
     yield self
     eager_load_models!
+  end
+
+  def self.use_encoding_providers?
+    use_custom_datum_writer && !defined?(Avromatic::Patches::SchemaValidatorPatch).nil?
   end
 
   def self.build_schema_registry

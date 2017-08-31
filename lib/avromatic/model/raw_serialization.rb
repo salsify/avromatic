@@ -29,7 +29,7 @@ module Avromatic
             if value.is_a?(Avromatic::Model::Attributes)
               hash = value.value_attributes_for_avro
               if Avromatic.use_custom_datum_writer
-                if Avromatic.use_encoding_providers && !value.class.config.mutable
+                if Avromatic.use_encoding_providers? && !value.class.config.mutable
                   # n.b. Ideally we'd just return value here instead of wrapping it in a
                   # hash but then we'd have no place to stash the union member index...
                   hash = { Avromatic::IO::ENCODING_PROVIDER => value }
