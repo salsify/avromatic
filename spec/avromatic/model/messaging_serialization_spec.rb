@@ -74,6 +74,32 @@ describe Avromatic::Model::MessagingSerialization do
       end
     end
 
+    context "with an optional record" do
+      let(:test_class) do
+        Avromatic::Model.model(value_schema_name: 'test.optional_record')
+      end
+      let(:values) { { id: 42, message: { body: 'foo' } } }
+
+      it "encodes the value for the model" do
+        message_value = instance.avro_message_value
+        decoded = test_class.avro_message_decode(message_value)
+        expect(decoded).to eq(instance)
+      end
+    end
+
+    context "with an optional array" do
+      let(:test_class) do
+        Avromatic::Model.model(value_schema_name: 'test.optional_array')
+      end
+      let(:values) { { id: 42, messages: [{ body: 'foo' }] } }
+
+      it "encodes the value for the model" do
+        message_value = instance.avro_message_value
+        decoded = test_class.avro_message_decode(message_value)
+        expect(decoded).to eq(instance)
+      end
+    end
+
     context "with a map of models" do
       let(:test_class) do
         schema = Avro::Builder.build_schema do

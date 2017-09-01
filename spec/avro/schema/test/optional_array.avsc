@@ -1,0 +1,32 @@
+{
+  "type": "record",
+  "name": "optional_array",
+  "namespace": "test",
+  "fields": [
+    {
+      "name": "id",
+      "type": "int"
+    },
+    {
+      "name": "messages",
+      "type": [
+        "null",
+        {
+          "type": "array",
+          "items": {
+            "type": "record",
+            "name": "message",
+            "namespace": "test",
+            "fields": [
+              {
+                "name": "body",
+                "type": "string"
+              }
+            ]
+          }
+        }
+      ],
+      "default": null
+    }
+  ]
+}

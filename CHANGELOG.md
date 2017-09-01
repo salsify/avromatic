@@ -1,5 +1,10 @@
 # avromatic changelog
 
+## v0.28.1
+- Fix a bug that raised an error when encoding a cached model containing optional
+  field(s). With this change, immutable model caching now enabled only when 
+  `avro-patches` is present.
+
 ## v0.28.0
 - Add support for caching avro encodings for immutable models
 
