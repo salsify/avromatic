@@ -29,7 +29,7 @@ module Avromatic
   end
 
   def self.use_encoding_providers?
-    use_custom_datum_writer && !defined?(Avromatic::Patches::SchemaValidatorPatch).nil?
+    use_custom_datum_writer && defined?(Avromatic::Patches::SchemaValidatorPatch)
   end
 
   def self.build_schema_registry
