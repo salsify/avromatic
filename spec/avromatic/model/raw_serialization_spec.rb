@@ -146,6 +146,101 @@ describe Avromatic::Model::RawSerialization do
     end
   end
 
+  describe "#avro_value_datum" do
+    let(:schema_name) { 'test.encode_value' }
+    let(:values) { { str1: 'a', str2: 'b' } }
+
+    it "returns a hash of attributes appropriate for avro encoding" do
+      expected = values.stringify_keys
+      expect(instance.avro_value_datum).to eq(expected)
+    end
+
+    context "with a nested record" do
+      let(:schema_name) { 'test.nested_record' }
+      let(:values) { { str: 'a', sub: { str: 'b', i: 1 } } }
+
+      it "returns a hash of attributes appropriate for avro encoding" do
+        expected = values.deep_stringify_keys
+        actual = instance.avro_value_datum
+        expect(actual).to eq(expected)
+      end
+    end
+
+    context "with repeated references to a named type" do
+      let(:schema_name) { 'test.wrapper' }
+      let(:wrapped1) { test_class.nested_models['test.wrapped1'].new(i: 42) }
+      let(:wrapped2) { test_class.nested_models['test.wrapped2'].new(i: 78) }
+      let(:values) { { sub1: wrapped1, sub2: wrapped1, sub3: wrapped2 } }
+
+      it "reuses attributes for cacheable models" do
+        expected = { sub1: { i: 42 }, sub2: { i: 42 }, sub3: { i: 78 } }.deep_stringify_keys
+        actual = instance.avro_value_datum
+        expect(actual).to eq(expected)
+        expect(actual['sub1']).to equal(actual['sub2'])
+      end
+    end
+
+    context "with reference to a mutable attribute" do
+      let(:schema_name) { 'test.wrapper' }
+      let(:wrapped1_class) { test_class.nested_models['test.wrapped1'] }
+      let(:wrapped2_class) { test_class.nested_models['test.wrapped2'] }
+      let(:wrapped1) { wrapped1_class.new(i: 42) }
+      let(:wrapped2) { wrapped1_class.new(i: 78) }
+      let(:wrapped3) { wrapped2_class.new(i: 96) }
+      let(:values) { { sub1: wrapped1, sub2: wrapped2, sub3: wrapped3 } }
+
+      before do
+        allow(wrapped1_class.config).to receive(:mutable).and_return(true)
+      end
+
+      it "doesn't reuse attributes for mutable models" do
+        expected = { sub1: { i: 42 }, sub2: { i: 78 }, sub3: { i: 96 } }.deep_stringify_keys
+        actual = instance.avro_value_datum
+        expect(actual).to eq(expected)
+        expect(actual['sub1']).not_to equal(actual['sub2'])
+      end
+    end
+
+    context "caching" do
+      context "immutable model" do
+        it "caches attributes appropriate for avro encoding" do
+          avro_datum1 = instance.avro_value_datum
+          avro_datum2 = instance.avro_value_datum
+          expect(avro_datum1).to equal(avro_datum2)
+        end
+      end
+
+      context "mutable model" do
+        let(:test_class) do
+          Avromatic::Model.model(value_schema_name: 'test.encode_value', mutable: true)
+        end
+
+        it "doesn't cache attributes for mutable models" do
+          avro_datum1 = instance.avro_value_datum
+          avro_datum2 = instance.avro_value_datum
+          expect(avro_datum1).not_to equal(avro_datum2)
+        end
+      end
+    end
+
+    context "a record with a union" do
+      let(:schema_name) { 'test.real_union' }
+      let(:bar_message) { test_class.nested_models['test.bar'].new(bar_message: "I'm a bar") }
+      let(:values) do
+        {
+          header: 'has bar',
+          message: { bar_message: "I'm a bar" }
+        }
+      end
+
+      it "does not include encoding provider or union member index" do
+        expected = values.deep_stringify_keys
+        actual = instance.avro_value_datum
+        expect(actual).to eq(expected)
+      end
+    end
+  end
+
   describe "#key_attributes_for_avro" do
     let(:test_class) do
       Avromatic::Model.model(
@@ -158,6 +253,21 @@ describe Avromatic::Model::RawSerialization do
     it "returns a hash of the key attributes that will be encoded using avro" do
       expected = { 'id' => values[:id] }
       expect(instance.key_attributes_for_avro).to eq(expected)
+    end
+  end
+
+  describe "#avro_key_datum" do
+    let(:test_class) do
+      Avromatic::Model.model(
+        value_schema_name: 'test.encode_value',
+        key_schema_name: 'test.encode_key'
+      )
+    end
+    let(:values) { super().merge!(str1: 'a', str2: 'b') }
+
+    it "returns a hash of the key attributes suitable for avro encoding" do
+      expected = { 'id' => values[:id] }
+      expect(instance.avro_key_datum).to eq(expected)
     end
   end
 

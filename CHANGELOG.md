@@ -1,5 +1,10 @@
 # avromatic changelog
 
+## v0.29.0
+- Add new public methods `#avro_key_datum` and `#avro_value_datum` on an
+  Avromatic model instance that return the attributes of the model suitable for
+  Avro encoding without any customizations.
+
 ## v0.28.1
 - Fix a bug that raised an error when encoding a cached model containing optional
   field(s). With this change, immutable model caching now enabled only when 

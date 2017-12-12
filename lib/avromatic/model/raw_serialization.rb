@@ -22,13 +22,13 @@ module Avromatic
         end
 
         module ClassMethods
-          def recursive_serialize(value, name: nil, member_types: nil)
+          def recursive_serialize(value, name: nil, member_types: nil, strict: false)
             member_types = attribute_member_types(name) if name
             member_types ||= EMPTY_ARRAY
 
             if value.is_a?(Avromatic::Model::Attributes)
-              hash = value.value_attributes_for_avro
-              if Avromatic.use_custom_datum_writer
+              hash = strict ? value.avro_value_datum : value.value_attributes_for_avro
+              if !strict && Avromatic.use_custom_datum_writer
                 if Avromatic.use_encoding_providers? && !value.class.config.mutable
                   # n.b. Ideally we'd just return value here instead of wrapping it in a
                   # hash but then we'd have no place to stash the union member index...
@@ -39,10 +39,10 @@ module Avromatic
               end
               hash
             elsif value.is_a?(Array)
-              value.map { |v| recursive_serialize(v, member_types: member_types) }
+              value.map { |v| recursive_serialize(v, member_types: member_types, strict: strict) }
             elsif value.is_a?(Hash)
               value.each_with_object({}) do |(k, v), map|
-                map[k] = recursive_serialize(v, member_types: member_types)
+                map[k] = recursive_serialize(v, member_types: member_types, strict: strict)
               end
             else
               avro_serializer[name].call(value)
@@ -96,11 +96,23 @@ module Avromatic
           avro_hash(key_avro_field_names)
         end
 
+        def avro_value_datum
+          if self.class.config.mutable
+            avro_hash(value_avro_field_names, strict: true)
+          else
+            @avro_datum ||= avro_hash(value_avro_field_names, strict: true)
+          end
+        end
+
+        def avro_key_datum
+          avro_hash(key_avro_field_names, strict: true)
+        end
+
         private
 
-        def avro_hash(fields)
+        def avro_hash(fields, strict: false)
           attributes.slice(*fields).each_with_object(Hash.new) do |(key, value), result|
-            result[key.to_s] = self.class.recursive_serialize(value, name: key)
+            result[key.to_s] = self.class.recursive_serialize(value, name: key, strict: strict)
           end
         end
 
