@@ -1,5 +1,8 @@
 # avromatic changelog
 
+## v0.29.1
+- Add `Avromatic.build_messaging!` to `avromatic/rspec`.
+
 ## v0.29.0
 - Add new public methods `#avro_key_datum` and `#avro_value_datum` on an
   Avromatic model instance that return the attributes of the model suitable for

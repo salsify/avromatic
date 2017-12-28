@@ -409,6 +409,15 @@ To use this gem, reference it in your Gemfile instead of `avro`:
 gem 'avro-patches'
 ````
 
+### RSpec Support
+
+This gem also includes an `"avromatic/rspec"` file that can be required to support
+using Avromatic with a fake schema registry during tests.
+
+Requiring this file configures a RSpec before hook that directs any schema
+registry requests to a fake, in-memory schema registry and rebuilds the
+`Avromatic::Messaging` object for each example.
+
 ### Unsupported/Future
 
 The following types/features are not supported for generated models:
