@@ -57,6 +57,11 @@ module Avromatic
         model.avro_message_attributes(message_key, message_value)
       end
 
+      # @return [Avromatic model class]
+      def model(*args)
+        extract_decode_args(*args).first
+      end
+
       private
 
       attr_reader :schema_names_by_id, :model_map, :schema_registry

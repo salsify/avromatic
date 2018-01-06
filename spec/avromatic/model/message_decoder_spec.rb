@@ -65,6 +65,23 @@ describe Avromatic::Model::MessageDecoder do
     end
   end
 
+  describe "#model" do
+    let(:models) { [model1, model2] }
+    let(:model1_instance) { model1.new(str1: 'A', str2: 'B', id: 99) }
+    let(:model1_value) do
+      model1_instance.avro_message_value
+    end
+    let(:model1_key) do
+      model1_instance.avro_message_key
+    end
+
+    it "returns the associated model for a message" do
+      expect(instance.model(model1_key, model1_value)).to equal(model1)
+    end
+
+    it_behaves_like "decoding failure cases", :model
+  end
+
   describe "#decode" do
     let(:models) { [model1, model2] }
     let(:model1_instance) { model1.new(str1: 'A', str2: 'B', id: 99) }

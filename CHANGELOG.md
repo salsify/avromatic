@@ -1,5 +1,9 @@
 # avromatic changelog
 
+## v0.30.0
+- Add `Avromatic::Model::MessageDecoder#model` method to return the Avromatic
+  model class for a message.
+
 ## v0.29.1
 - Add `Avromatic.build_messaging!` to `avromatic/rspec`.
 
