@@ -47,7 +47,12 @@ module Avromatic
 
         def safe_coerce(member_attribute, input)
           coerced = member_attribute.coerce(input)
-          coerced unless coerced.is_a?(Avromatic::Model::Attributes) && coerced.invalid?
+
+          if coerced.is_a?(Avromatic::Model::Attributes)
+            coerced if coerced.valid?
+          elsif member_attribute.coerced?(coerced)
+            coerced
+          end
         rescue
           nil
         end
