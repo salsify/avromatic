@@ -1,5 +1,7 @@
 require 'active_support/core_ext/object/duplicable'
+require 'active_support/time'
 require 'ice_nine/core_ext/object'
+require 'avromatic/model/allowed_type_validator'
 
 module Avromatic
   module Model
@@ -83,12 +85,12 @@ module Avromatic
                       field_class,
                       avro_field_options(field, field_class))
 
-            add_validation(field)
+            add_validation(field, field_class)
             add_serializer(field, field_class)
           end
         end
 
-        def add_validation(field)
+        def add_validation(field, field_class)
           case field.type.type_sym
           when :enum
             validates(field.name,
@@ -97,9 +99,23 @@ module Avromatic
             validates(field.name, length: { is: field.type.size })
           when :record, :array, :map, :union
             validate_complex(field.name)
+          else
+            add_type_validation(field.name, field_class)
           end
 
           add_required_validation(field)
+        end
+
+        def add_type_validation(name, field_class)
+          allowed_types = if field_class == Axiom::Types::Boolean
+                            [TrueClass, FalseClass]
+                          elsif field_class < Avromatic::Model::Attribute::AbstractTimestamp
+                            [Time]
+                          else
+                            [field_class]
+                          end
+
+          validates(name, allowed_type: allowed_types, allow_blank: true)
         end
 
         def add_required_validation(field)

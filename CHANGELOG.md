@@ -1,5 +1,10 @@
 # avromatic changelog
 
+## v0.31.0 (unreleased)
+- Improve partial assignment using a hash for records outside of unions.
+- Prevent invalid types from being assigned to primitives in unions.
+- Add validation that primitive attributes have the expected type.
+
 ## v0.30.0
 - Add `Avromatic::Model::MessageDecoder#model` method to return the Avromatic
   model class for a message.
