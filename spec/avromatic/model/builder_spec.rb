@@ -271,12 +271,12 @@ describe Avromatic::Model::Builder do
 
       context "string" do
         it "coerces an integer to a string" do
-          expect(test_class.new(s: 100).s).to eq("100")
+          expect(test_class.new(s: 100).s).to eq('100')
         end
 
         it "does not coerce a Hash to a string" do
           instance = test_class.new(s: { x: 1 })
-          expect(instance.s).to eq({ x: 1 })
+          expect(instance.s).to eq(x: 1)
         end
       end
 
