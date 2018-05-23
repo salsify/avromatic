@@ -315,7 +315,6 @@ describe Avromatic::Model::Builder, 'validation' do
         end
 
         it "validates records in an array initialized with hashes" do
-          nested_model = test_class.nested_models['x_and_y']
           data = [{},
                   { x: 1 },
                   { y: 2 }]
@@ -390,7 +389,6 @@ describe Avromatic::Model::Builder, 'validation' do
         end
 
         it "validates records in a map initialized with hashes" do
-          nested_model = test_class.nested_models['x_and_y']
           data = {
             a: { y: 3 },
             b: {},
