@@ -1,7 +1,7 @@
 language: ruby
 rvm:
-  - 2.5.0
-  - 2.4.3
+  - 2.5.1
+  - 2.4.4
   - 2.3.5
   - 2.2.8
 before_script:
@@ -12,6 +12,8 @@ script:
   - bundle exec appraisal rails4_2 rake spec
   - bundle exec appraisal rails5_0 rake spec
   - bundle exec appraisal rails5_1 rake spec
+  - bundle exec appraisal rails5_2 rake spec
   - bundle exec appraisal avro-patches-4_1 rake spec
   - bundle exec appraisal avro-patches-5_0 rake spec
   - bundle exec appraisal avro-patches-5_1 rake spec
+  - bundle exec appraisal avro-patches-5_2 rake spec

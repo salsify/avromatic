@@ -1,5 +1,8 @@
 # avromatic changelog
 
+## v0.31.0 (unreleased)
+= Add support for Rails 5.2.
+
 ## v0.30.0
 - Add `Avromatic::Model::MessageDecoder#model` method to return the Avromatic
   model class for a message.
