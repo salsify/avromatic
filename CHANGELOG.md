@@ -1,6 +1,6 @@
 # avromatic changelog
 
-## v0.31.0 (unreleased)
+## v0.31.0
 = Add support for Rails 5.2.
 
 ## v0.30.0
