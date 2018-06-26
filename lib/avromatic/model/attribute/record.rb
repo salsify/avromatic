@@ -12,10 +12,9 @@ module Avromatic
         primitive Avromatic::Model::Attributes
 
         def coerce(value)
-          return value if value.nil? || value_coerced?(value)
+          return value if value.nil? || value.is_a?(primitive)
 
-          coerced = primitive.new(value)
-          coerced if coerced.valid?
+          primitive.new(value)
         end
 
         def value_coerced?(value)

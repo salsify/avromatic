@@ -7,6 +7,74 @@ describe Avromatic::Model::Builder, 'validation' do
     test_class.attribute_set.map(&:name).map(&:to_s)
   end
 
+  context "primitives" do
+    let(:schema_name) { 'test.primitive_types' }
+
+    context "string" do
+      it "validates that a string has the correct type" do
+        instance = test_class.new(s: { x: 1 })
+        expect(instance).to be_invalid
+        expect(instance.errors[:s]).to include('does not have the expected type [String]')
+      end
+    end
+
+    context "integer" do
+      it "validates that an integer has the correct type" do
+        instance = test_class.new(i: { x: 2 })
+        expect(instance).to be_invalid
+        expect(instance.errors[:i]).to include('does not have the expected type [Integer]')
+      end
+    end
+
+    context "boolean" do
+      it "validates that a boolean has the correct type" do
+        instance = test_class.new(tf: { x: 3 })
+        expect(instance).to be_invalid
+        expect(instance.errors[:tf]).to include('does not have the expected type [TrueClass, FalseClass]')
+      end
+    end
+
+    context "bytes" do
+      it "validates that bytes have the correct type" do
+        instance = test_class.new(b: { x: 4 })
+        expect(instance).to be_invalid
+        expect(instance.errors[:b]).to include('does not have the expected type [String]')
+      end
+    end
+
+    context "long" do
+      it "validates that a long has the correct type" do
+        instance = test_class.new(l: { x: 5 })
+        expect(instance).to be_invalid
+        expect(instance.errors[:l]).to include('does not have the expected type [Integer]')
+      end
+    end
+
+    context "float" do
+      it "validates that a float has the correct type" do
+        instance = test_class.new(f: { x: 6 })
+        expect(instance).to be_invalid
+        expect(instance.errors[:f]).to include('does not have the expected type [Float]')
+      end
+    end
+
+    context "double" do
+      it "validates that a double has the correct type" do
+        instance = test_class.new(d: { x: 7 })
+        expect(instance).to be_invalid
+        expect(instance.errors[:d]).to include('does not have the expected type [Float]')
+      end
+    end
+
+    context "null" do
+      it "validates that a null field has the correct type" do
+        instance = test_class.new(n: { x: 8 })
+        expect(instance).to be_invalid
+        expect(instance.errors[:n]).to include('does not have the expected type [NilClass]')
+      end
+    end
+  end
+
   context "fixed" do
     let(:schema_name) { 'test.named_fields' }
 
@@ -24,6 +92,73 @@ describe Avromatic::Model::Builder, 'validation' do
       instance = test_class.new(e: :C)
       expect(instance).to be_invalid
       expect(instance.errors[:e]).to include('is not included in the list')
+    end
+  end
+
+  context "logical types" do
+    let(:schema_name) { 'test.logical_types' }
+
+    context "timestamp-millis" do
+      it "accepts a Time" do
+        instance = test_class.new(ts_msec: Time.now)
+        instance.validate
+        expect(instance.errors[:ts_msec]).to be_empty
+      end
+
+      it "accepts an ActiveSupport::TimeWithZone" do
+        Time.zone = 'GMT'
+        instance = test_class.new(ts_msec: Time.zone.now)
+        instance.validate
+        expect(instance.errors[:ts_msec]).to be_empty
+      end
+
+      it "validates that a timestamp-millis is a Time" do
+        instance = test_class.new(ts_msec: Date.today)
+        expect(instance).to be_invalid
+        expect(instance.errors[:ts_msec]).to include('does not have the expected type [Time]')
+      end
+    end
+
+    context "timestamp-micros" do
+      it "accepts a Time" do
+        instance = test_class.new(ts_usec: Time.now)
+        instance.validate
+        expect(instance.errors[:ts_usec]).to be_empty
+      end
+
+      it "accepts an ActiveSupport::TimeWithZone" do
+        Time.zone = 'GMT'
+        instance = test_class.new(ts_usec: Time.zone.now)
+        instance.validate
+        expect(instance.errors[:ts_usec]).to be_empty
+      end
+
+      it "validates that a timestamp-micros is a Time" do
+        instance = test_class.new(ts_usec: Date.today)
+        expect(instance).to be_invalid
+        expect(instance.errors[:ts_usec]).to include('does not have the expected type [Time]')
+      end
+    end
+
+    context "date" do
+      it "accepts a Date" do
+        instance = test_class.new(date: Date.today)
+        instance.validate
+        expect(instance.errors[:date]).to be_empty
+      end
+
+      it "accepts a Time" do
+        instance = test_class.new(date: Time.now)
+        instance.validate
+        expect(instance.errors[:date]).to be_empty
+      end
+
+      it "validates that a date is a Date" do
+        Time.zone = 'GMT'
+        instance = test_class.new(date: Time.zone.now)
+        expect(instance).to be_invalid
+        expect(instance.errors[:date]).to include('does not have the expected type [Date]')
+      end
     end
   end
 
@@ -116,6 +251,12 @@ describe Avromatic::Model::Builder, 'validation' do
         end
       end
 
+      it "validates nested records initialized with a hash" do
+        instance = test_class.new(sub: { i: 0 })
+        expect(instance).to be_invalid
+        expect(instance.errors[:sub]).to include(".s can't be blank")
+      end
+
       context "doubly nested record" do
         let(:schema) do
           Avro::Builder.build_schema do
@@ -133,6 +274,12 @@ describe Avromatic::Model::Builder, 'validation' do
           level1 = test_class.nested_models['level1']
           level2 = test_class.nested_models['level2']
           instance = test_class.new(sub: level1.new(sub_sub: level2.new))
+          expect(instance).to be_invalid
+          expect(instance.errors[:sub]).to include(".sub_sub.l can't be blank")
+        end
+
+        it "validates multiple levels of nesting initialized with a hash" do
+          instance = test_class.new(sub: { sub_sub: {} })
           expect(instance).to be_invalid
           expect(instance.errors[:sub]).to include(".sub_sub.l can't be blank")
         end
@@ -157,6 +304,20 @@ describe Avromatic::Model::Builder, 'validation' do
           data = [nested_model.new,
                   nested_model.new(x: 1),
                   nested_model.new(y: 2)]
+          instance = test_class.new(ary: data)
+          expect(instance).to be_invalid
+          aggregate_failures do
+            expect(instance.errors[:ary]).to include("[0].x can't be blank")
+            expect(instance.errors[:ary]).to include("[0].y can't be blank")
+            expect(instance.errors[:ary]).to include("[1].y can't be blank")
+            expect(instance.errors[:ary]).to include("[2].x can't be blank")
+          end
+        end
+
+        it "validates records in an array initialized with hashes" do
+          data = [{},
+                  { x: 1 },
+                  { y: 2 }]
           instance = test_class.new(ary: data)
           expect(instance).to be_invalid
           aggregate_failures do
@@ -226,6 +387,22 @@ describe Avromatic::Model::Builder, 'validation' do
             expect(instance.errors[:map]).to include("['c'].y can't be blank")
           end
         end
+
+        it "validates records in a map initialized with hashes" do
+          data = {
+            a: { y: 3 },
+            b: {},
+            c: { x: 4 }
+          }
+          instance = test_class.new(map: data)
+          expect(instance).to be_invalid
+          aggregate_failures do
+            expect(instance.errors[:map]).to include("['a'].x can't be blank")
+            expect(instance.errors[:map]).to include("['b'].y can't be blank")
+            expect(instance.errors[:map]).to include("['b'].y can't be blank")
+            expect(instance.errors[:map]).to include("['c'].y can't be blank")
+          end
+        end
       end
 
       context "record in a union" do
@@ -250,6 +427,19 @@ describe Avromatic::Model::Builder, 'validation' do
             expect(instance.errors[:u]).to include(".x can't be blank")
             expect(instance.errors[:u]).to include(".y can't be blank")
           end
+        end
+
+        it "validates a record in a union initialized with hashes" do
+          expect(test_class.new(u: { x: 1, y: 2 })).to be_valid
+          instance = test_class.new(u: {})
+          expect(instance).to be_invalid
+          expect(instance.errors[:u]).to include("can't be blank")
+        end
+
+        it "validates a record in a union initialized with incomplete hashes" do
+          instance = test_class.new(u: { x: 1 })
+          expect(instance).to be_invalid
+          expect(instance.errors[:u]).to include("can't be blank")
         end
       end
     end

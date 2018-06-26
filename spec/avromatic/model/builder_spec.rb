@@ -266,6 +266,70 @@ describe Avromatic::Model::Builder do
   context "coercion" do
     # This is important for the eventual encoding of a model to Avro
 
+    context "primitives" do
+      let(:schema_name) { 'test.primitive_types' }
+
+      context "string" do
+        it "coerces an integer to a string" do
+          expect(test_class.new(s: 100).s).to eq('100')
+        end
+
+        it "does not coerce a Hash to a string" do
+          instance = test_class.new(s: { x: 1 })
+          expect(instance.s).to eq(x: 1)
+        end
+      end
+
+      context "integer" do
+        it "does not coerce a Hash to an integer" do
+          instance = test_class.new(i: { x: 2 })
+          expect(instance.i).to eq(x: 2)
+        end
+      end
+
+      context "boolean" do
+        it "does not coerce a Hash to a boolean" do
+          instance = test_class.new(tf: { x: 3 })
+          expect(instance.tf).to eq(x: 3)
+        end
+      end
+
+      context "bytes" do
+        it "does not coerce a Hash to bytes" do
+          instance = test_class.new(b: { x: 4 })
+          expect(instance.b).to eq(x: 4)
+        end
+      end
+
+      context "long" do
+        it "does not coerce a Hash to a long" do
+          instance = test_class.new(l: { x: 5 })
+          expect(instance.l).to eq(x: 5)
+        end
+      end
+
+      context "float" do
+        it "does not coerce a Hash to a float" do
+          instance = test_class.new(f: { x: 6 })
+          expect(instance.f).to eq(x: 6)
+        end
+      end
+
+      context "double" do
+        it "does not coerce a Hash to a double" do
+          instance = test_class.new(d: { x: 7 })
+          expect(instance.d).to eq(x: 7)
+        end
+      end
+
+      context "null" do
+        it "does not coerce a Hash to nil" do
+          instance = test_class.new(n: { x: 8 })
+          expect(instance.n).to eq(x: 8)
+        end
+      end
+    end
+
     context "enum" do
       let(:schema_name) { 'test.named_fields' }
 

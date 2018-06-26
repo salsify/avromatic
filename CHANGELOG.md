@@ -1,7 +1,12 @@
 # avromatic changelog
 
+## v0.32.0 (unreleased)
+- Improve partial assignment using a hash for records outside of unions.
+- Prevent invalid types from being assigned to primitives in unions.
+- Add validation that primitive attributes have the expected type.
+
 ## v0.31.0
-= Add support for Rails 5.2.
+- Add support for Rails 5.2.
 
 ## v0.30.0
 - Add `Avromatic::Model::MessageDecoder#model` method to return the Avromatic
