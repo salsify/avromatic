@@ -1,6 +1,6 @@
 # avromatic changelog
 
-## v0.32.0 (unreleased)
+## v0.32.0
 - Improve partial assignment using a hash for records outside of unions.
 - Prevent invalid types from being assigned to primitives in unions.
 - Add validation that primitive attributes have the expected type.
