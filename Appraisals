@@ -45,4 +45,3 @@ appraise 'avro-patches-rails5_2' do
   gem 'activesupport', '~> 5.2.0'
   gem 'activemodel', '~> 5.2.0'
 end
-

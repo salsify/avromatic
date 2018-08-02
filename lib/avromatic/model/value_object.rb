@@ -17,7 +17,7 @@ module Avromatic
       end
 
       def to_s
-        format('#<%s:0x00%x>', self.class.name, object_id.abs * 2)
+        format('#<%<class_name>s:0x00%<identifier>x>', class_name: self.class.name, identifier: object_id.abs * 2)
       end
     end
   end

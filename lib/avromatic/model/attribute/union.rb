@@ -53,7 +53,7 @@ module Avromatic
           elsif member_attribute.coerced?(coerced)
             coerced
           end
-        rescue
+        rescue StandardError
           nil
         end
 
