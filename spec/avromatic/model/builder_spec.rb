@@ -11,7 +11,7 @@ describe Avromatic::Model::Builder do
   let(:values) { { s: 'foo', tf: true, i: 42 } }
 
   let(:attribute_names) do
-    test_class.attribute_set.map(&:name).map(&:to_s)
+    test_class.attribute_definitions.keys.map(&:to_s)
   end
 
   describe ".model" do
@@ -23,7 +23,7 @@ describe Avromatic::Model::Builder do
     it "returns a new model class" do
       expect(klass).to be_a(Class)
       expect(klass.ancestors).to include(Avromatic::Model::Attributes)
-      expect(klass.attribute_set.to_a.map(&:name).map(&:to_s))
+      expect(klass.attribute_definitions.keys.map(&:to_s))
         .to match_array(schema.fields.map(&:name))
     end
 

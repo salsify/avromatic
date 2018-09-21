@@ -54,16 +54,16 @@ module Avromatic
           def attribute_member_types(name)
             @attribute_member_types.fetch(name) do
               member_types = nil
-              attribute = attribute_set[name] if name
+              attribute = attribute_definitions[name] if name
               if attribute
-                if attribute.primitive == Array &&
-                  attribute.member_type.is_a?(Avromatic::Model::Attribute::Union)
-                  member_types = attribute.member_type.primitive.types
-                elsif attribute.primitive == Hash &&
-                  attribute.value_type.is_a?(Avromatic::Model::Attribute::Union)
-                  member_types = attribute.value_type.primitive.types
-                elsif attribute.options[:primitive] == Avromatic::Model::AttributeType::Union
-                  member_types = attribute.primitive.types
+                if attribute.field.is_a?(Avro::Schema::ArraySchema) &&
+                    attribute.field_class.first.is_a?(Avromatic::Model::AttributeType::Union)
+                  member_types =  attribute.field.type.items
+                elsif attribute.field.is_a?(Avro::Schema::MapSchema) &&
+                    field_class.first.last.is_a?(Avromatic::Model::AttributeType::Union)
+                  member_types = attribute.field.type.values
+                elsif attribute.field.is_a?(Avro::Schema::UnionSchema)
+                  member_types = attribute.field.type.schemas
                 end
               end
               @attribute_member_types[name] = member_types

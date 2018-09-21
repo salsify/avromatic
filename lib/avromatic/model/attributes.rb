@@ -20,6 +20,68 @@ module Avromatic
         end
       end
 
+      module IdentityCoercer
+        def self.call(input)
+          input
+        end
+      end
+
+      module StringCoercer
+        def self.call(input)
+          input.to_s
+        end
+      end
+
+      class ArrayCoercer
+        def initialize(element_coercer)
+          @element_coercer = element_coercer
+        end
+
+        def call(input)
+          input.map { |element| @element_coercer.call(element) }
+        end
+      end
+
+      class HashCoercer
+        def initialize(key_coercer, value_coercer)
+          @key_coercer = key_coercer
+          @value_coercer = value_coercer
+        end
+
+        def call(input)
+          input.each_with_object({}) do |(key, value), result|
+            result[@key_coercer.call(key)] = @value_coercer.call(value)
+          end
+        end
+      end
+
+      class AttributeDefinition
+        attr_reader :name, :field, :default, :coercer, :value_class
+        delegate :name, to: :field
+
+        def initialize(field:, coercer: nil, value_class: )
+          @field = field
+          @name = field.name.to_sym
+          @default = field.default.duplicable? ? field.default.dup.deep_freeze : field.default
+          @coercer = coercer
+          @value_class = value_class
+        end
+
+        def has_default?
+          @default != :no_default
+        end
+
+        def coerce(value)
+          # TODO: Coerce nil?
+          coercer.call(value)
+        end
+      end
+
+      included do
+        class_attribute :attribute_definitions, instance_writer: false
+        self.attribute_definitions = {}
+      end
+
       def self.first_union_schema(field_type)
         # TODO: This is a hack until I find a better solution for unions with
         # Virtus. This only handles a union for an optional field with :null
@@ -28,6 +90,31 @@ module Avromatic
         # down into unions. This means that custom types can only be optional
         # fields, not members of real unions.
         field_type.schemas.reject { |schema| schema.type_sym == :null }.first
+      end
+
+      def initialize(options = {})
+        # TODO: Validate keys? We ignore unknown keys
+        attribute_definitions.each do |attribute_name, attribute_definition|
+          if options.include?(attribute_name)
+            value = options.fetch(attribute_name)
+            attributes[attribute_name] = attribute_definition.coerce(value)
+          elsif options.include?(attribute_name.to_s)
+            value = options[attribute_name.to_s]
+            attributes[attribute_name] = attribute_definition.coerce(value)
+          elsif !attributes.include?(attribute_name) && attribute_definition.has_default?
+            attributes[attribute_name] = attribute_definition.default
+          end
+        end
+      end
+
+      def attributes
+        @attributes ||= {}
+      end
+
+      private
+
+      def default_for(value)
+        value.duplicable? ? value.dup.deep_freeze : value
       end
 
       module ClassMethods
@@ -81,12 +168,46 @@ module Avromatic
 
             field_class = avro_field_class(field.type)
 
-            attribute(field.name,
-                      field_class,
-                      avro_field_options(field, field_class))
+            prevent_union_including_custom_type!(field, field_class)
+
+            attribute_definitions[field.name.to_sym] = AttributeDefinition.new(
+              field: field,
+              coercer: value_coercer(field, field_class),
+              value_class: field_class
+            )
+
+            symbolized_field_name = field.name.to_sym
+            define_method(field.name) { attributes[symbolized_field_name] }
+
+            define_method("#{field.name}=") do |value|
+              attributes[symbolized_field_name] = attribute_definitions[symbolized_field_name].coerce(value)
+            end
+            private("#{field.name}=") unless config.mutable
 
             add_validation(field, field_class)
             add_serializer(field, field_class)
+          end
+        end
+
+        def value_coercer(field, value_class)
+          # TODO: This encoding of Arrays + Hashes is convoluted
+          if value_class.is_a?(Array)
+            value_class = value_class.first
+            ArrayCoercer.new(value_coercer(field.type.items, value_class))
+          elsif value_class.is_a?(Hash)
+            # Avro maps always have string keys
+            value_class = value_class.first.last
+            HashCoercer.new(IdentityCoercer.new, value_coercer(field.type.values, value_class))
+          else
+            custom_type = Avromatic.type_registry.fetch(field, value_class)
+            if custom_type.deserializer
+              custom_type.deserializer
+            elsif value_class == String
+              StringCoercer
+            else
+              # TODO: What about other types?
+              IdentityCoercer
+            end
           end
         end
 
@@ -189,34 +310,12 @@ module Avromatic
           end
         end
 
-        def avro_field_options(field, field_class)
-          options = {}
-
-          prevent_union_including_custom_type!(field, field_class)
-
-          custom_type = Avromatic.type_registry.fetch(field, field_class)
-          coercer = custom_type.deserializer
-          options[:coercer] = coercer if coercer
-
-          # See: https://github.com/dasch/avro_turf/pull/36
-          if field.default != :no_default
-            options.merge!(default: default_for(field.default), lazy: true)
-          end
-
-          options
-        end
-
         def add_serializer(field, field_class)
-          prevent_union_including_custom_type!(field, field_class)
-
+          # TODO: This probablly doesn't work properly for arrays or hashes
           custom_type = Avromatic.type_registry.fetch(field, field_class)
           serializer = custom_type.serializer
 
           avro_serializer[field.name.to_sym] = serializer if serializer
-        end
-
-        def default_for(value)
-          value.duplicable? ? value.dup.deep_freeze : value
         end
 
         # TODO: the methods below are temporary until support for custom types

@@ -4,7 +4,7 @@ describe Avromatic::Model::Builder, 'validation' do
     described_class.model(schema_name: schema_name)
   end
   let(:attribute_names) do
-    test_class.attribute_set.map(&:name).map(&:to_s)
+    test_class.attribute_definitions.keys.map(&:to_s)
   end
 
   context "primitives" do

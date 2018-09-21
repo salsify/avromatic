@@ -19,6 +19,7 @@ module Avromatic
         def self.[](*types)
           Class.new(self).tap do |klass|
             klass.types = types
+            # TODO: FIX ME
             # See https://github.com/solnic/virtus/issues/284#issuecomment-56405137
             Axiom::Types::Object.new { primitive(klass) }
           end
