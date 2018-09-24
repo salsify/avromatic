@@ -1,17 +1,15 @@
 module Avromatic
   module Model
-    module AttributeType
+    module Types
+      # TODO: Reconcile this with CustomTypeA
       class CustomTypeAdapter
-        attr_reader :custom_type
+        attr_reader :custom_type, :value_classes
 
         def initialize(custom_type:)
           @custom_type = custom_type
           @deserializer = custom_type.deserializer || Proc.new { |value| value }
           @serializer = custom_type.serializer || Proc.new { |value| value }
-        end
-
-        def value_classes
-          [custom_type.value_class]
+          @value_classes = [custom_type.value_class].freeze
         end
 
         def coerce(input)

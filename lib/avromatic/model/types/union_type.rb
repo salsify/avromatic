@@ -2,10 +2,10 @@ require 'avromatic/io'
 
 module Avromatic
   module Model
-    module AttributeType
+    module Types
 
       # This subclass of Virtus::Attribute is used for any unions that are
-      # defined as subclasses of the primitive Avromatic::Model::AttributeType::Union.
+      # defined as subclasses of the primitive Avromatic::Model::Types::Union.
       # Values are coerced by first checking if they already match one of the
       # member types, and then by attempting to coerce to each member type in
       # order.

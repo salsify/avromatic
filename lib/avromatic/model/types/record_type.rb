@@ -1,6 +1,6 @@
 module Avromatic
   module Model
-    module AttributeType
+    module Types
 
       # This subclass of Virtus::Attribute is defined to ensure that Avromatic
       # generated models (identified by their inclusion of
@@ -9,14 +9,11 @@ module Avromatic
       # This is required to coerce models correctly with nested complex types
       # with Virtus.
       class RecordType
-        attr_reader :record_class
+        attr_reader :record_class, :value_classes
 
         def initialize(record_class:)
           @record_class = record_class
-        end
-
-        def value_classes
-          [record_class]
+          @value_classes = [record_class].freeze
         end
 
         def coerce(input)

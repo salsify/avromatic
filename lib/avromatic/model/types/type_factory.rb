@@ -1,63 +1,63 @@
 module Avromatic
   module Model
-    module AttributeType
+    module Types
       module TypeFactory
         extend self
 
         def create(schema:, nested_models:)
           if Avromatic.type_registry.registered?(schema)
             custom_type = Avromatic.type_registry.fetch(schema)
-            return Avromatic::Model::AttributeType::CustomTypeAdapter.new(custom_type: custom_type)
+            return Avromatic::Model::Types::CustomTypeAdapter.new(custom_type: custom_type)
           elsif schema.respond_to?(:logical_type)
             case schema.logical_type
             when 'date'
-              return Avromatic::Model::AttributeType::DateType.new
+              return Avromatic::Model::Types::DateType.new
             when 'timestamp-micros'
-              return Avromatic::Model::AttributeType::TimestampMicrosType.new
+              return Avromatic::Model::Types::TimestampMicrosType.new
             when 'timestamp-millis'
-              return Avromatic::Model::AttributeType::TimestampMillisType
+              return Avromatic::Model::Types::TimestampMillisType
             end
           end
 
           case schema.type_sym
           when :string, :bytes, :fixed
-            Avromatic::Model::AttributeType::StringType.new
+            Avromatic::Model::Types::StringType.new
           when :boolean
-            Avromatic::Model::AttributeType::BooleanType.new
+            Avromatic::Model::Types::BooleanType.new
           when :int, :long
-            Avromatic::Model::AttributeType::IntegerType.new
+            Avromatic::Model::Types::IntegerType.new
           when :float, :double
-            Avromatic::Model::AttributeType::FloatType.new
+            Avromatic::Model::Types::FloatType.new
           when :enum
             # TODO: Create enum type?
-            Avromatic::Model::AttributeType::StringType.new
+            Avromatic::Model::Types::StringType.new
           when :null
-            Avromatic::Model::AttributeType::NullType.new
+            Avromatic::Model::Types::NullType.new
           when :array
             value_type = create(schema: schema.items, nested_models: nested_models)
-            Avromatic::Model::AttributeType::ArrayType.new(value_type: value_type)
+            Avromatic::Model::Types::ArrayType.new(value_type: value_type)
           when :map
             value_type = create(schema: schema.values, nested_models: nested_models)
-            Avromatic::Model::AttributeType::MapType.new(
-              key_type: Avromatic::Model::AttributeType::StringType.new,
+            Avromatic::Model::Types::MapType.new(
+              key_type: Avromatic::Model::Types::StringType.new,
               value_type: value_type
             )
           when :union
-            null_index = schema.schemas.index { |schema| schema.type_sym == :null }
+            null_index = schema.schemas.index { |member_schema| member_schema.type_sym == :null }
             raise 'a null type in a union must be the first member' if null_index && null_index > 0
 
-            member_schemas = schema.schemas.reject { |schema| schema.type_sym == :null }
+            member_schemas = schema.schemas.reject { |member_schema| member_schema.type_sym == :null }
             if member_schemas.size == 1
               create(schema: member_schemas.first, nested_models: nested_models)
             else
               member_types = member_schemas.map do |member_schema|
                 create(schema: member_schema, nested_models: nested_models)
               end
-              Avromatic::Model::AttributeType::UnionType.new(member_types: member_types)
+              Avromatic::Model::Types::UnionType.new(member_types: member_types)
             end
           when :record
             record_class = build_nested_model(schema: schema, nested_models: nested_models)
-            Avromatic::Model::AttributeType::RecordType.new(record_class: record_class)
+            Avromatic::Model::Types::RecordType.new(record_class: record_class)
           else
             raise "Unsupported type #{schema.type_sym}"
           end

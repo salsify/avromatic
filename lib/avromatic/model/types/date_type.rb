@@ -1,9 +1,11 @@
 module Avromatic
   module Model
-    module AttributeType
+    module Types
       class DateType
+        VALUE_CLASSES = [::Date].freeze
+
         def value_classes
-          [::Date]
+          VALUE_CLASSES
         end
 
         def coerce(input)

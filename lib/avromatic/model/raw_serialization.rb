@@ -18,13 +18,12 @@ module Avromatic
         EMPTY_ARRAY = [].freeze
 
         included do
-          @attribute_member_types = {}
+          @attribute_member_index_finder = {}
         end
 
         module ClassMethods
-          def recursive_serialize(value, name: nil, member_types: nil, strict: false)
-            member_types = attribute_member_types(name) if name
-            member_types ||= EMPTY_ARRAY
+          def recursive_serialize(value, name: nil, member_index_finder: nil, strict: false)
+            member_index_finder = attribute_member_index_finder(name) if name
 
             if value.is_a?(Avromatic::Model::Attributes)
               hash = strict ? value.avro_value_datum : value.value_attributes_for_avro
@@ -35,40 +34,40 @@ module Avromatic
                   hash = { Avromatic::IO::ENCODING_PROVIDER => value }
                 end
 
-                member_index = member_types.find_index(value) if member_types
+                member_index = member_index_finder.find_index(value) if member_index_finder
                 hash[Avromatic::IO::UNION_MEMBER_INDEX] = member_index if member_index
               end
               hash
             elsif value.is_a?(Array)
-              value.map { |v| recursive_serialize(v, member_types: member_types, strict: strict) }
+              value.map { |v| recursive_serialize(v, member_index_finder: member_index_finder, strict: strict) }
             elsif value.is_a?(Hash)
               value.each_with_object({}) do |(k, v), map|
-                map[k] = recursive_serialize(v, member_types: member_types, strict: strict)
+                map[k] = recursive_serialize(v, member_index_finder: member_index_finder, strict: strict)
               end
             else
-              # TODO: Push this into the AttributeDefinition?
+              # TODO: Push this into the various type classes?
               avro_serializer[name].call(value)
             end
           end
 
           private
 
-          def attribute_member_types(name)
-            @attribute_member_types.fetch(name) do
+          def attribute_member_index_finder(name)
+            @attribute_member_index_finder.fetch(name) do
               member_types = nil
               attribute = attribute_definitions[name] if name
               if attribute
-                if attribute.type.is_a?(Avromatic::Model::AttributeType::ArrayType) &&
-                    attribute.type.value_type.is_a?(Avromatic::Model::AttributeType::UnionType)
+                if attribute.type.is_a?(Avromatic::Model::Types::ArrayType) &&
+                    attribute.type.value_type.is_a?(Avromatic::Model::Types::UnionType)
                   member_types = attribute.type.value_type
                 elsif attribute.type.is_a?(Avro::Schema::MapSchema) &&
-                    attribute.type.value_type.is_a?(Avromatic::Model::AttributeType::UnionType)
+                    attribute.type.value_type.is_a?(Avromatic::Model::Types::UnionType)
                   member_types = attribute.type.value_type
-                elsif attribute.type.is_a?(Avromatic::Model::AttributeType::UnionType)
+                elsif attribute.type.is_a?(Avromatic::Model::Types::UnionType)
                   member_types = attribute.type
                 end
               end
-              @attribute_member_types[name] = member_types
+              @attribute_member_index_finder[name] = member_types
             end
           end
         end

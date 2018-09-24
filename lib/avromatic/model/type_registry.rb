@@ -21,22 +21,18 @@ module Avromatic
         end
       end
 
+      # @object [Avro::Schema] Custom type may be fetched based on a Avro field
+      #   or schema. If there is no custom type, then NullCustomType is returned.
       def registered?(object)
         field_type = object.is_a?(Avro::Schema::Field) ? object.type : object
-        # TODO: Handle unions
         custom_types.include?(field_type.fullname) if field_type.is_a?(Avro::Schema::NamedSchema)
       end
 
       # @object [Avro::Schema] Custom type may be fetched based on a Avro field
       #   or schema. If there is no custom type, then NullCustomType is returned.
       # @field_class [Object] Value class that has been determined for a field.
-      def fetch(object, field_class = nil)
+      def fetch(object)
         field_type = object.is_a?(Avro::Schema::Field) ? object.type : object
-
-        if field_class && field_type.type_sym == :union && !union_attribute?(field_class)
-          field_type = Avromatic::Model::Attributes.first_union_schema(field_type)
-        end
-
         fullname = field_type.fullname if field_type.is_a?(Avro::Schema::NamedSchema)
         custom_types.fetch(fullname, NullCustomType)
       end
@@ -49,7 +45,7 @@ module Avromatic
       # for an array or map field it may be an instance of an Array or Hash.
       # This method safely checks if a Union class has been selected.
       def union_attribute?(attribute_type)
-        attribute_type.is_a?(Class) && attribute_type < Avromatic::Model::AttributeType::UnionType
+        attribute_type.is_a?(Class) && attribute_type < Avromatic::Model::Types::UnionType
       end
     end
   end

@@ -1,11 +1,11 @@
-require 'avromatic/model/attribute_type/abstract_timestamp_type'
+require 'avromatic/model/types/abstract_timestamp_type'
 
 module Avromatic
   module Model
-    module AttributeType
+    module Types
 
       # This subclass is used to truncate timestamp values to milliseconds.
-      class TimestampMillisType < Avromatic::Model::AttributeType::AbstractTimestampType
+      class TimestampMillisType < Avromatic::Model::Types::AbstractTimestampType
 
         def coerced?(value)
           value.is_a?(::Time) && value.usec % 1000 == 0

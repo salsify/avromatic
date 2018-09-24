@@ -1,6 +1,6 @@
 module Avromatic
   module Model
-    module AttributeType
+    module Types
 
       # This subclass of Virtus::Attribute is defined to ensure that Avromatic
       # generated models (identified by their inclusion of
@@ -8,24 +8,30 @@ module Avromatic
       # instance of the model or creating a new one.
       # This is required to coerce models correctly with nested complex types
       # with Virtus.
-      class NullType
+      class StringType
+        VALUE_CLASSES = [::String].freeze
+
         def value_classes
-          [::NilClass]
+          VALUE_CLASSES
         end
 
         def coerce(input)
-          if input.nil?
-            nil
+          if input.nil? || input.is_a?(::String)
+            input
+          elsif input.is_a?(::Symbol)
+            input.to_s
           else
-            raise ArgumentError.new("Could not coerce '#{input.inspect}' to a Null")
+            raise ArgumentError.new("Could not coerce '#{input.inspect}' to a String")
           end
         end
 
         def coercible?(input)
-          input.nil?
+          input.nil? || input.is_a?(::String) || input.is_a?(::Symbol)
         end
 
-        alias_method :coerced?, :coercible?
+        def coerced?(value)
+          value.nil? || value.is_a?(::String)
+        end
       end
     end
   end

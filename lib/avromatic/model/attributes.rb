@@ -31,7 +31,7 @@ module Avromatic
           @default = field.default.duplicable? ? field.default.dup.deep_freeze : field.default
         end
 
-        def has_default?
+        def default?
           default != :no_default
         end
       end
@@ -60,7 +60,7 @@ module Avromatic
           elsif options.include?(attribute_name.to_s)
             value = options[attribute_name.to_s]
             attributes[attribute_name] = attribute_definition.coerce(value)
-          elsif !attributes.include?(attribute_name) && attribute_definition.has_default?
+          elsif !attributes.include?(attribute_name) && attribute_definition.default?
             attributes[attribute_name] = attribute_definition.default
           end
         end
@@ -69,8 +69,6 @@ module Avromatic
       def attributes
         @attributes ||= {}
       end
-
-      private
 
       module ClassMethods
         def add_avro_fields
@@ -121,7 +119,7 @@ module Avromatic
           schema.fields.each do |field|
             raise OptionalFieldError.new(field) if !allow_optional && optional?(field)
 
-            # prevent_union_including_custom_type!(field, field_class)
+            # TODO: Verify the unions with custom types work!
 
             attribute_definition = AttributeDefinition.new(
               field: field,
@@ -185,37 +183,17 @@ module Avromatic
         end
 
         def create_type(field)
-          Avromatic::Model::AttributeType::TypeFactory.create(schema: field.type, nested_models: nested_models)
+          Avromatic::Model::Types::TypeFactory.create(schema: field.type, nested_models: nested_models)
         end
 
         # TODO: Push this into Type?
-        # TODO: Why do we need field_class?
         def add_serializer(field)
-          # TODO: This probablly doesn't work properly for arrays or hashes
+          # TODO: This won't work for custom types used in maps, arrays or unions
           custom_type = Avromatic.type_registry.fetch(field)
           serializer = custom_type.serializer
 
           avro_serializer[field.name.to_sym] = serializer if serializer
         end
-
-        # TODO: the methods below are temporary until support for custom types
-        # as union members are supported.
-        def member_uses_custom_type?(field)
-          field.type.schemas.any? do |klass|
-            Avromatic.type_registry.fetch(klass) != NullCustomType
-          end
-        end
-
-        # TODO: Remove me
-        def prevent_union_including_custom_type!(field, field_class)
-          if field_class.is_a?(Class) &&
-            field_class < Avromatic::Model::AttributeType::Union &&
-            member_uses_custom_type?(field)
-
-            raise 'custom types within unions are currently unsupported'
-          end
-        end
-
       end
 
     end

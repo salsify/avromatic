@@ -1,6 +1,6 @@
 module Avromatic
   module Model
-    module AttributeType
+    module Types
 
       # This subclass of Virtus::Attribute is defined to ensure that Avromatic
       # generated models (identified by their inclusion of
@@ -9,6 +9,7 @@ module Avromatic
       # This is required to coerce models correctly with nested complex types
       # with Virtus.
       class ArrayType
+        VALUE_CLASSES = [::Array].freeze
         attr_reader :value_type
 
         def initialize(value_type:)
@@ -16,7 +17,7 @@ module Avromatic
         end
 
         def value_classes
-          [::Array]
+          VALUE_CLASSES
         end
 
         def coerce(input)

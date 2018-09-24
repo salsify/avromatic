@@ -3,6 +3,7 @@ require 'avromatic/model/null_custom_type'
 module Avromatic
   module Model
 
+    # TODO: Reconcile this with CustomTypeAdapter
     # Instances of this class contains the configuration for custom handling of
     # a named type (record, enum, fixed).
     class CustomType
