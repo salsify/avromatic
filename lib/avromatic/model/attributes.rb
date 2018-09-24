@@ -20,60 +20,19 @@ module Avromatic
         end
       end
 
-      module IdentityCoercer
-        def self.call(input)
-          input
-        end
-      end
-
-      module StringCoercer
-        def self.call(input)
-          input.to_s
-        end
-      end
-
-      class ArrayCoercer
-        def initialize(element_coercer)
-          @element_coercer = element_coercer
-        end
-
-        def call(input)
-          input.map { |element| @element_coercer.call(element) }
-        end
-      end
-
-      class HashCoercer
-        def initialize(key_coercer, value_coercer)
-          @key_coercer = key_coercer
-          @value_coercer = value_coercer
-        end
-
-        def call(input)
-          input.each_with_object({}) do |(key, value), result|
-            result[@key_coercer.call(key)] = @value_coercer.call(value)
-          end
-        end
-      end
-
       class AttributeDefinition
-        attr_reader :name, :field, :default, :coercer, :value_class
-        delegate :name, to: :field
+        attr_reader :name, :type, :field, :default
+        delegate :coerce, to: :type
 
-        def initialize(field:, coercer: nil, value_class: )
+        def initialize(field:, type:)
           @field = field
+          @type = type
           @name = field.name.to_sym
           @default = field.default.duplicable? ? field.default.dup.deep_freeze : field.default
-          @coercer = coercer
-          @value_class = value_class
         end
 
         def has_default?
-          @default != :no_default
-        end
-
-        def coerce(value)
-          # TODO: Coerce nil?
-          coercer.call(value)
+          default != :no_default
         end
       end
 
@@ -112,10 +71,6 @@ module Avromatic
       end
 
       private
-
-      def default_for(value)
-        value.duplicable? ? value.dup.deep_freeze : value
-      end
 
       module ClassMethods
         def add_avro_fields
@@ -166,15 +121,13 @@ module Avromatic
           schema.fields.each do |field|
             raise OptionalFieldError.new(field) if !allow_optional && optional?(field)
 
-            field_class = avro_field_class(field.type)
+            # prevent_union_including_custom_type!(field, field_class)
 
-            prevent_union_including_custom_type!(field, field_class)
-
-            attribute_definitions[field.name.to_sym] = AttributeDefinition.new(
+            attribute_definition = AttributeDefinition.new(
               field: field,
-              coercer: value_coercer(field, field_class),
-              value_class: field_class
+              type: create_type(field)
             )
+            attribute_definitions[field.name.to_sym] = attribute_definition
 
             symbolized_field_name = field.name.to_sym
             define_method(field.name) { attributes[symbolized_field_name] }
@@ -184,59 +137,29 @@ module Avromatic
             end
             private("#{field.name}=") unless config.mutable
 
-            add_validation(field, field_class)
-            add_serializer(field, field_class)
+            add_validation(attribute_definition)
+            add_serializer(field)
           end
         end
 
-        def value_coercer(field, value_class)
-          # TODO: This encoding of Arrays + Hashes is convoluted
-          if value_class.is_a?(Array)
-            value_class = value_class.first
-            ArrayCoercer.new(value_coercer(field.type.items, value_class))
-          elsif value_class.is_a?(Hash)
-            # Avro maps always have string keys
-            value_class = value_class.first.last
-            HashCoercer.new(IdentityCoercer.new, value_coercer(field.type.values, value_class))
-          else
-            custom_type = Avromatic.type_registry.fetch(field, value_class)
-            if custom_type.deserializer
-              custom_type.deserializer
-            elsif value_class == String
-              StringCoercer
-            else
-              # TODO: What about other types?
-              IdentityCoercer
-            end
-          end
-        end
-
-        def add_validation(field, field_class)
-          case field.type.type_sym
+        def add_validation(attribute_definition)
+          case attribute_definition.field.type.type_sym
           when :enum
-            validates(field.name,
-                      inclusion: { in: Set.new(field.type.symbols.map(&:freeze)).freeze })
+            validates(attribute_definition.field.name,
+                      inclusion: { in: Set.new(attribute_definition.field.type.symbols.map(&:freeze)).freeze })
           when :fixed
-            validates(field.name, length: { is: field.type.size })
+            validates(attribute_definition.field.name, length: { is: attribute_definition.field.type.size })
           when :record, :array, :map, :union
-            validate_complex(field.name)
+            validate_complex(attribute_definition.field.name)
           else
-            add_type_validation(field.name, field_class)
+            add_type_validation(attribute_definition)
           end
 
-          add_required_validation(field)
+          add_required_validation(attribute_definition.field)
         end
 
-        def add_type_validation(name, field_class)
-          allowed_types = if field_class == Axiom::Types::Boolean
-                            [TrueClass, FalseClass]
-                          elsif field_class < Avromatic::Model::Attribute::AbstractTimestamp
-                            [Time]
-                          else
-                            [field_class]
-                          end
-
-          validates(name, allowed_type: allowed_types, allow_blank: true)
+        def add_type_validation(attribute_definition)
+          validates(attribute_definition.name, allowed_type: attribute_definition.type.value_classes, allow_blank: true)
         end
 
         def add_required_validation(field)
@@ -261,58 +184,15 @@ module Avromatic
           !optional?(field)
         end
 
-        def avro_field_class(field_type)
-          custom_type = Avromatic.type_registry.fetch(field_type)
-          return custom_type.value_class if custom_type.value_class
-
-          if field_type.respond_to?(:logical_type)
-            value_class = Avromatic::Model::LogicalTypes.value_class(field_type.logical_type)
-            return value_class if value_class
-          end
-
-          case field_type.type_sym
-          when :string, :bytes, :fixed
-            String
-          when :boolean
-            Axiom::Types::Boolean
-          when :int, :long
-            Integer
-          when :float, :double
-            Float
-          when :enum
-            String
-          when :null
-            NilClass
-          when :array
-            Array[avro_field_class(field_type.items)]
-          when :map
-            Hash[String => avro_field_class(field_type.values)]
-          when :union
-            union_field_class(field_type)
-          when :record
-            build_nested_model(field_type)
-          else
-            raise "Unsupported type #{field_type}"
-          end
+        def create_type(field)
+          Avromatic::Model::AttributeType::TypeFactory.create(schema: field.type, nested_models: nested_models)
         end
 
-        def union_field_class(field_type)
-          null_index = field_type.schemas.index { |schema| schema.type_sym == :null }
-          raise 'a null type in a union must be the first member' if null_index && null_index > 0
-
-          field_classes = field_type.schemas.reject { |schema| schema.type_sym == :null }
-                            .map { |schema| avro_field_class(schema) }
-
-          if field_classes.size == 1
-            field_classes.first
-          else
-            Avromatic::Model::AttributeType::Union[*field_classes]
-          end
-        end
-
-        def add_serializer(field, field_class)
+        # TODO: Push this into Type?
+        # TODO: Why do we need field_class?
+        def add_serializer(field)
           # TODO: This probablly doesn't work properly for arrays or hashes
-          custom_type = Avromatic.type_registry.fetch(field, field_class)
+          custom_type = Avromatic.type_registry.fetch(field)
           serializer = custom_type.serializer
 
           avro_serializer[field.name.to_sym] = serializer if serializer
@@ -326,6 +206,7 @@ module Avromatic
           end
         end
 
+        # TODO: Remove me
         def prevent_union_including_custom_type!(field, field_class)
           if field_class.is_a?(Class) &&
             field_class < Avromatic::Model::AttributeType::Union &&

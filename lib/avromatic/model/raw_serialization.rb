@@ -34,7 +34,8 @@ module Avromatic
                   # hash but then we'd have no place to stash the union member index...
                   hash = { Avromatic::IO::ENCODING_PROVIDER => value }
                 end
-                member_index = member_types.index(value.class) if member_types.any?
+
+                member_index = member_types.find_index(value) if member_types
                 hash[Avromatic::IO::UNION_MEMBER_INDEX] = member_index if member_index
               end
               hash
@@ -45,6 +46,7 @@ module Avromatic
                 map[k] = recursive_serialize(v, member_types: member_types, strict: strict)
               end
             else
+              # TODO: Push this into the AttributeDefinition?
               avro_serializer[name].call(value)
             end
           end
@@ -56,14 +58,14 @@ module Avromatic
               member_types = nil
               attribute = attribute_definitions[name] if name
               if attribute
-                if attribute.field.is_a?(Avro::Schema::ArraySchema) &&
-                    attribute.field_class.first.is_a?(Avromatic::Model::AttributeType::Union)
-                  member_types =  attribute.field.type.items
-                elsif attribute.field.is_a?(Avro::Schema::MapSchema) &&
-                    field_class.first.last.is_a?(Avromatic::Model::AttributeType::Union)
-                  member_types = attribute.field.type.values
-                elsif attribute.field.is_a?(Avro::Schema::UnionSchema)
-                  member_types = attribute.field.type.schemas
+                if attribute.type.is_a?(Avromatic::Model::AttributeType::ArrayType) &&
+                    attribute.type.value_type.is_a?(Avromatic::Model::AttributeType::UnionType)
+                  member_types = attribute.type.value_type
+                elsif attribute.type.is_a?(Avro::Schema::MapSchema) &&
+                    attribute.type.value_type.is_a?(Avromatic::Model::AttributeType::UnionType)
+                  member_types = attribute.type.value_type
+                elsif attribute.type.is_a?(Avromatic::Model::AttributeType::UnionType)
+                  member_types = attribute.type
                 end
               end
               @attribute_member_types[name] = member_types

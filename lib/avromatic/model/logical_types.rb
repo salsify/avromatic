@@ -1,14 +1,16 @@
-require 'avromatic/model/attribute/timestamp_micros'
-require 'avromatic/model/attribute/timestamp_millis'
+require 'avromatic/model/attribute_type/date_type'
+require 'avromatic/model/attribute_type/timestamp_micros_type'
+require 'avromatic/model/attribute_type/timestamp_millis_type'
 
+# TODO: Consolidate with other types?
 module Avromatic
   module Model
     module LogicalTypes
 
       LOGICAL_TYPE_MAP = {
-        'date' => Date,
-        'timestamp-micros' => Avromatic::Model::Attribute::TimestampMicros,
-        'timestamp-millis' => Avromatic::Model::Attribute::TimestampMillis
+        'date' => Avromatic::Model::AttributeType::DateType,
+        'timestamp-micros' => Avromatic::Model::AttributeType::TimestampMicrosType,
+        'timestamp-millis' => Avromatic::Model::AttributeType::TimestampMillisType
       }.freeze
 
       def self.value_class(logical_type)

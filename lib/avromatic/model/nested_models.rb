@@ -22,12 +22,6 @@ module Avromatic
         # Register this model if it can be used as a nested model.
         def register!
           if key_avro_schema.nil? && value_avro_schema.type_sym == :record
-            # Register the generated model with Axiom to prevent it being
-            # treated as a BasicObject.
-            # See https://github.com/solnic/virtus/issues/284#issuecomment-56405137
-            nested_model = self
-            Axiom::Types::Object.new { primitive(nested_model) }
-
             nested_models.register(self)
           end
         end
