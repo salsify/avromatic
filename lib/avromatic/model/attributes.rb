@@ -28,11 +28,13 @@ module Avromatic
           @field = field
           @type = type
           @name = field.name.to_sym
-          @default = field.default.duplicable? ? field.default.dup.deep_freeze : field.default
-        end
-
-        def default?
-          default != :no_default
+          @default = if field.default == :no_default
+                       nil
+                     elsif field.default.duplicable?
+                       field.default.dup.deep_freeze
+                     else
+                       field.default
+                     end
         end
       end
 
@@ -44,15 +46,15 @@ module Avromatic
       def initialize(options = {})
         # TODO: Validate keys? We ignore unknown keys
         attribute_definitions.each do |attribute_name, attribute_definition|
-          attributes[attribute_name] = if options.include?(attribute_name)
-                                         value = options.fetch(attribute_name)
-                                         attribute_definition.coerce(value)
-                                       elsif options.include?(attribute_name.to_s)
-                                         value = options[attribute_name.to_s]
-                                         attribute_definition.coerce(value)
-                                       elsif !attributes.include?(attribute_name) && attribute_definition.default?
-                                         attribute_definition.default
-                                       end
+          if options.include?(attribute_name)
+            value = options.fetch(attribute_name)
+            attributes[attribute_name] = attribute_definition.coerce(value)
+          elsif options.include?(attribute_name.to_s)
+            value = options[attribute_name.to_s]
+            attributes[attribute_name] = attribute_definition.coerce(value)
+          elsif !attributes.include?(attribute_name)
+            attributes[attribute_name] = attribute_definition.default
+          end
         end
       end
 
