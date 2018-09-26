@@ -62,6 +62,10 @@ module Avromatic
         @attributes ||= {}
       end
 
+      def to_hash
+        attributes.dup
+      end
+
       module ClassMethods
         def add_avro_fields
           # models are registered in Avromatic.nested_models at this point to

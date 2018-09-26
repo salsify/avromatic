@@ -40,6 +40,8 @@ module Avromatic
 
         def serialize(value, strict:)
           member_index = find_index(value)
+          return nil if member_index.nil?
+
           hash = member_types[member_index].serialize(value, strict: strict)
           if !strict && Avromatic.use_custom_datum_writer && value.is_a?(Avromatic::Model::Attributes)
             hash[Avromatic::IO::UNION_MEMBER_INDEX] = member_index
