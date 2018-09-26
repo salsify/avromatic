@@ -11,20 +11,20 @@ module Avromatic
         def coerce(input)
           if input.nil? || input.is_a?(::Date)
             input
+          elsif input.is_a?(::Time)
+            Date.new(input.year, input.month, input.day)
           else
-            # TODO: How are these encoded?
-            raise ArgumentError.new("Could not coerce '#{input.inspect}' to a String")
+            raise ArgumentError.new("Could not coerce '#{input.inspect}' to a Date")
           end
         end
 
         def coercible?(input)
-          input.nil? || input.is_a?(::Date)
+          input.nil? || input.is_a?(::Date) || input.is_a?(::Time)
         end
 
         alias_method :coerced?, :coercible?
 
-        # TODO: Unused
-        def serialize(value)
+        def serialize(value, **)
           value
         end
       end

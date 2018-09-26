@@ -4,10 +4,18 @@ module Avromatic
       module TypeFactory
         extend self
 
-        def create(schema:, nested_models:)
-          if Avromatic.type_registry.registered?(schema)
+        def create(schema:, nested_models:, use_custom_types: true)
+          if use_custom_types && Avromatic.type_registry.registered?(schema)
             custom_type = Avromatic.type_registry.fetch(schema)
-            return Avromatic::Model::Types::CustomTypeAdapter.new(custom_type: custom_type)
+            default_value_classes = create(
+              schema: schema,
+              nested_models: nested_models,
+              use_custom_types: false
+            ).value_classes
+            return Avromatic::Model::Types::CustomTypeAdapter.new(
+              custom_type: custom_type,
+              default_value_classes: default_value_classes
+            )
           elsif schema.respond_to?(:logical_type)
             case schema.logical_type
             when 'date'
@@ -15,7 +23,7 @@ module Avromatic
             when 'timestamp-micros'
               return Avromatic::Model::Types::TimestampMicrosType.new
             when 'timestamp-millis'
-              return Avromatic::Model::Types::TimestampMillisType
+              return Avromatic::Model::Types::TimestampMillisType.new
             end
           end
 
@@ -34,10 +42,10 @@ module Avromatic
           when :null
             Avromatic::Model::Types::NullType.new
           when :array
-            value_type = create(schema: schema.items, nested_models: nested_models)
+            value_type = create(schema: schema.items, nested_models: nested_models, use_custom_types: use_custom_types)
             Avromatic::Model::Types::ArrayType.new(value_type: value_type)
           when :map
-            value_type = create(schema: schema.values, nested_models: nested_models)
+            value_type = create(schema: schema.values, nested_models: nested_models, use_custom_types: use_custom_types)
             Avromatic::Model::Types::MapType.new(
               key_type: Avromatic::Model::Types::StringType.new,
               value_type: value_type
@@ -51,7 +59,7 @@ module Avromatic
               create(schema: member_schemas.first, nested_models: nested_models)
             else
               member_types = member_schemas.map do |member_schema|
-                create(schema: member_schema, nested_models: nested_models)
+                create(schema: member_schema, nested_models: nested_models, use_custom_types: use_custom_types)
               end
               Avromatic::Model::Types::UnionType.new(member_types: member_types)
             end
@@ -62,6 +70,8 @@ module Avromatic
             raise "Unsupported type #{schema.type_sym}"
           end
         end
+
+        private
 
         # TODO: Copied from NestedModels
         def build_nested_model(schema:, nested_models:)

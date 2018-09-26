@@ -1,9 +1,6 @@
 module Avromatic
   module Model
     module Types
-
-      # This subclass of Virtus::Attribute is used to truncate timestamp values
-      # to the supported precision.
       class AbstractTimestampType
         VALUE_CLASSES = [::Time].freeze
 
@@ -28,6 +25,10 @@ module Avromatic
 
         def coerced?(_value)
           raise "#{__method__} must be overridden by #{self.class.name}"
+        end
+
+        def serialize(value, **)
+          value
         end
 
         private

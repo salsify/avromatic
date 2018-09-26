@@ -29,13 +29,13 @@ describe Avromatic::Model::Builder, 'nested_models' do
     end
 
     it "reuses nested models for multiple fields" do
-      expect(model.attribute_set['sub'].primitive)
-        .to equal(model.attribute_set['opt_sub'].primitive)
+      expect(model.attribute_definitions[:sub].type.record_class)
+        .to equal(model.attribute_definitions[:opt_sub].type.record_class)
     end
 
     it "reuses nested models for multiple models" do
-      expect(model.attribute_set['sub'].primitive)
-        .to equal(model2.attribute_set['same'].primitive)
+      expect(model.attribute_definitions[:sub].type.record_class)
+        .to equal(model2.attribute_definitions[:same].type.record_class)
     end
   end
 
@@ -47,19 +47,19 @@ describe Avromatic::Model::Builder, 'nested_models' do
 
     it "uses the specified registry for nested models" do
       aggregate_failures do
-        expect(model.nested_models['test.bar.sub_rec']).to equal(model.attribute_set['sub'].primitive)
+        expect(model.nested_models['test.bar.sub_rec']).to equal(model.attribute_definitions[:sub].type.record_class)
         expect(Avromatic.nested_models.registered?('test.bar.sub_rec')).to be(false)
       end
     end
 
     it "reuses nested models for multiple fields" do
-      expect(model.attribute_set['sub'].primitive)
-        .to equal(model.attribute_set['opt_sub'].primitive)
+      expect(model.attribute_definitions[:sub].type.record_class)
+        .to equal(model.attribute_definitions[:opt_sub].type.record_class)
     end
 
     it "does not reuse nested models for models with different registries" do
-      expect(model.attribute_set['sub'].primitive)
-        .not_to equal(model2.attribute_set['same'].primitive)
+      expect(model.attribute_definitions[:sub].type.record_class)
+        .not_to equal(model2.attribute_definitions[:same].type.record_class)
     end
   end
 end

@@ -1,19 +1,21 @@
 module Avromatic
   module Model
     module Types
-      # TODO: Reconcile this with CustomTypeA
+      # TODO: Reconcile this with CustomType
       class CustomTypeAdapter
+        IDENTITY_PROC = Proc.new { |value| value }
+
         attr_reader :custom_type, :value_classes
 
-        def initialize(custom_type:)
+        def initialize(custom_type:, default_value_classes:)
           @custom_type = custom_type
-          @deserializer = custom_type.deserializer || Proc.new { |value| value }
-          @serializer = custom_type.serializer || Proc.new { |value| value }
-          @value_classes = [custom_type.value_class].freeze
+          @deserializer = custom_type.deserializer || IDENTITY_PROC
+          @serializer = custom_type.serializer || IDENTITY_PROC
+          @value_classes = custom_type.value_class ? [custom_type.value_class].freeze : default_value_classes
         end
 
         def coerce(input)
-          if input.nil? || input.is_a?(custom_type.value_class)
+          if input.nil?
             input
           else
             @deserializer.call(input)
@@ -28,11 +30,13 @@ module Avromatic
         end
 
         def coerced?(value)
-          value.nil? || value.is_a?(custom_type.value_class)
+          # TODO: Is there a better way to implement this?
+          coerce(value) == value
+        rescue
+          false
         end
 
-        # TODO: Unused
-        def serialize(value)
+        def serialize(value, **)
           @serializer.call(value)
         end
       end

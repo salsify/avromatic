@@ -1,5 +1,3 @@
-require 'avromatic/model/passthrough_serializer'
-
 module Avromatic
   module Model
 
@@ -11,66 +9,8 @@ module Avromatic
       module Encode
         extend ActiveSupport::Concern
 
-        delegate :avro_serializer, :datum_writer, :datum_reader, :attribute_set,
-                 to: :class
-        private :avro_serializer, :datum_writer, :datum_reader
-
-        EMPTY_ARRAY = [].freeze
-
-        included do
-          @attribute_member_index_finder = {}
-        end
-
-        module ClassMethods
-          def recursive_serialize(value, name: nil, member_index_finder: nil, strict: false)
-            member_index_finder = attribute_member_index_finder(name) if name
-
-            if value.is_a?(Avromatic::Model::Attributes)
-              hash = strict ? value.avro_value_datum : value.value_attributes_for_avro
-              if !strict && Avromatic.use_custom_datum_writer
-                if Avromatic.use_encoding_providers? && !value.class.config.mutable
-                  # n.b. Ideally we'd just return value here instead of wrapping it in a
-                  # hash but then we'd have no place to stash the union member index...
-                  hash = { Avromatic::IO::ENCODING_PROVIDER => value }
-                end
-
-                member_index = member_index_finder.find_index(value) if member_index_finder
-                hash[Avromatic::IO::UNION_MEMBER_INDEX] = member_index if member_index
-              end
-              hash
-            elsif value.is_a?(Array)
-              value.map { |v| recursive_serialize(v, member_index_finder: member_index_finder, strict: strict) }
-            elsif value.is_a?(Hash)
-              value.each_with_object({}) do |(k, v), map|
-                map[k] = recursive_serialize(v, member_index_finder: member_index_finder, strict: strict)
-              end
-            else
-              # TODO: Push this into the various type classes?
-              avro_serializer[name].call(value)
-            end
-          end
-
-          private
-
-          def attribute_member_index_finder(name)
-            @attribute_member_index_finder.fetch(name) do
-              member_types = nil
-              attribute = attribute_definitions[name] if name
-              if attribute
-                if attribute.type.is_a?(Avromatic::Model::Types::ArrayType) &&
-                    attribute.type.value_type.is_a?(Avromatic::Model::Types::UnionType)
-                  member_types = attribute.type.value_type
-                elsif attribute.type.is_a?(Avro::Schema::MapSchema) &&
-                    attribute.type.value_type.is_a?(Avromatic::Model::Types::UnionType)
-                  member_types = attribute.type.value_type
-                elsif attribute.type.is_a?(Avromatic::Model::Types::UnionType)
-                  member_types = attribute.type
-                end
-              end
-              @attribute_member_index_finder[name] = member_types
-            end
-          end
-        end
+        delegate :datum_writer, :datum_reader, to: :class
+        private :datum_writer, :datum_reader
 
         def avro_raw_value
           if self.class.config.mutable
@@ -113,7 +53,7 @@ module Avromatic
 
         def avro_hash(fields, strict: false)
           attributes.slice(*fields).each_with_object(Hash.new) do |(key, value), result|
-            result[key.to_s] = self.class.recursive_serialize(value, name: key, strict: strict)
+            result[key.to_s] = attribute_definitions[key].serialize(value, strict: strict)
           end
         end
 
@@ -160,13 +100,6 @@ module Avromatic
 
         def datum_writer_class
           Avromatic.use_custom_datum_writer ? Avromatic::IO::DatumWriter : Avro::IO::DatumWriter
-        end
-
-        # Store a hash of Procs by field name (as a symbol) to convert
-        # the value before Avro serialization.
-        # Returns the default PassthroughSerializer if a key is not present.
-        def avro_serializer
-          @avro_serializer ||= Hash.new(PassthroughSerializer)
         end
 
         def datum_writer

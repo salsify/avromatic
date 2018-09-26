@@ -7,74 +7,6 @@ describe Avromatic::Model::Builder, 'validation' do
     test_class.attribute_definitions.keys.map(&:to_s)
   end
 
-  context "primitives" do
-    let(:schema_name) { 'test.primitive_types' }
-
-    context "string" do
-      it "validates that a string has the correct type" do
-        instance = test_class.new(s: { x: 1 })
-        expect(instance).to be_invalid
-        expect(instance.errors[:s]).to include('does not have the expected type [String]')
-      end
-    end
-
-    context "integer" do
-      it "validates that an integer has the correct type" do
-        instance = test_class.new(i: { x: 2 })
-        expect(instance).to be_invalid
-        expect(instance.errors[:i]).to include('does not have the expected type [Integer]')
-      end
-    end
-
-    context "boolean" do
-      it "validates that a boolean has the correct type" do
-        instance = test_class.new(tf: { x: 3 })
-        expect(instance).to be_invalid
-        expect(instance.errors[:tf]).to include('does not have the expected type [TrueClass, FalseClass]')
-      end
-    end
-
-    context "bytes" do
-      it "validates that bytes have the correct type" do
-        instance = test_class.new(b: { x: 4 })
-        expect(instance).to be_invalid
-        expect(instance.errors[:b]).to include('does not have the expected type [String]')
-      end
-    end
-
-    context "long" do
-      it "validates that a long has the correct type" do
-        instance = test_class.new(l: { x: 5 })
-        expect(instance).to be_invalid
-        expect(instance.errors[:l]).to include('does not have the expected type [Integer]')
-      end
-    end
-
-    context "float" do
-      it "validates that a float has the correct type" do
-        instance = test_class.new(f: { x: 6 })
-        expect(instance).to be_invalid
-        expect(instance.errors[:f]).to include('does not have the expected type [Float]')
-      end
-    end
-
-    context "double" do
-      it "validates that a double has the correct type" do
-        instance = test_class.new(d: { x: 7 })
-        expect(instance).to be_invalid
-        expect(instance.errors[:d]).to include('does not have the expected type [Float]')
-      end
-    end
-
-    context "null" do
-      it "validates that a null field has the correct type" do
-        instance = test_class.new(n: { x: 8 })
-        expect(instance).to be_invalid
-        expect(instance.errors[:n]).to include('does not have the expected type [NilClass]')
-      end
-    end
-  end
-
   context "fixed" do
     let(:schema_name) { 'test.named_fields' }
 
@@ -95,6 +27,7 @@ describe Avromatic::Model::Builder, 'validation' do
     end
   end
 
+  # TODO: Move thes to builder spec
   context "logical types" do
     let(:schema_name) { 'test.logical_types' }
 
@@ -112,10 +45,8 @@ describe Avromatic::Model::Builder, 'validation' do
         expect(instance.errors[:ts_msec]).to be_empty
       end
 
-      it "validates that a timestamp-millis is a Time" do
-        instance = test_class.new(ts_msec: Date.today)
-        expect(instance).to be_invalid
-        expect(instance.errors[:ts_msec]).to include('does not have the expected type [Time]')
+      it "raises an ArgumentError when the value is a Date" do
+        expect { test_class.new(ts_msec: Date.today) }.to raise_error(ArgumentError, /Could not coerce/)
       end
     end
 
@@ -133,10 +64,8 @@ describe Avromatic::Model::Builder, 'validation' do
         expect(instance.errors[:ts_usec]).to be_empty
       end
 
-      it "validates that a timestamp-micros is a Time" do
-        instance = test_class.new(ts_usec: Date.today)
-        expect(instance).to be_invalid
-        expect(instance.errors[:ts_usec]).to include('does not have the expected type [Time]')
+      it "raises an ArgumentError when the value is a Date" do
+        expect { test_class.new(ts_usec: Date.today) }.to raise_error(ArgumentError, /Could not coerce/)
       end
     end
 
@@ -151,13 +80,6 @@ describe Avromatic::Model::Builder, 'validation' do
         instance = test_class.new(date: Time.now)
         instance.validate
         expect(instance.errors[:date]).to be_empty
-      end
-
-      it "validates that a date is a Date" do
-        Time.zone = 'GMT'
-        instance = test_class.new(date: Time.zone.now)
-        expect(instance).to be_invalid
-        expect(instance.errors[:date]).to include('does not have the expected type [Date]')
       end
     end
   end
@@ -195,7 +117,6 @@ describe Avromatic::Model::Builder, 'validation' do
       let(:test_class) { described_class.model(schema: schema) }
 
       it "validates that a required array is not nil" do
-        pending "Virtus coerces nil values to an empty array"
         instance = test_class.new(a: nil)
         expect(instance).to be_invalid
         expect(instance.errors[:a]).to include("can't be nil")

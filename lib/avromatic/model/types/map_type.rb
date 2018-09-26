@@ -1,13 +1,6 @@
 module Avromatic
   module Model
     module Types
-
-      # This subclass of Virtus::Attribute is defined to ensure that Avromatic
-      # generated models (identified by their inclusion of
-      # Avromatic::Model::Attributes) are always coerced by identifying an
-      # instance of the model or creating a new one.
-      # This is required to coerce models correctly with nested complex types
-      # with Virtus.
       class MapType
         VALUE_CLASSES = [::Hash].freeze
 
@@ -55,6 +48,16 @@ module Avromatic
             end
           else
             false
+          end
+        end
+
+        def serialize(value, strict:)
+          if value.nil?
+            value
+          else
+            value.each_with_object({}) do |(element_key, element_value), result|
+              result[key_type.serialize(element_key, strict: strict)] = value_type.serialize(element_value, strict: strict)
+            end
           end
         end
       end

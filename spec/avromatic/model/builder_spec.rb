@@ -270,62 +270,135 @@ describe Avromatic::Model::Builder do
       let(:schema_name) { 'test.primitive_types' }
 
       context "string" do
-        it "coerces an integer to a string" do
-          expect(test_class.new(s: 100).s).to eq('100')
+        it "coerces a string to a string" do
+          instance = test_class.new(s: 'foo')
+          expect(instance.s).to eq('foo')
         end
 
-        it "does not coerce a Hash to a string" do
-          instance = test_class.new(s: { x: 1 })
-          expect(instance.s).to eq(x: 1)
+        it "coerces a symbol to a string" do
+          instance = test_class.new(s: :foo)
+          expect(instance.s).to eq('foo')
+        end
+
+        it "coerces a nil to a string" do
+          instance = test_class.new(s: nil)
+          expect(instance.s).to be_nil
+        end
+
+        it "does not coerce an integer to a string" do
+          expect { test_class.new(s: 100) }.to raise_error(ArgumentError, /Could not coerce/)
         end
       end
 
       context "integer" do
-        it "does not coerce a Hash to an integer" do
-          instance = test_class.new(i: { x: 2 })
-          expect(instance.i).to eq(x: 2)
+        it "coerces a integer to a integer" do
+          instance = test_class.new(i: 1)
+          expect(instance.i).to eq(1)
+        end
+
+        it "coerces a nil to an integer" do
+          instance = test_class.new(i: nil)
+          expect(instance.i).to be_nil
+        end
+
+        it "does not coerce a string to an integer" do
+          expect { test_class.new(i: '100') }.to raise_error(ArgumentError, /Could not coerce/)
         end
       end
 
       context "boolean" do
-        it "does not coerce a Hash to a boolean" do
-          instance = test_class.new(tf: { x: 3 })
-          expect(instance.tf).to eq(x: 3)
+        it "coerces a false to a boolean" do
+          instance = test_class.new(tf: false)
+          expect(instance.tf).to eq(false)
+        end
+
+        it "coerces a true to a boolean" do
+          instance = test_class.new(tf: true)
+          expect(instance.tf).to eq(true)
+        end
+
+        it "coerces a nil to an integer" do
+          instance = test_class.new(tf: nil)
+          expect(instance.tf).to be_nil
+        end
+
+        it "does not coerce a string to a boolean" do
+          expect { test_class.new(tf: 'true') }.to raise_error(ArgumentError, /Could not coerce/)
         end
       end
 
       context "bytes" do
-        it "does not coerce a Hash to bytes" do
-          instance = test_class.new(b: { x: 4 })
-          expect(instance.b).to eq(x: 4)
+        it "coerces a string to bytes" do
+          instance = test_class.new(b: 'foo')
+          expect(instance.b).to eq('foo')
+        end
+
+        it "coerces a nil to bytes" do
+          instance = test_class.new(b: nil)
+          expect(instance.b).to be_nil
+        end
+
+        it "does not coerce a number to bytes" do
+          expect { test_class.new(b: 12) }.to raise_error(ArgumentError, /Could not coerce/)
         end
       end
 
       context "long" do
-        it "does not coerce a Hash to a long" do
-          instance = test_class.new(l: { x: 5 })
-          expect(instance.l).to eq(x: 5)
+        it "coerces a long to a long" do
+          instance = test_class.new(l: 123)
+          expect(instance.l).to eq(123)
+        end
+
+        it "coerces a nil to a long" do
+          instance = test_class.new(l: nil)
+          expect(instance.l).to be_nil
+        end
+
+        it "does not coerce a string to a long" do
+          expect { test_class.new(l: '12') }.to raise_error(ArgumentError, /Could not coerce/)
         end
       end
 
       context "float" do
-        it "does not coerce a Hash to a float" do
-          instance = test_class.new(f: { x: 6 })
-          expect(instance.f).to eq(x: 6)
+        it "coerces a long to a float" do
+          instance = test_class.new(f: 1.23)
+          expect(instance.f).to eq(1.23)
+        end
+
+        it "coerces a nil to a float" do
+          instance = test_class.new(f: nil)
+          expect(instance.f).to be_nil
+        end
+
+        it "does not coerce a string to a float" do
+          expect { test_class.new(f: '1.22') }.to raise_error(ArgumentError, /Could not coerce/)
         end
       end
 
       context "double" do
-        it "does not coerce a Hash to a double" do
-          instance = test_class.new(d: { x: 7 })
-          expect(instance.d).to eq(x: 7)
+        it "coerces a long to a double" do
+          instance = test_class.new(d: 1.23)
+          expect(instance.d).to eq(1.23)
+        end
+
+        it "coerces a nil to a double" do
+          instance = test_class.new(d: nil)
+          expect(instance.d).to be_nil
+        end
+
+        it "does not coerce a string to a double" do
+          expect { test_class.new(d: '1.22') }.to raise_error(ArgumentError, /Could not coerce/)
         end
       end
 
       context "null" do
-        it "does not coerce a Hash to nil" do
-          instance = test_class.new(n: { x: 8 })
-          expect(instance.n).to eq(x: 8)
+        it "coerces a nil to a nil" do
+          instance = test_class.new(n: nil)
+          expect(instance.n).to be_nil
+        end
+
+        it "does not coerce an empty string to nil" do
+          expect { test_class.new(n: '') }.to raise_error(ArgumentError, /Could not coerce/)
         end
       end
     end
@@ -336,6 +409,15 @@ describe Avromatic::Model::Builder do
       it "coerces the value to a string" do
         instance = test_class.new(e: :C)
         expect(instance.e).to eq('C')
+      end
+
+      it "coerces a nil to an enum" do
+        instance = test_class.new(e: nil)
+        expect(instance.e).to be_nil
+      end
+
+      it "does not coerce a number to an enum" do
+        expect { test_class.new(e: 1) }.to raise_error(ArgumentError, /Could not coerce/)
       end
     end
   end
@@ -396,8 +478,8 @@ describe Avromatic::Model::Builder do
       end
 
       it "coerces values in the array" do
-        instance = test_class.new(aoo: [1, nil, 3])
-        expect(instance.aoo).to eq(['1', nil, '3'])
+        instance = test_class.new(aoo: ['foo', nil, :bar])
+        expect(instance.aoo).to eq(['foo', nil, 'bar'])
       end
     end
 
@@ -417,6 +499,28 @@ describe Avromatic::Model::Builder do
       it "coerces record members" do
         expect(test_class.new(value1).message.foo_message).to eq('foo')
         expect(test_class.new(value2).message.bar_message).to eq('bar')
+      end
+    end
+
+    context "union with a custom type" do
+      let(:schema) do
+        Avro::Builder.build_schema do
+          fixed :handshake, size: 6
+          record :union_with_custom do
+            required :u, :union, types: [:long, :handshake]
+          end
+        end
+      end
+
+      before do
+        Avromatic.register_type('handshake', String) do |type|
+          type.from_avro = ->(value) { value.downcase }
+        end
+      end
+
+      it "performs the expected coercion" do
+        instance = test_class.new(u: 'VALUE')
+        expect(instance.u).to eq('value')
       end
     end
 
@@ -441,7 +545,7 @@ describe Avromatic::Model::Builder do
       end
       let(:data) do
         {
-          top: { a: [{ str: 137 }, { i: '99', c: 'FooBar' }] }
+          top: { a: [{ str: '137' }, { i: 99, c: 'FooBar' }] }
         }
       end
 
@@ -462,28 +566,6 @@ describe Avromatic::Model::Builder do
     end
 
     context "unsupported" do
-      context "union with a custom type" do
-        let(:schema) do
-          Avro::Builder.build_schema do
-            fixed :handshake, size: 6
-            record :union_with_custom do
-              required :u, :union, types: [:string, :handshake]
-            end
-          end
-        end
-
-        before do
-          Avromatic.register_type('handshake', String) do |type|
-            type.from_avro = ->(value) { value.downcase }
-          end
-        end
-
-        it "raises an error" do
-          expect { test_class }
-            .to raise_error('custom types within unions are currently unsupported')
-        end
-      end
-
       context "null after the first union member type" do
         let(:schema_name) { 'test.null_in_union' }
         let(:test_class) do

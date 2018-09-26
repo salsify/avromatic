@@ -22,7 +22,7 @@ module Avromatic
 
       class AttributeDefinition
         attr_reader :name, :type, :field, :default
-        delegate :coerce, to: :type
+        delegate :coerce, :serialize, to: :type
 
         def initialize(field:, type:)
           @field = field
@@ -41,28 +41,18 @@ module Avromatic
         self.attribute_definitions = {}
       end
 
-      def self.first_union_schema(field_type)
-        # TODO: This is a hack until I find a better solution for unions with
-        # Virtus. This only handles a union for an optional field with :null
-        # and one other type.
-        # This hack lives on for now because custom type coercion is not pushed
-        # down into unions. This means that custom types can only be optional
-        # fields, not members of real unions.
-        field_type.schemas.reject { |schema| schema.type_sym == :null }.first
-      end
-
       def initialize(options = {})
         # TODO: Validate keys? We ignore unknown keys
         attribute_definitions.each do |attribute_name, attribute_definition|
-          if options.include?(attribute_name)
-            value = options.fetch(attribute_name)
-            attributes[attribute_name] = attribute_definition.coerce(value)
-          elsif options.include?(attribute_name.to_s)
-            value = options[attribute_name.to_s]
-            attributes[attribute_name] = attribute_definition.coerce(value)
-          elsif !attributes.include?(attribute_name) && attribute_definition.default?
-            attributes[attribute_name] = attribute_definition.default
-          end
+          attributes[attribute_name] = if options.include?(attribute_name)
+                                         value = options.fetch(attribute_name)
+                                         attribute_definition.coerce(value)
+                                       elsif options.include?(attribute_name.to_s)
+                                         value = options[attribute_name.to_s]
+                                         attribute_definition.coerce(value)
+                                       elsif !attributes.include?(attribute_name) && attribute_definition.default?
+                                         attribute_definition.default
+                                       end
         end
       end
 
@@ -119,8 +109,6 @@ module Avromatic
           schema.fields.each do |field|
             raise OptionalFieldError.new(field) if !allow_optional && optional?(field)
 
-            # TODO: Verify the unions with custom types work!
-
             attribute_definition = AttributeDefinition.new(
               field: field,
               type: create_type(field)
@@ -133,14 +121,19 @@ module Avromatic
             define_method("#{field.name}=") do |value|
               attributes[symbolized_field_name] = attribute_definitions[symbolized_field_name].coerce(value)
             end
-            private("#{field.name}=") unless config.mutable
+
+            unless config.mutable
+              private("#{field.name}=")
+              define_method(:clone) { self }
+              define_method(:dup) { self }
+            end
 
             add_validation(attribute_definition)
-            add_serializer(field)
           end
         end
 
         def add_validation(attribute_definition)
+          # TODO: Define types for enums and fixed to validate these at coercion time
           case attribute_definition.field.type.type_sym
           when :enum
             validates(attribute_definition.field.name,
@@ -149,15 +142,9 @@ module Avromatic
             validates(attribute_definition.field.name, length: { is: attribute_definition.field.type.size })
           when :record, :array, :map, :union
             validate_complex(attribute_definition.field.name)
-          else
-            add_type_validation(attribute_definition)
           end
 
           add_required_validation(attribute_definition.field)
-        end
-
-        def add_type_validation(attribute_definition)
-          validates(attribute_definition.name, allowed_type: attribute_definition.type.value_classes, allow_blank: true)
         end
 
         def add_required_validation(field)
@@ -184,15 +171,6 @@ module Avromatic
 
         def create_type(field)
           Avromatic::Model::Types::TypeFactory.create(schema: field.type, nested_models: nested_models)
-        end
-
-        # TODO: Push this into Type?
-        def add_serializer(field)
-          # TODO: This won't work for custom types used in maps, arrays or unions
-          custom_type = Avromatic.type_registry.fetch(field)
-          serializer = custom_type.serializer
-
-          avro_serializer[field.name.to_sym] = serializer if serializer
         end
       end
 

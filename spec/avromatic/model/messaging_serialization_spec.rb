@@ -208,7 +208,7 @@ describe Avromatic::Model::MessagingSerialization do
         }
       end
       let(:first_union_member) do
-        test_class.attribute_set[:message].type.primitive.types.first
+        test_class.attribute_definitions[:message].type.value_classes.first
       end
 
       before do

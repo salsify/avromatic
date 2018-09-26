@@ -3,12 +3,6 @@ require 'avromatic/io'
 module Avromatic
   module Model
     module Types
-
-      # This subclass of Virtus::Attribute is used for any unions that are
-      # defined as subclasses of the primitive Avromatic::Model::Types::Union.
-      # Values are coerced by first checking if they already match one of the
-      # member types, and then by attempting to coerce to each member type in
-      # order.
       class UnionType
         MEMBER_INDEX = ::Avromatic::IO::DatumReader::UNION_MEMBER_INDEX
         attr_reader :member_types, :value_classes
@@ -18,18 +12,11 @@ module Avromatic
           @value_classes = member_types.flat_map(&:value_classes)
         end
 
-        def find_index(value)
-          member_types.find_index do |member_type|
-            member_type.value_classes.any? { |value_class| value.is_a?(value_class) }
-          end
-        end
-
         def coerce(input)
           return input if coerced?(input)
 
           result = nil
           if input && input.is_a?(Hash) && input.key?(MEMBER_INDEX)
-            # This won't work for unions with booleans
             result = member_types[input.delete(MEMBER_INDEX)].coerce(input)
           else
             member_types.find do |member_type|
@@ -51,10 +38,26 @@ module Avromatic
           end
         end
 
+        def serialize(value, strict:)
+          member_index = find_index(value)
+          hash = member_types[member_index].serialize(value, strict: strict)
+          if !strict && Avromatic.use_custom_datum_writer && value.is_a?(Avromatic::Model::Attributes)
+            hash[Avromatic::IO::UNION_MEMBER_INDEX] = member_index
+          end
+          hash
+        end
+
         private
 
+        def find_index(value)
+          # TODO: Cache this?
+          member_types.find_index do |member_type|
+            member_type.value_classes.any? { |value_class| value.is_a?(value_class) }
+          end
+        end
+
         def safe_coerce(member_type, input)
-          member_type.coerce(input) if member_type.coercible?(value)
+          member_type.coerce(input) if member_type.coercible?(input)
         rescue
           nil
         end

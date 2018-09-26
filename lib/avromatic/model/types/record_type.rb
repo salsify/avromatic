@@ -1,13 +1,6 @@
 module Avromatic
   module Model
     module Types
-
-      # This subclass of Virtus::Attribute is defined to ensure that Avromatic
-      # generated models (identified by their inclusion of
-      # Avromatic::Model::Attributes) are always coerced by identifying an
-      # instance of the model or creating a new one.
-      # This is required to coerce models correctly with nested complex types
-      # with Virtus.
       class RecordType
         attr_reader :record_class, :value_classes
 
@@ -17,7 +10,6 @@ module Avromatic
         end
 
         def coerce(input)
-          # TODO: Should this be lazy to support class reloading?
           if input.nil? || input.is_a?(record_class)
             input
           elsif input.is_a?(Hash)
@@ -36,6 +28,18 @@ module Avromatic
 
         def coerced?(value)
           value.nil? || value.is_a?(record_class)
+        end
+
+        def serialize(value, strict:)
+          if value.nil?
+            value
+          elsif !strict && Avromatic.use_custom_datum_writer && Avromatic.use_encoding_providers? && !record_class.config.mutable
+            # n.b. Ideally we'd just return value here instead of wrapping it in a
+            # hash but then we'd have no place to stash the union member index...
+            { Avromatic::IO::ENCODING_PROVIDER => value }
+          else
+            strict ? value.avro_value_datum : value.value_attributes_for_avro
+          end
         end
       end
     end

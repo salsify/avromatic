@@ -40,13 +40,6 @@ module Avromatic
       private
 
       attr_reader :custom_types
-
-      # The type that is used to define a Virtus attribute may be a Class or
-      # for an array or map field it may be an instance of an Array or Hash.
-      # This method safely checks if a Union class has been selected.
-      def union_attribute?(attribute_type)
-        attribute_type.is_a?(Class) && attribute_type < Avromatic::Model::Types::UnionType
-      end
     end
   end
 end
