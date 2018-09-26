@@ -45,7 +45,9 @@ describe Avromatic::IO::DatumReader do
         l: 123456789,
         f: 0.5,
         d: 1.0 / 3.0,
-        n: nil
+        n: nil,
+        fx: '1234567',
+        e: 'A'
       }
     end
 

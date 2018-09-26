@@ -34,6 +34,27 @@
     {
       "name": "n",
       "type": "null"
+    },
+    {
+      "name": "fx",
+      "type": {
+        "name": "__primitive_types_fx_fixed",
+        "type": "fixed",
+        "namespace": "test",
+        "size": 7
+      }
+    },
+    {
+      "name": "e",
+      "type": {
+        "name": "__primitive_types_e_enum",
+        "type": "enum",
+        "namespace": "test",
+        "symbols": [
+          "A",
+          "B"
+        ]
+      }
     }
   ]
 }

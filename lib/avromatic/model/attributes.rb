@@ -133,14 +133,7 @@ module Avromatic
         end
 
         def add_validation(attribute_definition)
-          # TODO: Define types for enums and fixed to validate these at coercion time
-          case attribute_definition.field.type.type_sym
-          when :enum
-            validates(attribute_definition.field.name,
-                      inclusion: { in: Set.new(attribute_definition.field.type.symbols.map(&:freeze)).freeze })
-          when :fixed
-            validates(attribute_definition.field.name, length: { is: attribute_definition.field.type.size })
-          when :record, :array, :map, :union
+          if [:record, :array, :map, :union].include?(attribute_definition.field.type.type_sym)
             validate_complex(attribute_definition.field.name)
           end
 

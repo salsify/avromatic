@@ -1,17 +1,20 @@
 module Avromatic
   module Model
     module Types
-      # TODO: Reconcile this with CustomType
-      class CustomTypeAdapter
+      class CustomType
         IDENTITY_PROC = Proc.new { |value| value }
 
-        attr_reader :custom_type, :value_classes
+        attr_reader :custom_type_configuration, :value_classes
 
-        def initialize(custom_type:, default_value_classes:)
-          @custom_type = custom_type
-          @deserializer = custom_type.deserializer || IDENTITY_PROC
-          @serializer = custom_type.serializer || IDENTITY_PROC
-          @value_classes = custom_type.value_class ? [custom_type.value_class].freeze : default_value_classes
+        def initialize(custom_type_configuration:, default_value_classes:)
+          @custom_type_configuration = custom_type_configuration
+          @deserializer = custom_type_configuration.deserializer || IDENTITY_PROC
+          @serializer = custom_type_configuration.serializer || IDENTITY_PROC
+          @value_classes = if custom_type_configuration.value_class
+                             [custom_type_configuration.value_class].freeze
+                           else
+                             default_value_classes
+                           end
         end
 
         def coerce(input)

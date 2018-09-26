@@ -5,15 +5,15 @@ module Avromatic
         extend self
 
         def create(schema:, nested_models:, use_custom_types: true)
-          if use_custom_types && Avromatic.type_registry.registered?(schema)
-            custom_type = Avromatic.type_registry.fetch(schema)
+          if use_custom_types && Avromatic.custom_type_registry.registered?(schema)
+            custom_type_configuration = Avromatic.custom_type_registry.fetch(schema)
             default_value_classes = create(
               schema: schema,
               nested_models: nested_models,
               use_custom_types: false
             ).value_classes
-            return Avromatic::Model::Types::CustomTypeAdapter.new(
-              custom_type: custom_type,
+            return Avromatic::Model::Types::CustomType.new(
+              custom_type_configuration: custom_type_configuration,
               default_value_classes: default_value_classes
             )
           elsif schema.respond_to?(:logical_type)
@@ -28,8 +28,10 @@ module Avromatic
           end
 
           case schema.type_sym
-          when :string, :bytes, :fixed
+          when :string, :bytes
             Avromatic::Model::Types::StringType.new
+          when :fixed
+            Avromatic::Model::Types::FixedType.new(schema.size)
           when :boolean
             Avromatic::Model::Types::BooleanType.new
           when :int, :long
@@ -37,8 +39,7 @@ module Avromatic
           when :float, :double
             Avromatic::Model::Types::FloatType.new
           when :enum
-            # TODO: Create enum type?
-            Avromatic::Model::Types::StringType.new
+            Avromatic::Model::Types::EnumType.new(schema.symbols)
           when :null
             Avromatic::Model::Types::NullType.new
           when :array
@@ -73,7 +74,6 @@ module Avromatic
 
         private
 
-        # TODO: Copied from NestedModels
         def build_nested_model(schema:, nested_models:)
           fullname = nested_models.remove_prefix(schema.fullname)
 

@@ -25,7 +25,7 @@ RSpec.configure do |config|
     Avromatic.registry_url = 'http://registry.example.com'
     Avromatic.use_schema_fingerprint_lookup = true
     Avromatic.schema_store = AvroTurf::SchemaStore.new(path: 'spec/avro/schema')
-    Avromatic.type_registry.clear
+    Avromatic.custom_type_registry.clear
     Avromatic.nested_models = Avromatic::ModelRegistry.new
   end
 end

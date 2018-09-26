@@ -254,6 +254,58 @@ describe Avromatic::Model::Builder do
       let(:schema_name) { 'test.logical_types' }
 
       it_behaves_like "a generated model"
+
+      context "timestamp-millis" do
+        it "coerces a Time" do
+          time = Time.now
+          instance = test_class.new(ts_msec: time)
+          expect(instance.ts_msec).to eq(::Time.at(time.to_i, time.usec / 1000 * 1000))
+        end
+
+        it "coerces an ActiveSupport::TimeWithZone" do
+          Time.zone = 'GMT'
+          time = Time.zone.now
+          instance = test_class.new(ts_msec: time)
+          expect(instance.ts_msec).to eq(::Time.at(time.to_i, time.usec / 1000 * 1000))
+        end
+
+        it "raises an ArgumentError when the value is a Date" do
+          expect { test_class.new(ts_msec: Date.today) }.to raise_error(ArgumentError, /Could not coerce/)
+        end
+      end
+
+      context "timestamp-micros" do
+        it "coerces a Time" do
+          time = Time.now
+          instance = test_class.new(ts_usec: time)
+          expect(instance.ts_usec).to eq(::Time.at(time.to_i, time.usec))
+        end
+
+        it "coerces an ActiveSupport::TimeWithZone" do
+          Time.zone = 'GMT'
+          time = Time.zone.now
+          instance = test_class.new(ts_usec: time)
+          expect(instance.ts_usec).to eq(::Time.at(time.to_i, time.usec))
+        end
+
+        it "raises an ArgumentError when the value is a Date" do
+          expect { test_class.new(ts_usec: Date.today) }.to raise_error(ArgumentError, /Could not coerce/)
+        end
+      end
+
+      context "date" do
+        it "accepts a Date" do
+          today = Date.today
+          instance = test_class.new(date: today)
+          expect(instance.date).to eq(today)
+        end
+
+        it "accepts a Time" do
+          time = Time.now
+          instance = test_class.new(date: time)
+          expect(instance.date).to eq(::Date.new(time.year, time.month, time.day))
+        end
+      end
     end
 
     context "recursive models" do
@@ -287,6 +339,30 @@ describe Avromatic::Model::Builder do
 
         it "does not coerce an integer to a string" do
           expect { test_class.new(s: 100) }.to raise_error(ArgumentError, /Could not coerce/)
+        end
+      end
+
+      context "fixed" do
+        it "coerces a string of the appropriate length to a fixed" do
+          instance = test_class.new(fx: '1234567')
+          expect(instance.fx).to eq('1234567')
+        end
+
+        it "coerces a nil to a fixed" do
+          instance = test_class.new(fx: nil)
+          expect(instance.fx).to be_nil
+        end
+
+        it "does not coerce an integer to a fixed" do
+          expect { test_class.new(fx: 1234567) }.to raise_error(ArgumentError, /Could not coerce/)
+        end
+
+        it "does not coerce a string that is too short to a fixed" do
+          expect { test_class.new(fx: '123456') }.to raise_error(ArgumentError, /Could not coerce/)
+        end
+
+        it "does not coerce a string that is too long to a fixed" do
+          expect { test_class.new(fx: '12345678') }.to raise_error(ArgumentError, /Could not coerce/)
         end
       end
 
@@ -401,23 +477,34 @@ describe Avromatic::Model::Builder do
           expect { test_class.new(n: '') }.to raise_error(ArgumentError, /Could not coerce/)
         end
       end
-    end
 
-    context "enum" do
-      let(:schema_name) { 'test.named_fields' }
+      context "enum" do
+        it "coerces a string to an enum" do
+          instance = test_class.new(e: 'A')
+          expect(instance.e).to eq('A')
+        end
 
-      it "coerces the value to a string" do
-        instance = test_class.new(e: :C)
-        expect(instance.e).to eq('C')
-      end
+        it "coerces a symbol to an enum" do
+          instance = test_class.new(e: :A)
+          expect(instance.e).to eq('A')
+        end
 
-      it "coerces a nil to an enum" do
-        instance = test_class.new(e: nil)
-        expect(instance.e).to be_nil
-      end
+        it "coerces a nil to an enum" do
+          instance = test_class.new(e: nil)
+          expect(instance.e).to be_nil
+        end
 
-      it "does not coerce a number to an enum" do
-        expect { test_class.new(e: 1) }.to raise_error(ArgumentError, /Could not coerce/)
+        it "does not coerce an unallowed string to an enum" do
+          expect { test_class.new(e: 'invalid') }.to raise_error(ArgumentError, /Could not coerce/)
+        end
+
+        it "does not coerce an unallowed symbol to an enum" do
+          expect { test_class.new(e: :invalid) }.to raise_error(ArgumentError, /Could not coerce/)
+        end
+
+        it "does not coerce an integer to an enum" do
+          expect { test_class.new(e: 100) }.to raise_error(ArgumentError, /Could not coerce/)
+        end
       end
     end
   end
@@ -709,7 +796,7 @@ describe Avromatic::Model::Builder do
     describe "#inspect" do
       it "returns the class name and instance attributes" do
         expect(model1.inspect)
-          .to eq('#<PrimitiveType s: "foo", b: nil, tf: true, i: 42, l: nil, f: nil, d: nil, n: nil>')
+          .to eq('#<PrimitiveType s: "foo", b: nil, tf: true, i: 42, l: nil, f: nil, d: nil, n: nil, fx: nil, e: nil>')
       end
     end
 
