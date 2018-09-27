@@ -1,4 +1,4 @@
-require 'virtus'
+require 'ice_nine'
 require 'active_support/concern'
 require 'active_model'
 require 'avromatic/model/configuration'
