@@ -62,9 +62,11 @@ module Avromatic
         @attributes ||= {}
       end
 
-      def to_hash
+      def to_h
         attributes.dup
       end
+
+      alias_method :to_hash, :to_h
 
       module ClassMethods
         def add_avro_fields

@@ -11,7 +11,7 @@ module Avromatic
         def coerce(input)
           if input.nil? || coerced?(input)
             input
-          elsif input.is_a?(::Time)
+          elsif input.is_a?(::Time) || input.is_a?(::DateTime)
             coerce_time(input)
           else
             # TODO: What other coercions do we need to support? Avro encodes these as ints and longs
@@ -20,7 +20,7 @@ module Avromatic
         end
 
         def coercible?(input)
-          input.nil? || input.is_a?(::Time)
+          input.nil? || input.is_a?(::Time) || input.is_a?(::DateTime)
         end
 
         def coerced?(_value)

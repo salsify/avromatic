@@ -11,16 +11,20 @@ module Avromatic
         def coerce(input)
           if input.nil? || input.is_a?(::Float)
             input
+          elsif input.is_a?(::Integer)
+            input.to_f
           else
             raise ArgumentError.new("Could not coerce '#{input.inspect}' to a Float")
           end
         end
 
         def coercible?(input)
-          input.nil? || input.is_a?(::Float)
+          input.nil? || input.is_a?(::Float) || input.is_a?(::Integer)
         end
 
-        alias_method :coerced?, :coercible?
+        def coerced?(input)
+          input.nil? || input.is_a?(::Float)
+        end
 
         def serialize(value, **)
           value
