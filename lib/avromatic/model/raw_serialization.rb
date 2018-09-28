@@ -22,7 +22,7 @@ module Avromatic
         end
 
         module ClassMethods
-          def recursive_serialize(value, name: nil, member_types: nil, strict: false)
+          def recursive_serialize(value, name: nil, member_types: nil, strict: false) # rubocop:disable Lint/ShadowedArgument
             member_types = attribute_member_types(name) if name
             member_types ||= EMPTY_ARRAY
 
