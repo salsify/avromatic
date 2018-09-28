@@ -1,5 +1,8 @@
 # avromatic changelog
 
+## v0.33.0
+- Fix compatibility with avro-patches v0.4.0.
+
 ## v0.32.0
 - Improve partial assignment using a hash for records outside of unions.
 - Prevent invalid types from being assigned to primitives in unions.
