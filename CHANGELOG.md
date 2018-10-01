@@ -1,5 +1,8 @@
 # avromatic changelog
 
+## v1.0.0
+- No changes.
+
 ## v0.33.0
 - Fix compatibility with avro-patches v0.4.0.
 
