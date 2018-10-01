@@ -83,3 +83,4 @@ module Avromatic
     end
   end
 end
+# rubocop:enable Style/WhenThen

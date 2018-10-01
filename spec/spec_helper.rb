@@ -3,12 +3,7 @@ require 'simplecov'
 
 SimpleCov.start do
   add_filter 'spec'
-  begin
-    Gem::Specification.find_by_name('avro-patches')
-    minimum_coverage 98
-  rescue Gem::LoadError
-    minimum_coverage 97
-  end
+  minimum_coverage 97.5
 end
 
 require 'avro/builder'

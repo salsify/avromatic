@@ -207,7 +207,7 @@ The `ModelRegistry` can be customized to remove a namespace prefix:
 
 ```ruby
 Avromatic.nested_models =
-  Avromatic::ModelRegistry.new(remove_namespace_prefix: 'com.my_company'
+  Avromatic::ModelRegistry.new(remove_namespace_prefix: 'com.my_company')
 ```
 
 The `:remove_namespace_prefix` value can be a string or a regexp.

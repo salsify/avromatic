@@ -65,7 +65,7 @@ module Avromatic
 
         def safe_coerce(member_type, input)
           member_type.coerce(input) if member_type.coercible?(input)
-        rescue
+        rescue StandardError
           nil
         end
       end

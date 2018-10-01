@@ -22,7 +22,7 @@ module Avromatic
         def coercible?(input)
           # TODO: Is there a better way to figure this out?
           input.nil? || input.is_a?(record_class) || coerce(input).valid?
-        rescue
+        rescue StandardError
           false
         end
 
