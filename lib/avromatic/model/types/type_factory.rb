@@ -1,8 +1,38 @@
+require 'avromatic/model/types/array_type'
+require 'avromatic/model/types/boolean_type'
+require 'avromatic/model/types/custom_type'
+require 'avromatic/model/types/date_type'
+require 'avromatic/model/types/enum_type'
+require 'avromatic/model/types/fixed_type'
+require 'avromatic/model/types/float_type'
+require 'avromatic/model/types/integer_type'
+require 'avromatic/model/types/map_type'
+require 'avromatic/model/types/null_type'
+require 'avromatic/model/types/record_type'
+require 'avromatic/model/types/string_type'
+require 'avromatic/model/types/timestamp_micros_type'
+require 'avromatic/model/types/timestamp_millis_type'
+require 'avromatic/model/types/union_type'
+
 module Avromatic
   module Model
     module Types
       module TypeFactory
         extend self
+
+        SINGLETON_TYPES = {
+          'date' => Avromatic::Model::Types::DateType.new,
+          'timestamp-micros' => Avromatic::Model::Types::TimestampMicrosType.new,
+          'timestamp-millis' => Avromatic::Model::Types::TimestampMillisType.new,
+          'string' => Avromatic::Model::Types::StringType.new,
+          'bytes' => Avromatic::Model::Types::StringType.new,
+          'boolean' => Avromatic::Model::Types::BooleanType.new,
+          'int' => Avromatic::Model::Types::IntegerType.new,
+          'long' => Avromatic::Model::Types::IntegerType.new,
+          'float' => Avromatic::Model::Types::FloatType.new,
+          'double' => Avromatic::Model::Types::FloatType.new,
+          'null' => Avromatic::Model::Types::NullType.new
+        }.deep_freeze
 
         def create(schema:, nested_models:, use_custom_types: true)
           if use_custom_types && Avromatic.custom_type_registry.registered?(schema)
@@ -12,63 +42,48 @@ module Avromatic
               nested_models: nested_models,
               use_custom_types: false
             ).value_classes
-            return Avromatic::Model::Types::CustomType.new(
+            Avromatic::Model::Types::CustomType.new(
               custom_type_configuration: custom_type_configuration,
               default_value_classes: default_value_classes
             )
-          elsif schema.respond_to?(:logical_type)
-            case schema.logical_type
-            when 'date'
-              return Avromatic::Model::Types::DateType.new
-            when 'timestamp-micros'
-              return Avromatic::Model::Types::TimestampMicrosType.new
-            when 'timestamp-millis'
-              return Avromatic::Model::Types::TimestampMillisType.new
-            end
-          end
-
-          case schema.type_sym
-          when :string, :bytes
-            Avromatic::Model::Types::StringType.new
-          when :fixed
-            Avromatic::Model::Types::FixedType.new(schema.size)
-          when :boolean
-            Avromatic::Model::Types::BooleanType.new
-          when :int, :long
-            Avromatic::Model::Types::IntegerType.new
-          when :float, :double
-            Avromatic::Model::Types::FloatType.new
-          when :enum
-            Avromatic::Model::Types::EnumType.new(schema.symbols)
-          when :null
-            Avromatic::Model::Types::NullType.new
-          when :array
-            value_type = create(schema: schema.items, nested_models: nested_models, use_custom_types: use_custom_types)
-            Avromatic::Model::Types::ArrayType.new(value_type: value_type)
-          when :map
-            value_type = create(schema: schema.values, nested_models: nested_models, use_custom_types: use_custom_types)
-            Avromatic::Model::Types::MapType.new(
-              key_type: Avromatic::Model::Types::StringType.new,
-              value_type: value_type
-            )
-          when :union
-            null_index = schema.schemas.index { |member_schema| member_schema.type_sym == :null }
-            raise 'a null type in a union must be the first member' if null_index && null_index > 0
-
-            member_schemas = schema.schemas.reject { |member_schema| member_schema.type_sym == :null }
-            if member_schemas.size == 1
-              create(schema: member_schemas.first, nested_models: nested_models)
-            else
-              member_types = member_schemas.map do |member_schema|
-                create(schema: member_schema, nested_models: nested_models, use_custom_types: use_custom_types)
-              end
-              Avromatic::Model::Types::UnionType.new(member_types: member_types)
-            end
-          when :record
-            record_class = build_nested_model(schema: schema, nested_models: nested_models)
-            Avromatic::Model::Types::RecordType.new(record_class: record_class)
+          elsif schema.respond_to?(:logical_type) && SINGLETON_TYPES.include?(schema.logical_type)
+            SINGLETON_TYPES.fetch(schema.logical_type)
+          elsif SINGLETON_TYPES.include?(schema.type)
+            SINGLETON_TYPES.fetch(schema.type)
           else
-            raise "Unsupported type #{schema.type_sym}"
+            case schema.type_sym
+            when :fixed
+              Avromatic::Model::Types::FixedType.new(schema.size)
+            when :enum
+              Avromatic::Model::Types::EnumType.new(schema.symbols)
+            when :array
+              value_type = create(schema: schema.items, nested_models: nested_models, use_custom_types: use_custom_types)
+              Avromatic::Model::Types::ArrayType.new(value_type: value_type)
+            when :map
+              value_type = create(schema: schema.values, nested_models: nested_models, use_custom_types: use_custom_types)
+              Avromatic::Model::Types::MapType.new(
+                key_type: Avromatic::Model::Types::StringType.new,
+                value_type: value_type
+              )
+            when :union
+              null_index = schema.schemas.index { |member_schema| member_schema.type_sym == :null }
+              raise 'a null type in a union must be the first member' if null_index && null_index > 0
+
+              member_schemas = schema.schemas.reject { |member_schema| member_schema.type_sym == :null }
+              if member_schemas.size == 1
+                create(schema: member_schemas.first, nested_models: nested_models)
+              else
+                member_types = member_schemas.map do |member_schema|
+                  create(schema: member_schema, nested_models: nested_models, use_custom_types: use_custom_types)
+                end
+                Avromatic::Model::Types::UnionType.new(member_types: member_types)
+              end
+            when :record
+              record_class = build_nested_model(schema: schema, nested_models: nested_models)
+              Avromatic::Model::Types::RecordType.new(record_class: record_class)
+            else
+              raise "Unsupported type #{schema.type_sym}"
+            end
           end
         end
 
@@ -80,8 +95,7 @@ module Avromatic
           if nested_models.registered?(fullname)
             nested_models[fullname]
           else
-            Avromatic::Model.model(schema: schema,
-                                   nested_models: nested_models)
+            Avromatic::Model.model(schema: schema, nested_models: nested_models)
           end
         end
       end

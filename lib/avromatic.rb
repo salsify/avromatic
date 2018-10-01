@@ -1,5 +1,7 @@
 require 'avromatic/version'
 require 'avro_schema_registry-client'
+require 'ice_nine'
+require 'ice_nine/core_ext/object'
 require 'avromatic/model'
 require 'avromatic/model_registry'
 require 'avromatic/messaging'

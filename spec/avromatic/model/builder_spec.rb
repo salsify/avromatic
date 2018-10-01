@@ -262,6 +262,12 @@ describe Avromatic::Model::Builder do
           expect(instance.ts_msec).to eq(::Time.at(time.to_i, time.usec / 1000 * 1000))
         end
 
+        it "coerces a DateTime" do
+          time = DateTime.now # rubocop:disable Style/DateTime
+          instance = test_class.new(ts_msec: time)
+          expect(instance.ts_msec).to eq(::Time.at(time.to_i, time.usec / 1000 * 1000))
+        end
+
         it "coerces an ActiveSupport::TimeWithZone" do
           Time.zone = 'GMT'
           time = Time.zone.now
@@ -277,6 +283,12 @@ describe Avromatic::Model::Builder do
       context "timestamp-micros" do
         it "coerces a Time" do
           time = Time.now
+          instance = test_class.new(ts_usec: time)
+          expect(instance.ts_usec).to eq(::Time.at(time.to_i, time.usec))
+        end
+
+        it "coerces a DateTime" do
+          time = DateTime.now # rubocop:disable Style/DateTime
           instance = test_class.new(ts_usec: time)
           expect(instance.ts_usec).to eq(::Time.at(time.to_i, time.usec))
         end
@@ -305,6 +317,12 @@ describe Avromatic::Model::Builder do
           instance = test_class.new(date: time)
           expect(instance.date).to eq(::Date.new(time.year, time.month, time.day))
         end
+
+        it "accepts a DateTime" do
+          time = DateTime.now # rubocop:disable Style/DateTime
+          instance = test_class.new(date: time)
+          expect(instance.date).to eq(::Date.new(time.year, time.month, time.day))
+        end
       end
     end
 
@@ -313,6 +331,47 @@ describe Avromatic::Model::Builder do
 
       it_behaves_like "a generated model"
     end
+  end
+
+  shared_examples_for "a reader of attribute values" do |method_name|
+    let(:schema_name) { 'test.primitive_types' }
+    let(:attributes) do
+      {
+        s: 'foo',
+        b: '123',
+        tf: true,
+        i: 777,
+        l: 123456789,
+        f: 0.5,
+        d: 1.0 / 3.0,
+        n: nil,
+        fx: '1234567',
+        e: 'A'
+      }
+    end
+    let(:instance) { test_class.new(attributes) }
+
+    it "returns the correct attributes" do
+      expect(instance.send(method_name)).to eq(attributes)
+    end
+
+    it "returns a copy of the mutable hash" do
+      expect do
+        instance.send(method_name)[:s] = 'updated'
+      end.not_to change(instance, :s)
+    end
+  end
+
+  describe "#to_h" do
+    it_behaves_like "a reader of attribute values", :to_h
+  end
+
+  describe "#to_hash" do
+    it_behaves_like "a reader of attribute values", :to_hash
+  end
+
+  describe "#attributes" do
+    it_behaves_like "a reader of attribute values", :attributes
   end
 
   context "coercion" do
@@ -393,7 +452,7 @@ describe Avromatic::Model::Builder do
           expect(instance.tf).to eq(true)
         end
 
-        it "coerces a nil to an integer" do
+        it "coerces a nil to a boolean" do
           instance = test_class.new(tf: nil)
           expect(instance.tf).to be_nil
         end
@@ -446,6 +505,11 @@ describe Avromatic::Model::Builder do
           expect(instance.f).to be_nil
         end
 
+        it "coerces an integer to a float" do
+          instance = test_class.new(f: 123)
+          expect(instance.f).to eq(123.0)
+        end
+
         it "does not coerce a string to a float" do
           expect { test_class.new(f: '1.22') }.to raise_error(ArgumentError, /Could not coerce/)
         end
@@ -460,6 +524,11 @@ describe Avromatic::Model::Builder do
         it "coerces a nil to a double" do
           instance = test_class.new(d: nil)
           expect(instance.d).to be_nil
+        end
+
+        it "coerces an integer to a double" do
+          instance = test_class.new(f: 123)
+          expect(instance.f).to eq(123.0)
         end
 
         it "does not coerce a string to a double" do
@@ -709,6 +778,15 @@ describe Avromatic::Model::Builder do
           expect(instance.attributes[:defaulted_int]).to eq(42)
         end
       end
+    end
+
+    it "does not override attributes that have already been set" do
+      test_class.define_method(:initialize) do |attributes = {}|
+        self.defaulted_string = 'other_value'
+        super(attributes)
+      end
+      instance = test_class.new
+      expect(instance.defaulted_string).to eq('other_value')
     end
   end
 

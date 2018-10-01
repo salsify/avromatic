@@ -26,14 +26,14 @@ module Avromatic
         end
 
         def coercible?(input)
-          # TODO: Is there a better way to implement this?
+          # TODO: Delegate this to optional configuration
           input.nil? || !coerce(input).nil?
         rescue StandardError
           false
         end
 
         def coerced?(value)
-          # TODO: Is there a better way to implement this?
+          # TODO: Delegate this to optional configuration
           coerce(value) == value
         rescue StandardError
           false

@@ -1,6 +1,5 @@
 require 'active_support/core_ext/object/duplicable'
 require 'active_support/time'
-require 'ice_nine/core_ext/object'
 require 'avromatic/model/allowed_type_validator'
 
 module Avromatic
@@ -43,30 +42,33 @@ module Avromatic
         self.attribute_definitions = {}
       end
 
-      def initialize(options = {})
-        # TODO: Validate keys? We ignore unknown keys
+      def initialize(data = {})
+        # TODO: Validate keys
         attribute_definitions.each do |attribute_name, attribute_definition|
-          if options.include?(attribute_name)
-            value = options.fetch(attribute_name)
-            attributes[attribute_name] = attribute_definition.coerce(value)
-          elsif options.include?(attribute_name.to_s)
-            value = options[attribute_name.to_s]
-            attributes[attribute_name] = attribute_definition.coerce(value)
+          if data.include?(attribute_name)
+            value = data.fetch(attribute_name)
+            _attributes[attribute_name] = attribute_definition.coerce(value)
+          elsif data.include?(attribute_name.to_s)
+            value = data[attribute_name.to_s]
+            _attributes[attribute_name] = attribute_definition.coerce(value)
           elsif !attributes.include?(attribute_name)
-            attributes[attribute_name] = attribute_definition.default
+            _attributes[attribute_name] = attribute_definition.default
           end
         end
       end
 
-      def attributes
-        @attributes ||= {}
-      end
-
       def to_h
-        attributes.dup
+        _attributes.dup
       end
 
       alias_method :to_hash, :to_h
+      alias_method :attributes, :to_h
+
+      private
+
+      def _attributes
+        @attributes ||= {}
+      end
 
       module ClassMethods
         def add_avro_fields
@@ -117,17 +119,17 @@ module Avromatic
           schema.fields.each do |field|
             raise OptionalFieldError.new(field) if !allow_optional && optional?(field)
 
+            symbolized_field_name = field.name.to_sym
             attribute_definition = AttributeDefinition.new(
               field: field,
               type: create_type(field)
             )
-            attribute_definitions[field.name.to_sym] = attribute_definition
+            attribute_definitions[symbolized_field_name] = attribute_definition
 
-            symbolized_field_name = field.name.to_sym
-            define_method(field.name) { attributes[symbolized_field_name] }
+            define_method(field.name) { _attributes[symbolized_field_name] }
 
             define_method("#{field.name}=") do |value|
-              attributes[symbolized_field_name] = attribute_definitions[symbolized_field_name].coerce(value)
+              _attributes[symbolized_field_name] = attribute_definitions[symbolized_field_name].coerce(value)
             end
 
             unless config.mutable

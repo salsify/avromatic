@@ -9,7 +9,7 @@ module Avromatic
         end
 
         def coerce(input)
-          if input.nil? || input.is_a?(::TrueClass) || input.is_a?(::FalseClass)
+          if coercible?(input)
             input
           else
             raise ArgumentError.new("Could not coerce '#{input.inspect}' to a Boolean")
