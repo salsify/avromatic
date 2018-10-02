@@ -4,6 +4,9 @@
 - Removed Virtus dependency.
 - Support for custom types in unions with more than one non-null type.
 
+## v1.0.0
+- No changes.
+
 ## v0.33.0
 - Fix compatibility with avro-patches v0.4.0.
 
