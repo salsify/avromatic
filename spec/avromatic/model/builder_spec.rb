@@ -323,6 +323,10 @@ describe Avromatic::Model::Builder do
           instance = test_class.new(date: time)
           expect(instance.date).to eq(::Date.new(time.year, time.month, time.day))
         end
+
+        it "raises an ArgumentError when the value is not coercible" do
+          expect { test_class.new(date: 'today') }.to raise_error(ArgumentError, /Could not coerce/)
+        end
       end
     end
 
@@ -575,6 +579,115 @@ describe Avromatic::Model::Builder do
           expect { test_class.new(e: 100) }.to raise_error(ArgumentError, /Could not coerce/)
         end
       end
+
+      context "custom type" do
+        let(:schema) do
+          Avro::Builder.build_schema do
+            fixed :handshake, size: 6
+            record :record_with_custom_type do
+              required :h, :handshake
+            end
+          end
+        end
+
+        let(:test_class) do
+          described_class.model(schema: schema)
+        end
+
+        before do
+          Avromatic.register_type('handshake', String) do |type|
+            type.from_avro = ->(value) { value.downcase }
+          end
+        end
+
+        it "coerces to the custom type when the input is coercible" do
+          instance = test_class.new(h: 'VALUE')
+          expect(instance.h).to eq('value')
+        end
+
+        it "coerces to nil to nil" do
+          instance = test_class.new(h: nil)
+          expect(instance.h).to be_nil
+        end
+
+        it "raises an exception for uncoercible input" do
+          expect { test_class.new(h: 1) }.to raise_error(ArgumentError, /Could not coerce/)
+        end
+      end
+    end
+
+    context "records" do
+      let(:schema_name) { 'test.nested_record' }
+
+      it "coerces a hash to a model" do
+        instance = test_class.new(sub: { str: 'a', i: 1 })
+        expect(instance.sub).to eq(Avromatic.nested_models['test.__nested_record_sub_record'].new(str: 'a', i: 1))
+      end
+
+      it "coerces a nil to a null" do
+        instance = test_class.new(sub: nil)
+        expect(instance.sub).to be_nil
+      end
+
+      it "does not coerce a string" do
+        expect { test_class.new(sub: 'foobar') }.to raise_error(ArgumentError, /Could not coerce/)
+      end
+    end
+
+    context "arrays" do
+      let(:schema) do
+        Avro::Builder.build_schema do
+          record :record_with_array do
+            required :a, array(:string)
+          end
+        end
+      end
+
+      let(:test_class) do
+        described_class.model(schema: schema)
+      end
+
+      it "coerces elements in the array" do
+        instance = test_class.new(a: [:foo])
+        expect(instance.a).to eq(['foo'])
+      end
+
+      it "coerces a nil to a nil" do
+        instance = test_class.new(a: nil)
+        expect(instance.a).to be_nil
+      end
+
+      it "raises an exception for non-Arrays" do
+        expect { test_class.new(a: 'foobar') }.to raise_error(ArgumentError, /Could not coerce/)
+      end
+    end
+
+    context "maps" do
+      let(:schema) do
+        Avro::Builder.build_schema do
+          record :record_with_map do
+            required :m, map(:string)
+          end
+        end
+      end
+
+      let(:test_class) do
+        described_class.model(schema: schema)
+      end
+
+      it "coerces elements in the map" do
+        instance = test_class.new(m: { foo: :bar })
+        expect(instance.m).to eq('foo' => 'bar')
+      end
+
+      it "coerces a nil to a nil" do
+        instance = test_class.new(m: nil)
+        expect(instance.m).to be_nil
+      end
+
+      it "raises an exception for non-Hashes" do
+        expect { test_class.new(m: 'foobar') }.to raise_error(ArgumentError, /Could not coerce/)
+      end
     end
   end
 
@@ -593,6 +706,14 @@ describe Avromatic::Model::Builder do
     it "stores values in the member types" do
       expect(test_class.new(u: 1).u).to eq(1)
       expect(test_class.new(u: 'foo').u).to eq('foo')
+    end
+
+    it "coerces a nil to nil" do
+      expect(test_class.new(u: nil).u).to be_nil
+    end
+
+    it "raises an ArgumentError for input that can't be coerced to a member type" do
+      expect { test_class.new(u: { foo: 'bar' }) }.to raise_error(ArgumentError, /Could not coerce/)
     end
 
     context "string member first" do
@@ -658,12 +779,42 @@ describe Avromatic::Model::Builder do
       end
     end
 
+    context "union of arrays" do
+      let(:schema) do
+        Avro::Builder.build_schema do
+          record :with_array_union do
+            required :u, :union, types: [:string, array(:string)]
+          end
+        end
+      end
+
+      it "coerces a string array to a union member" do
+        instance = test_class.new(u: %(a b))
+        expect(instance.u).to eq(%(a b))
+      end
+    end
+
+    context "union of maps" do
+      let(:schema) do
+        Avro::Builder.build_schema do
+          record :with_map_union do
+            required :u, :union, types: [:string, map(:string)]
+          end
+        end
+      end
+
+      it "coerces a map to a union member" do
+        instance = test_class.new(u: { a: 'b' })
+        expect(instance.u).to eq('a' => 'b')
+      end
+    end
+
     context "union with a custom type" do
       let(:schema) do
         Avro::Builder.build_schema do
           fixed :handshake, size: 6
           record :union_with_custom do
-            required :u, :union, types: [:long, :handshake]
+            required :u, :union, types: [:long, :boolean, :double, :handshake]
           end
         end
       end
@@ -717,6 +868,60 @@ describe Avromatic::Model::Builder do
           expect(ary.first.str).to eq('137')
           expect(ary.last.i).to eq(99)
           expect(ary.last.c).to eq('foobar')
+        end
+      end
+    end
+
+    context "union with logical types" do
+      let(:test_class) do
+        Avromatic::Model.model(schema: schema)
+      end
+
+      context "union with a timestamp-micros" do
+        let(:schema) do
+          Avro::Builder.build_schema do
+            record :with_date_union do
+              required :u, :union, types: [:string, long(logical_type: 'timestamp-micros')]
+            end
+          end
+        end
+
+        it "coerces a time to a union member" do
+          now = Time.now
+          instance = test_class.new(u: now)
+          expect(instance.u).to eq(Time.at(now.to_i, now.usec))
+        end
+      end
+
+      context "union with a timestamp-millis" do
+        let(:schema) do
+          Avro::Builder.build_schema do
+            record :with_date_union do
+              required :u, :union, types: [:string, long(logical_type: 'timestamp-millis')]
+            end
+          end
+        end
+
+        it "coerces a time to a union member" do
+          now = Time.now
+          instance = test_class.new(u: now)
+          expect(instance.u).to eq(Time.at(now.to_i, now.usec / 1000 * 1000))
+        end
+      end
+
+      context "union with a date" do
+        let(:schema) do
+          Avro::Builder.build_schema do
+            record :with_date_union do
+              required :u, :union, types: [:string, long(logical_type: 'date')]
+            end
+          end
+        end
+
+        it "coerces dates to a union member" do
+          now = Date.today
+          instance = test_class.new(u: now)
+          expect(instance.u).to eq(now)
         end
       end
     end

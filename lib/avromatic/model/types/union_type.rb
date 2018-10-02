@@ -16,18 +16,23 @@ module Avromatic
           return input if coerced?(input)
 
           result = nil
-          if input && input.is_a?(Hash) && input.key?(MEMBER_INDEX)
+          if input.is_a?(Hash) && input.key?(MEMBER_INDEX)
             result = member_types[input.delete(MEMBER_INDEX)].coerce(input)
           else
             member_types.find do |member_type|
               result = safe_coerce(member_type, input)
             end
           end
+
+          unless result
+            raise ArgumentError.new("Could not coerce '#{input.inspect}' to a union of #{value_classes.map(&:name)}")
+          end
+
           result
         end
 
         def coerced?(value)
-          member_types.any? do |member_type|
+          value.nil? || member_types.any? do |member_type|
             member_type.coerced?(value)
           end
         end

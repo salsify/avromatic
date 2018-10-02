@@ -272,19 +272,6 @@ describe Avromatic::Model::Builder, 'validation' do
             expect(instance.errors[:u]).to include(".y can't be blank")
           end
         end
-
-        it "validates a record in a union initialized with hashes" do
-          expect(test_class.new(u: { x: 1, y: 2 })).to be_valid
-          instance = test_class.new(u: {})
-          expect(instance).to be_invalid
-          expect(instance.errors[:u]).to include("can't be blank")
-        end
-
-        it "validates a record in a union initialized with incomplete hashes" do
-          instance = test_class.new(u: { x: 1 })
-          expect(instance).to be_invalid
-          expect(instance.errors[:u]).to include("can't be blank")
-        end
       end
     end
   end

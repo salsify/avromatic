@@ -1,6 +1,5 @@
 require 'active_support/core_ext/object/duplicable'
 require 'active_support/time'
-require 'avromatic/model/allowed_type_validator'
 
 module Avromatic
   module Model

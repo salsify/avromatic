@@ -23,6 +23,8 @@ module Avromatic
           else
             @deserializer.call(input)
           end
+        rescue StandardError => e
+          raise ArgumentError.new("Could not coerce '#{input.inspect}' to a #{value_classes.map(&:name).join(', ')}: #{e.message}")
         end
 
         def coercible?(input)
