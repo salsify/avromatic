@@ -986,7 +986,7 @@ describe Avromatic::Model::Builder do
     end
 
     it "does not override attributes that have already been set" do
-      test_class.define_method(:initialize) do |attributes = {}|
+      test_class.send(:define_method, :initialize) do |attributes = {}|
         self.defaulted_string = 'other_value'
         super(attributes)
       end
