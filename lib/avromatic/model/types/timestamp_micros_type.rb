@@ -1,23 +1,23 @@
-require 'avromatic/model/attribute/abstract_timestamp'
+require 'avromatic/model/types/abstract_timestamp_type'
 
 module Avromatic
   module Model
-    module Attribute
+    module Types
 
       # This subclass is used to truncate timestamp values to microseconds.
-      class TimestampMicros < AbstractTimestamp
+      class TimestampMicrosType < Avromatic::Model::Types::AbstractTimestampType
 
-        def value_coerced?(value)
-          value.is_a?(Time) && value.nsec % 1000 == 0
+        def coerced?(value)
+          value.is_a?(::Time) && value.nsec % 1000 == 0
         end
 
         private
 
-        def coerce_time(value)
+        def coerce_time(input)
           # value is coerced to a local Time
           # The Avro representation of a timestamp is Epoch seconds, independent
           # of time zone.
-          Time.at(value.to_i, value.usec)
+          ::Time.at(input.to_i, input.usec)
         end
 
       end

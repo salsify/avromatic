@@ -1,5 +1,9 @@
 # avromatic changelog
 
+## v2.0.0 (unreleased)
+- Removed Virtus dependency.
+- Support for custom types in unions with more than one non-null type.
+
 ## v1.0.0
 - No changes.
 

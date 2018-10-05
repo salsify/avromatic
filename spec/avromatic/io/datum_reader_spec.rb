@@ -45,7 +45,9 @@ describe Avromatic::IO::DatumReader do
         l: 123456789,
         f: 0.5,
         d: 1.0 / 3.0,
-        n: nil
+        n: nil,
+        fx: '1234567',
+        e: 'A'
       }
     end
 
@@ -105,17 +107,10 @@ describe Avromatic::IO::DatumReader do
         }
       end
 
-      it "includes the member index in the decoded hash" do
-        pending "a null type in the middle of union member types is currently broken/unsupported"
-
-        expect(attributes['values'][0][described_class::UNION_MEMBER_INDEX]).to eq(0)
-        expect(attributes['values'][2][described_class::UNION_MEMBER_INDEX]).to eq(2)
-      end
-
-      it "can decode a message" do
-        pending "a null type in the middle of union member types is currently broken/unsupported"
-
-        expect(test_class.avro_message_decode(avro_message_value)).to eq(instance)
+      it "does not support a null in the middle of a union" do
+        expect do
+          Avromatic::Model.model(schema_name: schema_name)
+        end.to raise_error('a null type in a union must be the first member')
       end
     end
 

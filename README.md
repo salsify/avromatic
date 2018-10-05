@@ -8,6 +8,9 @@
 `Avromatic` generates Ruby models from [Avro](http://avro.apache.org/) schemas
 and provides utilities to encode and decode them.
 
+**This README reflects unreleased changes in Avromatic 2.0. Please see the 
+[1-0-stable](https://github.com/salsify/avromatic/blob/1-0-stable/README.md) branch for the latest stable release.**
+
 ## Installation
 
 Add this line to your application's Gemfile:
@@ -126,7 +129,7 @@ class MyModel
 end
 ```
 
-Models are generated as [Virtus](https://github.com/solnic/virtus) value
+Models are generated as immutable value
 objects by default, but can optionally be defined as mutable:
 
 ```ruby
@@ -135,9 +138,9 @@ class MyModel
 end
 ```
 
-`Virtus` attributes are added for each field in the Avro schema
+Generated models include attributes for each field in the Avro schema
 including any default values defined in the schema. `ActiveModel` validations
-are used to define validations on certain types of fields ([see below](#validations)).
+are used to define validations for the presence of required fields ([see below](#validations)).
 
 A model may be defined with both a key and a value schema:
 
@@ -176,7 +179,7 @@ MyModel = Avromatic::Model.model(schema_name :my_model)
 #### Experimental: Union Support
 
 Avromatic contains experimental support for unions containing more than one
-non-null member type. This feature is experimental because Virtus attributes
+non-null member type. This feature is experimental because Avromatic
 may attempt to coerce between types too aggressively.
 
 For now, if a union contains [nested models](#nested-models) then it is
@@ -186,7 +189,7 @@ Some combination of the ordering of member types in the union and relying on
 model validation may be required so that the correct member is selected,
 especially when deserializing from Avro.
 
-In the future, the type coercion used in the gem will be replaced to better
+In the future, the type coercion used in the gem will be enhanced to better
 support the union use case.
 
 #### Nested Models
@@ -250,9 +253,6 @@ Custom types can be configured for fields of named types (record, enum, fixed).
 These customizations are registered on the `Avromatic` module. Once a custom type
 is registered, it is used for all models with a schema that references that type.
 It is recommended to register types within a block passed to `Avromatic.configure`:
-
-Note: custom types are not currently supported on members of unions with more
-than one non-null type.
 
 ```ruby
 Avromatic.configure do |config|
@@ -385,8 +385,6 @@ decoder.decode(model2_message_value)
 
 The following validations are supported:
 
-- The size of the value for a fixed type field.
-- The value for an enum type field is in the declared set of values.
 - Presence of a value for required fields. Empty arrays and maps are considered
   valid for required fields.
 - Validity of nested records, including records embedded in array, maps, and
@@ -418,11 +416,9 @@ Requiring this file configures a RSpec before hook that directs any schema
 registry requests to a fake, in-memory schema registry and rebuilds the
 `Avromatic::Messaging` object for each example.
 
-### Unsupported/Future
+## Upgrading to 2.0
 
-The following types/features are not supported for generated models:
-
-- Custom types for members within a union.
+TODO
 
 ## Development
 

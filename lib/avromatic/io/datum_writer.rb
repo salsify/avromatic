@@ -9,6 +9,9 @@ module Avromatic
           index_of_schema = datum[Avromatic::IO::UNION_MEMBER_INDEX]
           # Avromatic does not treat the null of an optional field as part of the union
           index_of_schema += 1 if optional
+        elsif optional && writers_schema.schemas.size == 2
+          # Optimize for the common case of a union that's just an optional field
+          index_of_schema = datum.nil? ? 0 : 1
         else
           index_of_schema = writers_schema.schemas.find_index do |schema|
             Avro::Schema.validate(schema, datum)

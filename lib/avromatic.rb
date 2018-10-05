@@ -1,5 +1,7 @@
 require 'avromatic/version'
 require 'avro_schema_registry-client'
+require 'ice_nine'
+require 'ice_nine/core_ext/object'
 require 'avromatic/model'
 require 'avromatic/model_registry'
 require 'avromatic/messaging'
@@ -9,16 +11,16 @@ require 'avromatic/patches'
 module Avromatic
   class << self
     attr_accessor :schema_registry, :registry_url, :schema_store, :logger,
-                  :messaging, :type_registry, :nested_models,
+                  :messaging, :custom_type_registry, :nested_models,
                   :use_custom_datum_reader, :use_custom_datum_writer,
                   :use_schema_fingerprint_lookup
 
-    delegate :register_type, to: :type_registry
+    delegate :register_type, to: :custom_type_registry
   end
 
   self.nested_models = ModelRegistry.new
   self.logger = Logger.new($stdout)
-  self.type_registry = Avromatic::Model::TypeRegistry.new
+  self.custom_type_registry = Avromatic::Model::CustomTypeRegistry.new
   self.use_custom_datum_reader = true
   self.use_custom_datum_writer = true
   self.use_schema_fingerprint_lookup = true

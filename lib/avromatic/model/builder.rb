@@ -1,15 +1,12 @@
-require 'virtus'
 require 'active_support/concern'
 require 'active_model'
-require 'avromatic/model/allowed_writer_methods_memoization'
 require 'avromatic/model/configuration'
 require 'avromatic/model/value_object'
 require 'avromatic/model/configurable'
 require 'avromatic/model/nested_models'
 require 'avromatic/model/validation'
-require 'avromatic/model/attribute/union'
+require 'avromatic/model/types/type_factory'
 require 'avromatic/model/attributes'
-require 'avromatic/model/attribute/record'
 require 'avromatic/model/raw_serialization'
 require 'avromatic/model/messaging_serialization'
 
@@ -43,8 +40,6 @@ module Avromatic
       def inclusions
         [
           ActiveModel::Validations,
-          config.mutable ? Virtus.model : Virtus.value_object,
-          Avromatic::Model::AllowedWriterMethodsMemoization,
           Avromatic::Model::Configurable,
           Avromatic::Model::NestedModels,
           Avromatic::Model::Validation,

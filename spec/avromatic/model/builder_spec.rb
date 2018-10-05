@@ -11,7 +11,7 @@ describe Avromatic::Model::Builder do
   let(:values) { { s: 'foo', tf: true, i: 42 } }
 
   let(:attribute_names) do
-    test_class.attribute_set.map(&:name).map(&:to_s)
+    test_class.attribute_definitions.keys.map(&:to_s)
   end
 
   describe ".model" do
@@ -23,7 +23,7 @@ describe Avromatic::Model::Builder do
     it "returns a new model class" do
       expect(klass).to be_a(Class)
       expect(klass.ancestors).to include(Avromatic::Model::Attributes)
-      expect(klass.attribute_set.to_a.map(&:name).map(&:to_s))
+      expect(klass.attribute_definitions.keys.map(&:to_s))
         .to match_array(schema.fields.map(&:name))
     end
 
@@ -254,6 +254,80 @@ describe Avromatic::Model::Builder do
       let(:schema_name) { 'test.logical_types' }
 
       it_behaves_like "a generated model"
+
+      context "timestamp-millis" do
+        it "coerces a Time" do
+          time = Time.now
+          instance = test_class.new(ts_msec: time)
+          expect(instance.ts_msec).to eq(::Time.at(time.to_i, time.usec / 1000 * 1000))
+        end
+
+        it "coerces a DateTime" do
+          time = DateTime.now # rubocop:disable Style/DateTime
+          instance = test_class.new(ts_msec: time)
+          expect(instance.ts_msec).to eq(::Time.at(time.to_i, time.usec / 1000 * 1000))
+        end
+
+        it "coerces an ActiveSupport::TimeWithZone" do
+          Time.zone = 'GMT'
+          time = Time.zone.now
+          instance = test_class.new(ts_msec: time)
+          expect(instance.ts_msec).to eq(::Time.at(time.to_i, time.usec / 1000 * 1000))
+        end
+
+        it "raises an Avromatic::Model::CoercionError when the value is a Date" do
+          expect { test_class.new(ts_msec: Date.today) }.to raise_error(Avromatic::Model::CoercionError)
+        end
+      end
+
+      context "timestamp-micros" do
+        it "coerces a Time" do
+          time = Time.now
+          instance = test_class.new(ts_usec: time)
+          expect(instance.ts_usec).to eq(::Time.at(time.to_i, time.usec))
+        end
+
+        it "coerces a DateTime" do
+          time = DateTime.now # rubocop:disable Style/DateTime
+          instance = test_class.new(ts_usec: time)
+          expect(instance.ts_usec).to eq(::Time.at(time.to_i, time.usec))
+        end
+
+        it "coerces an ActiveSupport::TimeWithZone" do
+          Time.zone = 'GMT'
+          time = Time.zone.now
+          instance = test_class.new(ts_usec: time)
+          expect(instance.ts_usec).to eq(::Time.at(time.to_i, time.usec))
+        end
+
+        it "raises an Avromatic::Model::CoercionError when the value is a Date" do
+          expect { test_class.new(ts_usec: Date.today) }.to raise_error(Avromatic::Model::CoercionError)
+        end
+      end
+
+      context "date" do
+        it "accepts a Date" do
+          today = Date.today
+          instance = test_class.new(date: today)
+          expect(instance.date).to eq(today)
+        end
+
+        it "accepts a Time" do
+          time = Time.now
+          instance = test_class.new(date: time)
+          expect(instance.date).to eq(::Date.new(time.year, time.month, time.day))
+        end
+
+        it "accepts a DateTime" do
+          time = DateTime.now # rubocop:disable Style/DateTime
+          instance = test_class.new(date: time)
+          expect(instance.date).to eq(::Date.new(time.year, time.month, time.day))
+        end
+
+        it "raises an Avromatic::Model::CoercionError when the value is not coercible" do
+          expect { test_class.new(date: 'today') }.to raise_error(Avromatic::Model::CoercionError)
+        end
+      end
     end
 
     context "recursive models" do
@@ -263,6 +337,47 @@ describe Avromatic::Model::Builder do
     end
   end
 
+  shared_examples_for "a reader of attribute values" do |method_name|
+    let(:schema_name) { 'test.primitive_types' }
+    let(:attributes) do
+      {
+        s: 'foo',
+        b: '123',
+        tf: true,
+        i: 777,
+        l: 123456789,
+        f: 0.5,
+        d: 1.0 / 3.0,
+        n: nil,
+        fx: '1234567',
+        e: 'A'
+      }
+    end
+    let(:instance) { test_class.new(attributes) }
+
+    it "returns the correct attributes" do
+      expect(instance.send(method_name)).to eq(attributes)
+    end
+
+    it "returns a copy of the mutable hash" do
+      expect do
+        instance.send(method_name)[:s] = 'updated'
+      end.not_to change(instance, :s)
+    end
+  end
+
+  describe "#to_h" do
+    it_behaves_like "a reader of attribute values", :to_h
+  end
+
+  describe "#to_hash" do
+    it_behaves_like "a reader of attribute values", :to_hash
+  end
+
+  describe "#attributes" do
+    it_behaves_like "a reader of attribute values", :attributes
+  end
+
   context "coercion" do
     # This is important for the eventual encoding of a model to Avro
 
@@ -270,72 +385,308 @@ describe Avromatic::Model::Builder do
       let(:schema_name) { 'test.primitive_types' }
 
       context "string" do
-        it "coerces an integer to a string" do
-          expect(test_class.new(s: 100).s).to eq('100')
+        it "coerces a string to a string" do
+          instance = test_class.new(s: 'foo')
+          expect(instance.s).to eq('foo')
         end
 
-        it "does not coerce a Hash to a string" do
-          instance = test_class.new(s: { x: 1 })
-          expect(instance.s).to eq(x: 1)
+        it "coerces a symbol to a string" do
+          instance = test_class.new(s: :foo)
+          expect(instance.s).to eq('foo')
+        end
+
+        it "coerces a nil to a string" do
+          instance = test_class.new(s: nil)
+          expect(instance.s).to be_nil
+        end
+
+        it "does not coerce an integer to a string" do
+          expect { test_class.new(s: 100) }.to raise_error(Avromatic::Model::CoercionError)
+        end
+      end
+
+      context "fixed" do
+        it "coerces a string of the appropriate length to a fixed" do
+          instance = test_class.new(fx: '1234567')
+          expect(instance.fx).to eq('1234567')
+        end
+
+        it "coerces a nil to a fixed" do
+          instance = test_class.new(fx: nil)
+          expect(instance.fx).to be_nil
+        end
+
+        it "does not coerce an integer to a fixed" do
+          expect { test_class.new(fx: 1234567) }.to raise_error(Avromatic::Model::CoercionError)
+        end
+
+        it "does not coerce a string that is too short to a fixed" do
+          expect { test_class.new(fx: '123456') }.to raise_error(Avromatic::Model::CoercionError)
+        end
+
+        it "does not coerce a string that is too long to a fixed" do
+          expect { test_class.new(fx: '12345678') }.to raise_error(Avromatic::Model::CoercionError)
         end
       end
 
       context "integer" do
-        it "does not coerce a Hash to an integer" do
-          instance = test_class.new(i: { x: 2 })
-          expect(instance.i).to eq(x: 2)
+        it "coerces a integer to a integer" do
+          instance = test_class.new(i: 1)
+          expect(instance.i).to eq(1)
+        end
+
+        it "coerces a nil to an integer" do
+          instance = test_class.new(i: nil)
+          expect(instance.i).to be_nil
+        end
+
+        it "does not coerce a string to an integer" do
+          expect { test_class.new(i: '100') }.to raise_error(Avromatic::Model::CoercionError)
         end
       end
 
       context "boolean" do
-        it "does not coerce a Hash to a boolean" do
-          instance = test_class.new(tf: { x: 3 })
-          expect(instance.tf).to eq(x: 3)
+        it "coerces a false to a boolean" do
+          instance = test_class.new(tf: false)
+          expect(instance.tf).to eq(false)
+        end
+
+        it "coerces a true to a boolean" do
+          instance = test_class.new(tf: true)
+          expect(instance.tf).to eq(true)
+        end
+
+        it "coerces a nil to a boolean" do
+          instance = test_class.new(tf: nil)
+          expect(instance.tf).to be_nil
+        end
+
+        it "does not coerce a string to a boolean" do
+          expect { test_class.new(tf: 'true') }.to raise_error(Avromatic::Model::CoercionError)
         end
       end
 
       context "bytes" do
-        it "does not coerce a Hash to bytes" do
-          instance = test_class.new(b: { x: 4 })
-          expect(instance.b).to eq(x: 4)
+        it "coerces a string to bytes" do
+          instance = test_class.new(b: 'foo')
+          expect(instance.b).to eq('foo')
+        end
+
+        it "coerces a nil to bytes" do
+          instance = test_class.new(b: nil)
+          expect(instance.b).to be_nil
+        end
+
+        it "does not coerce a number to bytes" do
+          expect { test_class.new(b: 12) }.to raise_error(Avromatic::Model::CoercionError)
         end
       end
 
       context "long" do
-        it "does not coerce a Hash to a long" do
-          instance = test_class.new(l: { x: 5 })
-          expect(instance.l).to eq(x: 5)
+        it "coerces a long to a long" do
+          instance = test_class.new(l: 123)
+          expect(instance.l).to eq(123)
+        end
+
+        it "coerces a nil to a long" do
+          instance = test_class.new(l: nil)
+          expect(instance.l).to be_nil
+        end
+
+        it "does not coerce a string to a long" do
+          expect { test_class.new(l: '12') }.to raise_error(Avromatic::Model::CoercionError)
         end
       end
 
       context "float" do
-        it "does not coerce a Hash to a float" do
-          instance = test_class.new(f: { x: 6 })
-          expect(instance.f).to eq(x: 6)
+        it "coerces a long to a float" do
+          instance = test_class.new(f: 1.23)
+          expect(instance.f).to eq(1.23)
+        end
+
+        it "coerces a nil to a float" do
+          instance = test_class.new(f: nil)
+          expect(instance.f).to be_nil
+        end
+
+        it "coerces an integer to a float" do
+          instance = test_class.new(f: 123)
+          expect(instance.f).to eq(123.0)
+        end
+
+        it "does not coerce a string to a float" do
+          expect { test_class.new(f: '1.22') }.to raise_error(Avromatic::Model::CoercionError)
         end
       end
 
       context "double" do
-        it "does not coerce a Hash to a double" do
-          instance = test_class.new(d: { x: 7 })
-          expect(instance.d).to eq(x: 7)
+        it "coerces a long to a double" do
+          instance = test_class.new(d: 1.23)
+          expect(instance.d).to eq(1.23)
+        end
+
+        it "coerces a nil to a double" do
+          instance = test_class.new(d: nil)
+          expect(instance.d).to be_nil
+        end
+
+        it "coerces an integer to a double" do
+          instance = test_class.new(f: 123)
+          expect(instance.f).to eq(123.0)
+        end
+
+        it "does not coerce a string to a double" do
+          expect { test_class.new(d: '1.22') }.to raise_error(Avromatic::Model::CoercionError)
         end
       end
 
       context "null" do
-        it "does not coerce a Hash to nil" do
-          instance = test_class.new(n: { x: 8 })
-          expect(instance.n).to eq(x: 8)
+        it "coerces a nil to a nil" do
+          instance = test_class.new(n: nil)
+          expect(instance.n).to be_nil
+        end
+
+        it "does not coerce an empty string to nil" do
+          expect { test_class.new(n: '') }.to raise_error(Avromatic::Model::CoercionError)
+        end
+      end
+
+      context "enum" do
+        it "coerces a string to an enum" do
+          instance = test_class.new(e: 'A')
+          expect(instance.e).to eq('A')
+        end
+
+        it "coerces a symbol to an enum" do
+          instance = test_class.new(e: :A)
+          expect(instance.e).to eq('A')
+        end
+
+        it "coerces a nil to an enum" do
+          instance = test_class.new(e: nil)
+          expect(instance.e).to be_nil
+        end
+
+        it "does not coerce an unallowed string to an enum" do
+          expect { test_class.new(e: 'invalid') }.to raise_error(Avromatic::Model::CoercionError)
+        end
+
+        it "does not coerce an unallowed symbol to an enum" do
+          expect { test_class.new(e: :invalid) }.to raise_error(Avromatic::Model::CoercionError)
+        end
+
+        it "does not coerce an integer to an enum" do
+          expect { test_class.new(e: 100) }.to raise_error(Avromatic::Model::CoercionError)
+        end
+      end
+
+      context "custom type" do
+        let(:schema) do
+          Avro::Builder.build_schema do
+            fixed :handshake, size: 6
+            record :record_with_custom_type do
+              required :h, :handshake
+            end
+          end
+        end
+
+        let(:test_class) do
+          described_class.model(schema: schema)
+        end
+
+        before do
+          Avromatic.register_type('handshake', String) do |type|
+            type.from_avro = ->(value) { value.downcase }
+          end
+        end
+
+        it "coerces to the custom type when the input is coercible" do
+          instance = test_class.new(h: 'VALUE')
+          expect(instance.h).to eq('value')
+        end
+
+        it "coerces to nil to nil" do
+          instance = test_class.new(h: nil)
+          expect(instance.h).to be_nil
+        end
+
+        it "raises an exception for uncoercible input" do
+          expect { test_class.new(h: 1) }.to raise_error(Avromatic::Model::CoercionError)
         end
       end
     end
 
-    context "enum" do
-      let(:schema_name) { 'test.named_fields' }
+    context "records" do
+      let(:schema_name) { 'test.nested_record' }
 
-      it "coerces the value to a string" do
-        instance = test_class.new(e: :C)
-        expect(instance.e).to eq('C')
+      it "coerces a hash to a model" do
+        instance = test_class.new(sub: { str: 'a', i: 1 })
+        expect(instance.sub).to eq(Avromatic.nested_models['test.__nested_record_sub_record'].new(str: 'a', i: 1))
+      end
+
+      it "coerces a nil to a null" do
+        instance = test_class.new(sub: nil)
+        expect(instance.sub).to be_nil
+      end
+
+      it "does not coerce a string" do
+        expect { test_class.new(sub: 'foobar') }.to raise_error(Avromatic::Model::CoercionError)
+      end
+    end
+
+    context "arrays" do
+      let(:schema) do
+        Avro::Builder.build_schema do
+          record :record_with_array do
+            required :a, array(:string)
+          end
+        end
+      end
+
+      let(:test_class) do
+        described_class.model(schema: schema)
+      end
+
+      it "coerces elements in the array" do
+        instance = test_class.new(a: [:foo])
+        expect(instance.a).to eq(['foo'])
+      end
+
+      it "coerces a nil to a nil" do
+        instance = test_class.new(a: nil)
+        expect(instance.a).to be_nil
+      end
+
+      it "raises an exception for non-Arrays" do
+        expect { test_class.new(a: 'foobar') }.to raise_error(Avromatic::Model::CoercionError)
+      end
+    end
+
+    context "maps" do
+      let(:schema) do
+        Avro::Builder.build_schema do
+          record :record_with_map do
+            required :m, map(:string)
+          end
+        end
+      end
+
+      let(:test_class) do
+        described_class.model(schema: schema)
+      end
+
+      it "coerces elements in the map" do
+        instance = test_class.new(m: { foo: :bar })
+        expect(instance.m).to eq('foo' => 'bar')
+      end
+
+      it "coerces a nil to a nil" do
+        instance = test_class.new(m: nil)
+        expect(instance.m).to be_nil
+      end
+
+      it "raises an exception for non-Hashes" do
+        expect { test_class.new(m: 'foobar') }.to raise_error(Avromatic::Model::CoercionError)
       end
     end
   end
@@ -355,6 +706,14 @@ describe Avromatic::Model::Builder do
     it "stores values in the member types" do
       expect(test_class.new(u: 1).u).to eq(1)
       expect(test_class.new(u: 'foo').u).to eq('foo')
+    end
+
+    it "coerces a nil to nil" do
+      expect(test_class.new(u: nil).u).to be_nil
+    end
+
+    it "raises an Avromatic::Model::CoercionError for input that can't be coerced to a member type" do
+      expect { test_class.new(u: { foo: 'bar' }) }.to raise_error(Avromatic::Model::CoercionError)
     end
 
     context "string member first" do
@@ -396,8 +755,8 @@ describe Avromatic::Model::Builder do
       end
 
       it "coerces values in the array" do
-        instance = test_class.new(aoo: [1, nil, 3])
-        expect(instance.aoo).to eq(['1', nil, '3'])
+        instance = test_class.new(aoo: ['foo', nil, :bar])
+        expect(instance.aoo).to eq(['foo', nil, 'bar'])
       end
     end
 
@@ -417,6 +776,58 @@ describe Avromatic::Model::Builder do
       it "coerces record members" do
         expect(test_class.new(value1).message.foo_message).to eq('foo')
         expect(test_class.new(value2).message.bar_message).to eq('bar')
+      end
+    end
+
+    context "union of arrays" do
+      let(:schema) do
+        Avro::Builder.build_schema do
+          record :with_array_union do
+            required :u, :union, types: [:string, array(:string)]
+          end
+        end
+      end
+
+      it "coerces a string array to a union member" do
+        instance = test_class.new(u: %(a b))
+        expect(instance.u).to eq(%(a b))
+      end
+    end
+
+    context "union of maps" do
+      let(:schema) do
+        Avro::Builder.build_schema do
+          record :with_map_union do
+            required :u, :union, types: [:string, map(:string)]
+          end
+        end
+      end
+
+      it "coerces a map to a union member" do
+        instance = test_class.new(u: { a: 'b' })
+        expect(instance.u).to eq('a' => 'b')
+      end
+    end
+
+    context "union with a custom type" do
+      let(:schema) do
+        Avro::Builder.build_schema do
+          fixed :handshake, size: 6
+          record :union_with_custom do
+            required :u, :union, types: [:long, :boolean, :double, :handshake]
+          end
+        end
+      end
+
+      before do
+        Avromatic.register_type('handshake', String) do |type|
+          type.from_avro = ->(value) { value.downcase }
+        end
+      end
+
+      it "performs the expected coercion" do
+        instance = test_class.new(u: 'VALUE')
+        expect(instance.u).to eq('value')
       end
     end
 
@@ -441,7 +852,7 @@ describe Avromatic::Model::Builder do
       end
       let(:data) do
         {
-          top: { a: [{ str: 137 }, { i: '99', c: 'FooBar' }] }
+          top: { a: [{ str: '137' }, { i: 99, c: 'FooBar' }] }
         }
       end
 
@@ -461,29 +872,61 @@ describe Avromatic::Model::Builder do
       end
     end
 
-    context "unsupported" do
-      context "union with a custom type" do
+    context "union with logical types" do
+      let(:test_class) do
+        Avromatic::Model.model(schema: schema)
+      end
+
+      context "union with a timestamp-micros" do
         let(:schema) do
           Avro::Builder.build_schema do
-            fixed :handshake, size: 6
-            record :union_with_custom do
-              required :u, :union, types: [:string, :handshake]
+            record :with_date_union do
+              required :u, :union, types: [:string, long(logical_type: 'timestamp-micros')]
             end
           end
         end
 
-        before do
-          Avromatic.register_type('handshake', String) do |type|
-            type.from_avro = ->(value) { value.downcase }
-          end
-        end
-
-        it "raises an error" do
-          expect { test_class }
-            .to raise_error('custom types within unions are currently unsupported')
+        it "coerces a time to a union member" do
+          now = Time.now
+          instance = test_class.new(u: now)
+          expect(instance.u).to eq(Time.at(now.to_i, now.usec))
         end
       end
 
+      context "union with a timestamp-millis" do
+        let(:schema) do
+          Avro::Builder.build_schema do
+            record :with_date_union do
+              required :u, :union, types: [:string, long(logical_type: 'timestamp-millis')]
+            end
+          end
+        end
+
+        it "coerces a time to a union member" do
+          now = Time.now
+          instance = test_class.new(u: now)
+          expect(instance.u).to eq(Time.at(now.to_i, now.usec / 1000 * 1000))
+        end
+      end
+
+      context "union with a date" do
+        let(:schema) do
+          Avro::Builder.build_schema do
+            record :with_date_union do
+              required :u, :union, types: [:string, long(logical_type: 'date')]
+            end
+          end
+        end
+
+        it "coerces dates to a union member" do
+          now = Date.today
+          instance = test_class.new(u: now)
+          expect(instance.u).to eq(now)
+        end
+      end
+    end
+
+    context "unsupported" do
       context "null after the first union member type" do
         let(:schema_name) { 'test.null_in_union' }
         let(:test_class) do
@@ -540,6 +983,15 @@ describe Avromatic::Model::Builder do
           expect(instance.attributes[:defaulted_int]).to eq(42)
         end
       end
+    end
+
+    it "does not override attributes that have already been set" do
+      test_class.send(:define_method, :initialize) do |attributes = {}|
+        self.defaulted_string = 'other_value'
+        super(attributes)
+      end
+      instance = test_class.new
+      expect(instance.defaulted_string).to eq('other_value')
     end
   end
 
@@ -627,7 +1079,7 @@ describe Avromatic::Model::Builder do
     describe "#inspect" do
       it "returns the class name and instance attributes" do
         expect(model1.inspect)
-          .to eq('#<PrimitiveType s: "foo", b: nil, tf: true, i: 42, l: nil, f: nil, d: nil, n: nil>')
+          .to eq('#<PrimitiveType s: "foo", b: nil, tf: true, i: 42, l: nil, f: nil, d: nil, n: nil, fx: nil, e: nil>')
       end
     end
 

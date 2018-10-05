@@ -23,7 +23,7 @@ Gem::Specification.new do |spec|
   spec.add_runtime_dependency 'avro', '>= 1.7.7'
   spec.add_runtime_dependency 'avro_schema_registry-client', '>= 0.3.0'
   spec.add_runtime_dependency 'avro_turf'
-  spec.add_runtime_dependency 'virtus'
+  spec.add_runtime_dependency 'ice_nine'
 
   spec.add_development_dependency 'avro-builder', '>= 0.12.0'
   spec.add_development_dependency 'bundler', '~> 1.11'
