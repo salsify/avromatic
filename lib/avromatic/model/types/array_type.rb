@@ -19,7 +19,7 @@ module Avromatic
           elsif input.is_a?(::Array)
             input.map { |element_input| value_type.coerce(element_input) }
           else
-            raise ArgumentError.new("Could not coerce '#{input.inspect}' to an Array")
+            raise Avromatic::Model::CoercionError.new("Could not coerce '#{input.inspect}' to an Array")
           end
         end
 

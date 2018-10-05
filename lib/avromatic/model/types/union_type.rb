@@ -25,7 +25,7 @@ module Avromatic
           end
 
           unless result
-            raise ArgumentError.new("Could not coerce '#{input.inspect}' to a union of #{value_classes.map(&:name)}")
+            raise Avromatic::Model::CoercionError.new("Could not coerce '#{input.inspect}' to a union of #{value_classes.map(&:name)}")
           end
 
           result

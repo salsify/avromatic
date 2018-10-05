@@ -18,7 +18,7 @@ module Avromatic
           if coercible?(input)
             input
           else
-            raise ArgumentError.new("Could not coerce '#{input.inspect}' to a Fixed(#{size})")
+            raise Avromatic::Model::CoercionError.new("Could not coerce '#{input.inspect}' to a Fixed(#{size})")
           end
         end
 

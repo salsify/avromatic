@@ -1,4 +1,5 @@
 require 'avromatic/model/builder'
+require 'avromatic/model/coercion_error'
 require 'avromatic/model/message_decoder'
 require 'avromatic/model/custom_type_registry'
 

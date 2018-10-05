@@ -275,8 +275,8 @@ describe Avromatic::Model::Builder do
           expect(instance.ts_msec).to eq(::Time.at(time.to_i, time.usec / 1000 * 1000))
         end
 
-        it "raises an ArgumentError when the value is a Date" do
-          expect { test_class.new(ts_msec: Date.today) }.to raise_error(ArgumentError, /Could not coerce/)
+        it "raises an Avromatic::Model::CoercionError when the value is a Date" do
+          expect { test_class.new(ts_msec: Date.today) }.to raise_error(Avromatic::Model::CoercionError)
         end
       end
 
@@ -300,8 +300,8 @@ describe Avromatic::Model::Builder do
           expect(instance.ts_usec).to eq(::Time.at(time.to_i, time.usec))
         end
 
-        it "raises an ArgumentError when the value is a Date" do
-          expect { test_class.new(ts_usec: Date.today) }.to raise_error(ArgumentError, /Could not coerce/)
+        it "raises an Avromatic::Model::CoercionError when the value is a Date" do
+          expect { test_class.new(ts_usec: Date.today) }.to raise_error(Avromatic::Model::CoercionError)
         end
       end
 
@@ -324,8 +324,8 @@ describe Avromatic::Model::Builder do
           expect(instance.date).to eq(::Date.new(time.year, time.month, time.day))
         end
 
-        it "raises an ArgumentError when the value is not coercible" do
-          expect { test_class.new(date: 'today') }.to raise_error(ArgumentError, /Could not coerce/)
+        it "raises an Avromatic::Model::CoercionError when the value is not coercible" do
+          expect { test_class.new(date: 'today') }.to raise_error(Avromatic::Model::CoercionError)
         end
       end
     end
@@ -401,7 +401,7 @@ describe Avromatic::Model::Builder do
         end
 
         it "does not coerce an integer to a string" do
-          expect { test_class.new(s: 100) }.to raise_error(ArgumentError, /Could not coerce/)
+          expect { test_class.new(s: 100) }.to raise_error(Avromatic::Model::CoercionError)
         end
       end
 
@@ -417,15 +417,15 @@ describe Avromatic::Model::Builder do
         end
 
         it "does not coerce an integer to a fixed" do
-          expect { test_class.new(fx: 1234567) }.to raise_error(ArgumentError, /Could not coerce/)
+          expect { test_class.new(fx: 1234567) }.to raise_error(Avromatic::Model::CoercionError)
         end
 
         it "does not coerce a string that is too short to a fixed" do
-          expect { test_class.new(fx: '123456') }.to raise_error(ArgumentError, /Could not coerce/)
+          expect { test_class.new(fx: '123456') }.to raise_error(Avromatic::Model::CoercionError)
         end
 
         it "does not coerce a string that is too long to a fixed" do
-          expect { test_class.new(fx: '12345678') }.to raise_error(ArgumentError, /Could not coerce/)
+          expect { test_class.new(fx: '12345678') }.to raise_error(Avromatic::Model::CoercionError)
         end
       end
 
@@ -441,7 +441,7 @@ describe Avromatic::Model::Builder do
         end
 
         it "does not coerce a string to an integer" do
-          expect { test_class.new(i: '100') }.to raise_error(ArgumentError, /Could not coerce/)
+          expect { test_class.new(i: '100') }.to raise_error(Avromatic::Model::CoercionError)
         end
       end
 
@@ -462,7 +462,7 @@ describe Avromatic::Model::Builder do
         end
 
         it "does not coerce a string to a boolean" do
-          expect { test_class.new(tf: 'true') }.to raise_error(ArgumentError, /Could not coerce/)
+          expect { test_class.new(tf: 'true') }.to raise_error(Avromatic::Model::CoercionError)
         end
       end
 
@@ -478,7 +478,7 @@ describe Avromatic::Model::Builder do
         end
 
         it "does not coerce a number to bytes" do
-          expect { test_class.new(b: 12) }.to raise_error(ArgumentError, /Could not coerce/)
+          expect { test_class.new(b: 12) }.to raise_error(Avromatic::Model::CoercionError)
         end
       end
 
@@ -494,7 +494,7 @@ describe Avromatic::Model::Builder do
         end
 
         it "does not coerce a string to a long" do
-          expect { test_class.new(l: '12') }.to raise_error(ArgumentError, /Could not coerce/)
+          expect { test_class.new(l: '12') }.to raise_error(Avromatic::Model::CoercionError)
         end
       end
 
@@ -515,7 +515,7 @@ describe Avromatic::Model::Builder do
         end
 
         it "does not coerce a string to a float" do
-          expect { test_class.new(f: '1.22') }.to raise_error(ArgumentError, /Could not coerce/)
+          expect { test_class.new(f: '1.22') }.to raise_error(Avromatic::Model::CoercionError)
         end
       end
 
@@ -536,7 +536,7 @@ describe Avromatic::Model::Builder do
         end
 
         it "does not coerce a string to a double" do
-          expect { test_class.new(d: '1.22') }.to raise_error(ArgumentError, /Could not coerce/)
+          expect { test_class.new(d: '1.22') }.to raise_error(Avromatic::Model::CoercionError)
         end
       end
 
@@ -547,7 +547,7 @@ describe Avromatic::Model::Builder do
         end
 
         it "does not coerce an empty string to nil" do
-          expect { test_class.new(n: '') }.to raise_error(ArgumentError, /Could not coerce/)
+          expect { test_class.new(n: '') }.to raise_error(Avromatic::Model::CoercionError)
         end
       end
 
@@ -568,15 +568,15 @@ describe Avromatic::Model::Builder do
         end
 
         it "does not coerce an unallowed string to an enum" do
-          expect { test_class.new(e: 'invalid') }.to raise_error(ArgumentError, /Could not coerce/)
+          expect { test_class.new(e: 'invalid') }.to raise_error(Avromatic::Model::CoercionError)
         end
 
         it "does not coerce an unallowed symbol to an enum" do
-          expect { test_class.new(e: :invalid) }.to raise_error(ArgumentError, /Could not coerce/)
+          expect { test_class.new(e: :invalid) }.to raise_error(Avromatic::Model::CoercionError)
         end
 
         it "does not coerce an integer to an enum" do
-          expect { test_class.new(e: 100) }.to raise_error(ArgumentError, /Could not coerce/)
+          expect { test_class.new(e: 100) }.to raise_error(Avromatic::Model::CoercionError)
         end
       end
 
@@ -611,7 +611,7 @@ describe Avromatic::Model::Builder do
         end
 
         it "raises an exception for uncoercible input" do
-          expect { test_class.new(h: 1) }.to raise_error(ArgumentError, /Could not coerce/)
+          expect { test_class.new(h: 1) }.to raise_error(Avromatic::Model::CoercionError)
         end
       end
     end
@@ -630,7 +630,7 @@ describe Avromatic::Model::Builder do
       end
 
       it "does not coerce a string" do
-        expect { test_class.new(sub: 'foobar') }.to raise_error(ArgumentError, /Could not coerce/)
+        expect { test_class.new(sub: 'foobar') }.to raise_error(Avromatic::Model::CoercionError)
       end
     end
 
@@ -658,7 +658,7 @@ describe Avromatic::Model::Builder do
       end
 
       it "raises an exception for non-Arrays" do
-        expect { test_class.new(a: 'foobar') }.to raise_error(ArgumentError, /Could not coerce/)
+        expect { test_class.new(a: 'foobar') }.to raise_error(Avromatic::Model::CoercionError)
       end
     end
 
@@ -686,7 +686,7 @@ describe Avromatic::Model::Builder do
       end
 
       it "raises an exception for non-Hashes" do
-        expect { test_class.new(m: 'foobar') }.to raise_error(ArgumentError, /Could not coerce/)
+        expect { test_class.new(m: 'foobar') }.to raise_error(Avromatic::Model::CoercionError)
       end
     end
   end
@@ -712,8 +712,8 @@ describe Avromatic::Model::Builder do
       expect(test_class.new(u: nil).u).to be_nil
     end
 
-    it "raises an ArgumentError for input that can't be coerced to a member type" do
-      expect { test_class.new(u: { foo: 'bar' }) }.to raise_error(ArgumentError, /Could not coerce/)
+    it "raises an Avromatic::Model::CoercionError for input that can't be coerced to a member type" do
+      expect { test_class.new(u: { foo: 'bar' }) }.to raise_error(Avromatic::Model::CoercionError)
     end
 
     context "string member first" do

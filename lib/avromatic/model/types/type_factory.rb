@@ -82,7 +82,7 @@ module Avromatic
               record_class = build_nested_model(schema: schema, nested_models: nested_models)
               Avromatic::Model::Types::RecordType.new(record_class: record_class)
             else
-              raise "Unsupported type #{schema.type_sym}"
+              raise ArgumentError.new("Unsupported type #{schema.type_sym}")
             end
           end
         end

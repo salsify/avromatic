@@ -24,20 +24,20 @@ module Avromatic
             @deserializer.call(input)
           end
         rescue StandardError => e
-          raise ArgumentError.new("Could not coerce '#{input.inspect}' to a #{value_classes.map(&:name).join(', ')}: #{e.message}")
+          raise Avromatic::Model::CoercionError.new("Could not coerce '#{input.inspect}' to a #{value_classes.map(&:name).join(', ')}: #{e.message}")
         end
 
         def coercible?(input)
           # TODO: Delegate this to optional configuration
           input.nil? || !coerce(input).nil?
-        rescue StandardError
+        rescue Avromatic::Model::CoercionError
           false
         end
 
         def coerced?(value)
           # TODO: Delegate this to optional configuration
           coerce(value) == value
-        rescue StandardError
+        rescue Avromatic::Model::CoercionError
           false
         end
 

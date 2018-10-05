@@ -14,8 +14,7 @@ module Avromatic
           elsif input.is_a?(::Time) || input.is_a?(::DateTime)
             coerce_time(input)
           else
-            # TODO: What other coercions do we need to support? Avro encodes these as ints and longs
-            raise ArgumentError.new("Could not coerce '#{input.inspect}' to #{self.class.name.demodulize}")
+            raise Avromatic::Model::CoercionError.new("Could not coerce '#{input.inspect}' to #{self.class.name.demodulize}")
           end
         end
 

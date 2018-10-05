@@ -12,7 +12,7 @@ module Avromatic
           if input.nil? || input.is_a?(::Integer)
             input
           else
-            raise ArgumentError.new("Could not coerce '#{input.inspect}' to an Integer")
+            raise Avromatic::Model::CoercionError.new("Could not coerce '#{input.inspect}' to an Integer")
           end
         end
 

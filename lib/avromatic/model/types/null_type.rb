@@ -12,7 +12,7 @@ module Avromatic
           if input.nil?
             nil
           else
-            raise ArgumentError.new("Could not coerce '#{input.inspect}' to a Null")
+            raise Avromatic::Model::CoercionError.new("Could not coerce '#{input.inspect}' to a Null")
           end
         end
 

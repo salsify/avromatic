@@ -15,14 +15,14 @@ module Avromatic
           elsif input.is_a?(Hash)
             record_class.new(input)
           else
-            raise ArgumentError.new("Could not coerce '#{input.inspect}' to a #{record_class}")
+            raise Avromatic::Model::CoercionError.new("Could not coerce '#{input.inspect}' to a #{record_class}")
           end
         end
 
         def coercible?(input)
           # TODO: Is there a better way to figure this out?
           input.nil? || input.is_a?(record_class) || coerce(input).valid?
-        rescue StandardError
+        rescue Avromatic::Model::CoercionError
           false
         end
 

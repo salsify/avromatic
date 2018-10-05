@@ -14,7 +14,7 @@ module Avromatic
           elsif input.is_a?(::Symbol)
             input.to_s
           else
-            raise ArgumentError.new("Could not coerce '#{input.inspect}' to a String")
+            raise Avromatic::Model::CoercionError.new("Could not coerce '#{input.inspect}' to a String")
           end
         end
 

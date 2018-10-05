@@ -14,7 +14,7 @@ module Avromatic
           elsif input.is_a?(::Integer)
             input.to_f
           else
-            raise ArgumentError.new("Could not coerce '#{input.inspect}' to a Float")
+            raise Avromatic::Model::CoercionError.new("Could not coerce '#{input.inspect}' to a Float")
           end
         end
 

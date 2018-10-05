@@ -12,7 +12,7 @@ module Avromatic
           if coercible?(input)
             input
           else
-            raise ArgumentError.new("Could not coerce '#{input.inspect}' to a Boolean")
+            raise Avromatic::Model::CoercionError.new("Could not coerce '#{input.inspect}' to a Boolean")
           end
         end
 

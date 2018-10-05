@@ -20,7 +20,7 @@ module Avromatic
           elsif coercible?(input)
             input.to_s
           else
-            raise ArgumentError.new("Could not coerce '#{input.inspect}' to an Enum(#{allowed_values.to_a.join(',')})")
+            raise Avromatic::Model::CoercionError.new("Could not coerce '#{input.inspect}' to an Enum(#{allowed_values.to_a.join(',')})")
           end
         end
 

@@ -14,7 +14,7 @@ module Avromatic
           elsif input.nil? || input.is_a?(::Date)
             input
           else
-            raise ArgumentError.new("Could not coerce '#{input.inspect}' to a Date")
+            raise Avromatic::Model::CoercionError.new("Could not coerce '#{input.inspect}' to a Date")
           end
         end
 

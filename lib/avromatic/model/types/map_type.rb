@@ -23,7 +23,7 @@ module Avromatic
               result[key_type.coerce(key_input)] = value_type.coerce(value_input)
             end
           else
-            raise ArgumentError.new("Could not coerce '#{input.inspect}' to a Map")
+            raise Avromatic::Model::CoercionError.new("Could not coerce '#{input.inspect}' to a Map")
           end
         end
 
