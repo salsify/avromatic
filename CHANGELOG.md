@@ -2,6 +2,8 @@
 
 ## v2.0.0 (unreleased)
 - Removed Virtus dependency.
+- Raise `Avromatic::Model::CoercionError` when attribute values can't be coerced to the target type.
+- Prevent model instances from being constructed with unknown attributes by default.
 - Support for custom types in unions with more than one non-null type.
 
 ## v1.0.0

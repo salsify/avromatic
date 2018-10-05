@@ -378,6 +378,21 @@ describe Avromatic::Model::Builder do
     it_behaves_like "a reader of attribute values", :attributes
   end
 
+  describe "#initialize" do
+    let(:schema_name) { 'test.primitive_types' }
+
+    it "raises an ArgumentError when passed an unknown attribute when allow_unknown_attributes is false" do
+      expect do
+        test_class.new(unknown: true)
+      end.to raise_error(ArgumentError, 'Unexpected attributes for PrimitiveType: unknown. Complete arguments: {:unknown=>true}')
+    end
+
+    it "does not raise an ArgumentError when passed an unknown attribute when allow_unknown_attributes is true" do
+      allow(Avromatic).to receive(:allow_unknown_attributes).and_return(true)
+      expect { test_class.new(unknown: true) }.not_to raise_error
+    end
+  end
+
   context "coercion" do
     # This is important for the eventual encoding of a model to Avro
 

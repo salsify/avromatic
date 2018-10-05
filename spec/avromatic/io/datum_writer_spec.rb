@@ -6,7 +6,6 @@ describe Avromatic::IO::DatumWriter do
   end
   let(:values) do
     {
-      headers: 'has bar',
       message: { bar_message: 'bar' }
     }
   end

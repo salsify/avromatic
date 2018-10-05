@@ -42,17 +42,23 @@ module Avromatic
       end
 
       def initialize(data = {})
-        # TODO: Validate keys
+        valid_keys = []
         attribute_definitions.each do |attribute_name, attribute_definition|
           if data.include?(attribute_name)
+            valid_keys << attribute_name
             value = data.fetch(attribute_name)
             _attributes[attribute_name] = attribute_definition.coerce(value)
           elsif data.include?(attribute_name.to_s)
+            valid_keys << attribute_name
             value = data[attribute_name.to_s]
             _attributes[attribute_name] = attribute_definition.coerce(value)
           elsif !attributes.include?(attribute_name)
             _attributes[attribute_name] = attribute_definition.default
           end
+        end
+
+        unless Avromatic.allow_unknown_attributes || valid_keys.size == data.size
+          raise ArgumentError.new("Unexpected attributes for #{self.class.name}: #{(data.keys - valid_keys).map(&:to_s).join(', ')}. Complete arguments: #{data}")
         end
       end
 
