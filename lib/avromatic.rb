@@ -13,7 +13,7 @@ module Avromatic
     attr_accessor :schema_registry, :registry_url, :schema_store, :logger,
                   :messaging, :custom_type_registry, :nested_models,
                   :use_custom_datum_reader, :use_custom_datum_writer,
-                  :use_schema_fingerprint_lookup
+                  :use_schema_fingerprint_lookup, :allow_unknown_attributes
 
     delegate :register_type, to: :custom_type_registry
   end
@@ -24,6 +24,7 @@ module Avromatic
   self.use_custom_datum_reader = true
   self.use_custom_datum_writer = true
   self.use_schema_fingerprint_lookup = true
+  self.allow_unknown_attributes = false
 
   def self.configure
     yield self

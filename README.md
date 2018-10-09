@@ -52,6 +52,8 @@ Avromatic with unreleased Avro features.
   `Avromatic.configure` and during code reloading in Rails applications. This
   option is useful for defining models that will be extended when the load order
   is important.
+* **allow_unknown_attributes**: Optionally allow model constructors to silently
+  ignore unknown attributes. Defaults to `false`.
 
 #### Custom Types
 
@@ -418,7 +420,9 @@ registry requests to a fake, in-memory schema registry and rebuilds the
 
 ## Upgrading to 2.0
 
-TODO
+TODO:
+* Validation in initialize/setters
+* Unknown attributes not allowed 
 
 ## Development
 
