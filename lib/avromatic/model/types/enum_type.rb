@@ -10,6 +10,10 @@ module Avromatic
           @allowed_values = allowed_values.to_set
         end
 
+        def name
+          "enum#{allowed_values.to_a}"
+        end
+
         def value_classes
           VALUE_CLASSES
         end
@@ -20,7 +24,7 @@ module Avromatic
           elsif coercible?(input)
             input.to_s
           else
-            raise Avromatic::Model::CoercionError.new("Could not coerce '#{input.inspect}' to an Enum(#{allowed_values.to_a.join(',')})")
+            raise ArgumentError.new("Could not coerce '#{input.inspect}' to #{name}")
           end
         end
 

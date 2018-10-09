@@ -8,13 +8,17 @@ module Avromatic
           VALUE_CLASSES
         end
 
+        def name
+          'string'
+        end
+
         def coerce(input)
           if input.nil? || input.is_a?(::String)
             input
           elsif input.is_a?(::Symbol)
             input.to_s
           else
-            raise Avromatic::Model::CoercionError.new("Could not coerce '#{input.inspect}' to a String")
+            raise ArgumentError.new("Could not coerce '#{input.inspect}' to #{name}")
           end
         end
 

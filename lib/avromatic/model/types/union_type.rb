@@ -12,6 +12,10 @@ module Avromatic
           @value_classes = member_types.flat_map(&:value_classes)
         end
 
+        def name
+          "union[#{member_types.map(&:name).join(', ')}]"
+        end
+
         def coerce(input)
           return input if coerced?(input)
 
@@ -25,7 +29,7 @@ module Avromatic
           end
 
           unless result
-            raise Avromatic::Model::CoercionError.new("Could not coerce '#{input.inspect}' to a union of #{value_classes.map(&:name)}")
+            raise ArgumentError.new("Could not coerce '#{input.inspect}' to #{name}")
           end
 
           result

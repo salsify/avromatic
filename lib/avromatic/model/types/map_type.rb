@@ -11,6 +11,10 @@ module Avromatic
           @value_type = value_type
         end
 
+        def name
+          "map[#{key_type.name} => #{value_type.name}]"
+        end
+
         def value_classes
           VALUE_CLASSES
         end
@@ -23,7 +27,7 @@ module Avromatic
               result[key_type.coerce(key_input)] = value_type.coerce(value_input)
             end
           else
-            raise Avromatic::Model::CoercionError.new("Could not coerce '#{input.inspect}' to a Map")
+            raise ArgumentError.new("Could not coerce '#{input.inspect}' to #{name}")
           end
         end
 

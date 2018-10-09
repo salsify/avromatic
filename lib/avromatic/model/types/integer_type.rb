@@ -8,11 +8,15 @@ module Avromatic
           VALUE_CLASSES
         end
 
+        def name
+          'integer'
+        end
+
         def coerce(input)
           if input.nil? || input.is_a?(::Integer)
             input
           else
-            raise Avromatic::Model::CoercionError.new("Could not coerce '#{input.inspect}' to an Integer")
+            raise ArgumentError.new("Could not coerce '#{input.inspect}' to #{name}")
           end
         end
 

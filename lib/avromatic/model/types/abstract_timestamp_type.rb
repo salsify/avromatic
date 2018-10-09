@@ -14,7 +14,7 @@ module Avromatic
           elsif input.is_a?(::Time) || input.is_a?(::DateTime)
             coerce_time(input)
           else
-            raise Avromatic::Model::CoercionError.new("Could not coerce '#{input.inspect}' to #{self.class.name.demodulize}")
+            raise ArgumentError.new("Could not coerce '#{input.inspect}' to #{name}")
           end
         end
 

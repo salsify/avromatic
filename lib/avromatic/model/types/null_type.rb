@@ -8,11 +8,15 @@ module Avromatic
           VALUE_CLASSES
         end
 
+        def name
+          'null'
+        end
+
         def coerce(input)
           if input.nil?
             nil
           else
-            raise Avromatic::Model::CoercionError.new("Could not coerce '#{input.inspect}' to a Null")
+            raise ArgumentError.new("Could not coerce '#{input.inspect}' to #{name}")
           end
         end
 
