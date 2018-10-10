@@ -141,8 +141,7 @@ end
 ```
 
 Generated models include attributes for each field in the Avro schema
-including any default values defined in the schema. `ActiveModel` validations
-are used to define validations for the presence of required fields ([see below](#validations)).
+including any default values defined in the schema.
 
 A model may be defined with both a key and a value schema:
 
@@ -383,14 +382,31 @@ decoder.decode(model2_message_value)
 # => instance of MyModel2
 ```
 
-### Validations
+### Validations and Coercions
 
-The following validations are supported:
+An exception will be thrown if an attribute value cannot be coerced to the corresponding Avro schema field's type.
+The following coercions are supported:
 
-- Presence of a value for required fields. Empty arrays and maps are considered
-  valid for required fields.
-- Validity of nested records, including records embedded in array, maps, and
-  unions.
+| Ruby Type | Avro Type |
+| --------- | --------- |
+| String, Symbol | string |
+| Array | array |
+| Hash | map |
+| Integer, Float | int |
+| Integer | long |
+| Float | float |
+| Float | double |
+| String | bytes |
+| Date, Time, DateTime | date |
+| Time, DateTime | timestamp-millis |
+| Time, DateTime | timestamp-micros |
+| TrueClass, FalseClass | boolean |
+| NilClass | null |
+| Hash | record |
+
+Validation of required fields is done automatically when serializing a model to Avro. It can also be done
+explicitly by calling the `valid?` or `invalid?` methods from the 
+[ActiveModel::Validations](https://edgeapi.rubyonrails.org/classes/ActiveModel/Validations.html) interface.
 
 ### Logical Types
 
@@ -421,8 +437,9 @@ registry requests to a fake, in-memory schema registry and rebuilds the
 ## Upgrading to 2.0
 
 TODO:
-* Validation in initialize/setters
+* Coercion validation in initialize/setters
 * Unknown attributes not allowed 
+* Required field validation when serializing to Avro
 
 ## Development
 

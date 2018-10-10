@@ -56,6 +56,14 @@ describe Avromatic::Model::RawSerialization do
       end
     end
 
+    context "with missing required attributes" do
+      let(:values) { { str1: 'a', str2: nil } }
+
+      it "raises a ValidationError" do
+        expect { instance.value_attributes_for_avro }.to raise_error(Avromatic::Model::ValidationError)
+      end
+    end
+
     context "with reference to a mutable attribute" do
       let(:schema_name) { 'test.wrapper' }
       let(:wrapped1_class) { test_class.nested_models['test.wrapped1'] }
@@ -180,6 +188,14 @@ describe Avromatic::Model::RawSerialization do
       end
     end
 
+    context "with missing required attributes" do
+      let(:values) { { str1: 'a', str2: nil } }
+
+      it "raises a ValidationError" do
+        expect { instance.avro_value_datum }.to raise_error(Avromatic::Model::ValidationError)
+      end
+    end
+
     context "with reference to a mutable attribute" do
       let(:schema_name) { 'test.wrapper' }
       let(:wrapped1_class) { test_class.nested_models['test.wrapped1'] }
@@ -254,6 +270,14 @@ describe Avromatic::Model::RawSerialization do
       expected = { 'id' => values[:id] }
       expect(instance.key_attributes_for_avro).to eq(expected)
     end
+
+    context "with missing required attributes" do
+      let(:values) { { id: nil, str1: 'a', str2: 'b' } }
+
+      it "raises a ValidationError" do
+        expect { instance.key_attributes_for_avro }.to raise_error(Avromatic::Model::ValidationError)
+      end
+    end
   end
 
   describe "#avro_key_datum" do
@@ -268,6 +292,14 @@ describe Avromatic::Model::RawSerialization do
     it "returns a hash of the key attributes suitable for avro encoding" do
       expected = { 'id' => values[:id] }
       expect(instance.avro_key_datum).to eq(expected)
+    end
+
+    context "with missing required attributes" do
+      let(:values) { { id: nil, str1: 'a', str2: 'b' } }
+
+      it "raises a ValidationError" do
+        expect { instance.avro_key_datum }.to raise_error(Avromatic::Model::ValidationError)
+      end
     end
   end
 
@@ -291,6 +323,14 @@ describe Avromatic::Model::RawSerialization do
         expect(decoded).to eq(instance)
       end
     end
+
+    context "with missing required attributes" do
+      let(:values) { { str1: 'a', str2: nil } }
+
+      it "raises a ValidationError" do
+        expect { instance.avro_raw_value }.to raise_error(Avromatic::Model::ValidationError)
+      end
+    end
   end
 
   describe "#avro_raw_key" do
@@ -307,6 +347,14 @@ describe Avromatic::Model::RawSerialization do
       encoded_key = instance.avro_raw_key
       decoded = test_class.avro_raw_decode(key: encoded_key, value: encoded_value)
       expect(decoded).to eq(instance)
+    end
+
+    context "with missing required attributes" do
+      let(:values) { { id: nil, str1: 'a', str2: 'b' } }
+
+      it "raises a ValidationError" do
+        expect { instance.avro_raw_key }.to raise_error(Avromatic::Model::ValidationError)
+      end
     end
 
     context "when a model does not have a key schema" do

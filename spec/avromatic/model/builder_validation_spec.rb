@@ -10,21 +10,36 @@ describe Avromatic::Model::Builder, 'validation' do
   context "required" do
     context "primitive types" do
       let(:schema_name) { 'test.primitive_types' }
+      let(:valid_attributes) do
+        {
+          s: 'foo',
+          b: '123',
+          tf: true,
+          i: 777,
+          l: 123456789,
+          f: 0.5,
+          d: 1.0 / 3.0,
+          n: nil,
+          fx: '1234567',
+          e: 'A'
+        }
+      end
 
       it "validates that required fields must be present" do
         instance = test_class.new
         aggregate_failures do
           expect(instance).to be_invalid
-          expect(instance.errors[:s]).to include("can't be blank")
-          expect(instance.errors[:tf]).to include("can't be nil")
-          expect(instance.errors.keys.map(&:to_s)).to match_array(attribute_names)
+          expect(instance.errors[:base]).to include("s can't be nil")
+          expect(instance.errors[:base]).to include("tf can't be nil")
+          # All attributes are invalid except the field with type null
+          expect(instance.errors.size).to eq(attribute_names.size - 1)
         end
       end
 
       context "boolean" do
         it "allows a boolean field to be false" do
-          instance = test_class.new(tf: false)
-          expect(instance.errors.keys).not_to include(:tf)
+          instance = test_class.new(valid_attributes.merge(tf: false))
+          expect(instance).to be_valid
         end
       end
     end
@@ -42,7 +57,7 @@ describe Avromatic::Model::Builder, 'validation' do
       it "validates that a required array is not nil" do
         instance = test_class.new(a: nil)
         expect(instance).to be_invalid
-        expect(instance.errors[:a]).to include("can't be nil")
+        expect(instance.errors[:base]).to match_array(["a can't be nil"])
       end
 
       it "allows a required array to be empty" do
@@ -64,7 +79,7 @@ describe Avromatic::Model::Builder, 'validation' do
       it "validates that a required map is not nil" do
         instance = test_class.new(m: nil)
         expect(instance).to be_invalid
-        expect(instance.errors[:m]).to include("can't be nil")
+        expect(instance.errors[:base]).to include("m can't be nil")
       end
 
       it "allows a required map to be empty" do
@@ -90,15 +105,15 @@ describe Avromatic::Model::Builder, 'validation' do
         instance = test_class.new(sub: test_class.nested_models['sub_type'].new)
         expect(instance).to be_invalid
         aggregate_failures do
-          expect(instance.errors[:sub]).to include(".i can't be blank")
-          expect(instance.errors[:sub]).to include(".s can't be blank")
+          expect(instance.errors[:base]).to include("sub.i can't be nil")
+          expect(instance.errors[:base]).to include("sub.s can't be nil")
         end
       end
 
       it "validates nested records initialized with a hash" do
         instance = test_class.new(sub: { i: 0 })
         expect(instance).to be_invalid
-        expect(instance.errors[:sub]).to include(".s can't be blank")
+        expect(instance.errors[:base]).to include("sub.s can't be nil")
       end
 
       context "doubly nested record" do
@@ -119,13 +134,13 @@ describe Avromatic::Model::Builder, 'validation' do
           level2 = test_class.nested_models['level2']
           instance = test_class.new(sub: level1.new(sub_sub: level2.new))
           expect(instance).to be_invalid
-          expect(instance.errors[:sub]).to include(".sub_sub.l can't be blank")
+          expect(instance.errors[:base]).to include("sub.sub_sub.l can't be nil")
         end
 
         it "validates multiple levels of nesting initialized with a hash" do
           instance = test_class.new(sub: { sub_sub: {} })
           expect(instance).to be_invalid
-          expect(instance.errors[:sub]).to include(".sub_sub.l can't be blank")
+          expect(instance.errors[:base]).to include("sub.sub_sub.l can't be nil")
         end
       end
 
@@ -151,10 +166,10 @@ describe Avromatic::Model::Builder, 'validation' do
           instance = test_class.new(ary: data)
           expect(instance).to be_invalid
           aggregate_failures do
-            expect(instance.errors[:ary]).to include("[0].x can't be blank")
-            expect(instance.errors[:ary]).to include("[0].y can't be blank")
-            expect(instance.errors[:ary]).to include("[1].y can't be blank")
-            expect(instance.errors[:ary]).to include("[2].x can't be blank")
+            expect(instance.errors[:base]).to include("ary[0].x can't be nil")
+            expect(instance.errors[:base]).to include("ary[0].y can't be nil")
+            expect(instance.errors[:base]).to include("ary[1].y can't be nil")
+            expect(instance.errors[:base]).to include("ary[2].x can't be nil")
           end
         end
 
@@ -165,10 +180,10 @@ describe Avromatic::Model::Builder, 'validation' do
           instance = test_class.new(ary: data)
           expect(instance).to be_invalid
           aggregate_failures do
-            expect(instance.errors[:ary]).to include("[0].x can't be blank")
-            expect(instance.errors[:ary]).to include("[0].y can't be blank")
-            expect(instance.errors[:ary]).to include("[1].y can't be blank")
-            expect(instance.errors[:ary]).to include("[2].x can't be blank")
+            expect(instance.errors[:base]).to include("ary[0].x can't be nil")
+            expect(instance.errors[:base]).to include("ary[0].y can't be nil")
+            expect(instance.errors[:base]).to include("ary[1].y can't be nil")
+            expect(instance.errors[:base]).to include("ary[2].x can't be nil")
           end
         end
       end
@@ -195,8 +210,8 @@ describe Avromatic::Model::Builder, 'validation' do
           instance = test_class.new(m: data)
           expect(instance).to be_invalid
           aggregate_failures do
-            expect(instance.errors[:m]).to include("[0][1].s can't be blank")
-            expect(instance.errors[:m]).to include("[1][1].s can't be blank")
+            expect(instance.errors[:base]).to include("m[0][1].s can't be nil")
+            expect(instance.errors[:base]).to include("m[1][1].s can't be nil")
           end
         end
       end
@@ -225,10 +240,10 @@ describe Avromatic::Model::Builder, 'validation' do
           instance = test_class.new(map: data)
           expect(instance).to be_invalid
           aggregate_failures do
-            expect(instance.errors[:map]).to include("['a'].x can't be blank")
-            expect(instance.errors[:map]).to include("['b'].y can't be blank")
-            expect(instance.errors[:map]).to include("['b'].y can't be blank")
-            expect(instance.errors[:map]).to include("['c'].y can't be blank")
+            expect(instance.errors[:base]).to include("map['a'].x can't be nil")
+            expect(instance.errors[:base]).to include("map['b'].y can't be nil")
+            expect(instance.errors[:base]).to include("map['b'].y can't be nil")
+            expect(instance.errors[:base]).to include("map['c'].y can't be nil")
           end
         end
 
@@ -241,10 +256,10 @@ describe Avromatic::Model::Builder, 'validation' do
           instance = test_class.new(map: data)
           expect(instance).to be_invalid
           aggregate_failures do
-            expect(instance.errors[:map]).to include("['a'].x can't be blank")
-            expect(instance.errors[:map]).to include("['b'].y can't be blank")
-            expect(instance.errors[:map]).to include("['b'].y can't be blank")
-            expect(instance.errors[:map]).to include("['c'].y can't be blank")
+            expect(instance.errors[:base]).to include("map['a'].x can't be nil")
+            expect(instance.errors[:base]).to include("map['b'].y can't be nil")
+            expect(instance.errors[:base]).to include("map['b'].y can't be nil")
+            expect(instance.errors[:base]).to include("map['c'].y can't be nil")
           end
         end
       end
@@ -268,8 +283,8 @@ describe Avromatic::Model::Builder, 'validation' do
           instance = test_class.new(u: test_class.nested_models['x_and_y'].new)
           expect(instance).to be_invalid
           aggregate_failures do
-            expect(instance.errors[:u]).to include(".x can't be blank")
-            expect(instance.errors[:u]).to include(".y can't be blank")
+            expect(instance.errors[:base]).to include("u.x can't be nil")
+            expect(instance.errors[:base]).to include("u.y can't be nil")
           end
         end
       end

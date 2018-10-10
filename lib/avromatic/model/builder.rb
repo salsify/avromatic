@@ -40,7 +40,6 @@ module Avromatic
 
       def inclusions
         [
-          ActiveModel::Validations,
           Avromatic::Model::Configurable,
           Avromatic::Model::NestedModels,
           Avromatic::Model::Validation,

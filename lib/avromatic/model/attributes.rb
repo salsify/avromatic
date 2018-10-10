@@ -141,34 +141,10 @@ module Avromatic
               _attributes[symbolized_field_name] = attribute_definitions[symbolized_field_name].coerce(value)
             end
 
-            unless config.mutable
+            unless config.mutable # rubocop:disable Style/Next
               private("#{field.name}=")
               define_method(:clone) { self }
               define_method(:dup) { self }
-            end
-
-            # TODO: Remove this along with ActiveModel validations
-            add_validation(attribute_definition)
-          end
-        end
-
-        # TODO: Remove this along with ActiveModel validations
-        def add_validation(attribute_definition)
-          if [:record, :array, :map, :union].include?(attribute_definition.field.type.type_sym)
-            validate_complex(attribute_definition.field.name)
-          end
-
-          add_required_validation(attribute_definition.field)
-        end
-
-        # TODO: Remove this along with ActiveModel validations
-        def add_required_validation(field)
-          if FieldHelper.required?(field) && field.default == :no_default
-            case field.type.type_sym
-            when :array, :map, :boolean
-              validates(field.name, exclusion: { in: [nil], message: "can't be nil" })
-            else
-              validates(field.name, presence: true)
             end
           end
         end

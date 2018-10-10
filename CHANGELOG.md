@@ -1,9 +1,14 @@
 # avromatic changelog
 
 ## v2.0.0 (unreleased)
-- Removed Virtus dependency.
+- Remove Virtus dependency.
 - Raise `Avromatic::Model::CoercionError` when attribute values can't be coerced to the target type.
-- Prevent model instances from being constructed with unknown attributes by default.
+- Prevent model instances from being constructed with unknown attributes by default. This can be disabled
+  by setting `Avromatic.allow_unknown_attributes` to `false`.
+- Validate required attributes are present when serializing to Avro for better error messages. Explicit 
+  validation can still be done by calling the `valid?` or `invalid?` methods from the 
+  [ActiveModel::Validations](https://edgeapi.rubyonrails.org/classes/ActiveModel/Validations.html) interface
+  but errors will now appear under the `:base` key.  
 - Support for custom types in unions with more than one non-null type.
 
 ## v1.0.0
