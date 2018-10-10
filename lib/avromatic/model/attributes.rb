@@ -34,6 +34,10 @@ module Avromatic
                        field.default
                      end
         end
+
+        def required?
+          FieldHelper.required?(field)
+        end
       end
 
       included do
@@ -122,7 +126,7 @@ module Avromatic
           end
 
           schema.fields.each do |field|
-            raise OptionalFieldError.new(field) if !allow_optional && optional?(field)
+            raise OptionalFieldError.new(field) if !allow_optional && FieldHelper.optional?(field)
 
             symbolized_field_name = field.name.to_sym
             attribute_definition = AttributeDefinition.new(
@@ -143,10 +147,12 @@ module Avromatic
               define_method(:dup) { self }
             end
 
+            # TODO: Remove this along with ActiveModel validations
             add_validation(attribute_definition)
           end
         end
 
+        # TODO: Remove this along with ActiveModel validations
         def add_validation(attribute_definition)
           if [:record, :array, :map, :union].include?(attribute_definition.field.type.type_sym)
             validate_complex(attribute_definition.field.name)
@@ -155,8 +161,9 @@ module Avromatic
           add_required_validation(attribute_definition.field)
         end
 
+        # TODO: Remove this along with ActiveModel validations
         def add_required_validation(field)
-          if required?(field) && field.default == :no_default
+          if FieldHelper.required?(field) && field.default == :no_default
             case field.type.type_sym
             when :array, :map, :boolean
               validates(field.name, exclusion: { in: [nil], message: "can't be nil" })
@@ -164,17 +171,6 @@ module Avromatic
               validates(field.name, presence: true)
             end
           end
-        end
-
-        # An optional field is represented as a union where the first member
-        # is null.
-        def optional?(field)
-          field.type.type_sym == :union &&
-            field.type.schemas.first.type_sym == :null
-        end
-
-        def required?(field)
-          !optional?(field)
         end
 
         def create_type(field)
