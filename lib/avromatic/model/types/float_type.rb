@@ -8,13 +8,17 @@ module Avromatic
           VALUE_CLASSES
         end
 
+        def name
+          'float'.freeze
+        end
+
         def coerce(input)
           if input.nil? || input.is_a?(::Float)
             input
           elsif input.is_a?(::Integer)
             input.to_f
           else
-            raise Avromatic::Model::CoercionError.new("Could not coerce '#{input.inspect}' to a Float")
+            raise ArgumentError.new("Could not coerce '#{input.inspect}' to #{name}")
           end
         end
 

@@ -10,6 +10,10 @@ module Avromatic
           @size = size
         end
 
+        def name
+          "fixed(#{size})".freeze
+        end
+
         def value_classes
           VALUE_CLASSES
         end
@@ -18,7 +22,7 @@ module Avromatic
           if coercible?(input)
             input
           else
-            raise Avromatic::Model::CoercionError.new("Could not coerce '#{input.inspect}' to a Fixed(#{size})")
+            raise ArgumentError.new("Could not coerce '#{input.inspect}' to #{name}")
           end
         end
 

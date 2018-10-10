@@ -8,11 +8,15 @@ module Avromatic
           VALUE_CLASSES
         end
 
+        def name
+          'boolean'.freeze
+        end
+
         def coerce(input)
           if coercible?(input)
             input
           else
-            raise Avromatic::Model::CoercionError.new("Could not coerce '#{input.inspect}' to a Boolean")
+            raise ArgumentError.new("Could not coerce '#{input.inspect}' to #{name}")
           end
         end
 

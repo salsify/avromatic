@@ -37,14 +37,14 @@ module Avromatic
         def create(schema:, nested_models:, use_custom_types: true)
           if use_custom_types && Avromatic.custom_type_registry.registered?(schema)
             custom_type_configuration = Avromatic.custom_type_registry.fetch(schema)
-            default_value_classes = create(
+            default_type = create(
               schema: schema,
               nested_models: nested_models,
               use_custom_types: false
-            ).value_classes
+            )
             Avromatic::Model::Types::CustomType.new(
               custom_type_configuration: custom_type_configuration,
-              default_value_classes: default_value_classes
+              default_type: default_type
             )
           elsif schema.respond_to?(:logical_type) && SINGLETON_TYPES.include?(schema.logical_type)
             SINGLETON_TYPES.fetch(schema.logical_type)
