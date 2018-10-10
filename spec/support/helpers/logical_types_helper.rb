@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module LogicalTypesHelper
 
   def with_logical_types

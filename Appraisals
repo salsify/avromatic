@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 appraise 'rails5_0' do
   gem 'avro', '1.8.2'
   gem 'activesupport', '~> 5.0.6'

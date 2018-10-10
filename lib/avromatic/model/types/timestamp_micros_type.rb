@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'avromatic/model/types/abstract_timestamp_type'
 
 module Avromatic
@@ -8,7 +10,7 @@ module Avromatic
       class TimestampMicrosType < Avromatic::Model::Types::AbstractTimestampType
 
         def name
-          'timestamp-micros'.freeze
+          'timestamp-micros'
         end
 
         def coerced?(value)

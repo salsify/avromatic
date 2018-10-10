@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'avro_turf/messaging'
 require 'avromatic/io'
 

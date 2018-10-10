@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 record :logical_types, namespace: :test do
   required :date, :int, logical_type: 'date'
   required :ts_msec, :long, logical_type: 'timestamp-millis'

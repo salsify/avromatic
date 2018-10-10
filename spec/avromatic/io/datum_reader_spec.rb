@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 describe Avromatic::IO::DatumReader do
   let(:test_class) do
     Avromatic::Model.model(schema_name: schema_name)
@@ -67,7 +69,7 @@ describe Avromatic::IO::DatumReader do
     end
 
     it "includes the member index in the decoded hash" do
-      expect(attributes['message'][described_class::UNION_MEMBER_INDEX]).to eq(1)
+      expect(attributes.dig('message', described_class::UNION_MEMBER_INDEX)).to eq(1)
     end
 
     it "can decode a message" do
@@ -78,7 +80,7 @@ describe Avromatic::IO::DatumReader do
       let(:schema_name) { 'test.optional_union' }
 
       it "includes the member index in the decoded hash" do
-        expect(attributes['message'][described_class::UNION_MEMBER_INDEX]).to eq(1)
+        expect(attributes.dig('message', described_class::UNION_MEMBER_INDEX)).to eq(1)
       end
 
       it "can decode a message" do

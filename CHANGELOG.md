@@ -5,6 +5,7 @@
 - Raise `Avromatic::Model::CoercionError` when attribute values can't be coerced to the target type.
 - Prevent model instances from being constructed with unknown attributes by default.
 - Support for custom types in unions with more than one non-null type.
+- Drop support for Ruby < 2.3 and Rails < 5.0.
 
 ## v1.0.0
 - No changes.

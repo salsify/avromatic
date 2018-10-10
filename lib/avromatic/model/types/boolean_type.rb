@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Avromatic
   module Model
     module Types
@@ -9,7 +11,7 @@ module Avromatic
         end
 
         def name
-          'boolean'.freeze
+          'boolean'
         end
 
         def coerce(input)

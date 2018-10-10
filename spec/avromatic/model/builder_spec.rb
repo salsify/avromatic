@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 describe Avromatic::Model::Builder do
   let(:schema_store) { Avromatic.schema_store }
   let(:schema) { schema_store.find(schema_name) }

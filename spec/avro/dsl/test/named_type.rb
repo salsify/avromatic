@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 namespace :test
 
 fixed :six, size: 6

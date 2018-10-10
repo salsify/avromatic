@@ -2,10 +2,13 @@ inherit_gem:
   salsify_rubocop: conf/rubocop.yml
 
 AllCops:
-  TargetRubyVersion: 2.2
+  TargetRubyVersion: 2.3
 
 Style/MultilineBlockChain:
   Enabled: false
 
 Style/NumericPredicate:
   Enabled: false
+
+Style/FrozenStringLiteralComment:
+  Enabled: true

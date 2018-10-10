@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 namespace 'test'
 
 record :wrapped1 do
