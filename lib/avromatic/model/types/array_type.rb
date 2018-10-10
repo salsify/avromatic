@@ -13,13 +13,17 @@ module Avromatic
           VALUE_CLASSES
         end
 
+        def name
+          "array[#{value_type.name}]".freeze
+        end
+
         def coerce(input)
           if input.nil?
             input
           elsif input.is_a?(::Array)
             input.map { |element_input| value_type.coerce(element_input) }
           else
-            raise Avromatic::Model::CoercionError.new("Could not coerce '#{input.inspect}' to an Array")
+            raise ArgumentError.new("Could not coerce '#{input.inspect}' to #{name}")
           end
         end
 

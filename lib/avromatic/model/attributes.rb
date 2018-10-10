@@ -19,10 +19,11 @@ module Avromatic
       end
 
       class AttributeDefinition
-        attr_reader :name, :type, :field, :default
-        delegate :coerce, :serialize, to: :type
+        attr_reader :name, :type, :field, :default, :owner
+        delegate :serialize, to: :type
 
-        def initialize(field:, type:)
+        def initialize(owner:, field:, type:)
+          @owner = owner
           @field = field
           @type = type
           @name = field.name.to_sym
@@ -33,6 +34,12 @@ module Avromatic
                      else
                        field.default
                      end
+        end
+
+        def coerce(input)
+          type.coerce(input)
+        rescue StandardError
+          raise Avromatic::Model::CoercionError.new("Could not coerce '#{input.inspect}' to #{type.name} when setting #{owner.name}##{name}")
         end
       end
 
@@ -126,6 +133,7 @@ module Avromatic
 
             symbolized_field_name = field.name.to_sym
             attribute_definition = AttributeDefinition.new(
+              owner: self,
               field: field,
               type: create_type(field)
             )

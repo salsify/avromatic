@@ -7,6 +7,10 @@ module Avromatic
       # This subclass is used to truncate timestamp values to microseconds.
       class TimestampMicrosType < Avromatic::Model::Types::AbstractTimestampType
 
+        def name
+          'timestamp-micros'.freeze
+        end
+
         def coerced?(value)
           value.is_a?(::Time) && value.nsec % 1000 == 0
         end
