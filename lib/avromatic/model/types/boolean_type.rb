@@ -9,7 +9,7 @@ module Avromatic
         end
 
         def name
-          'boolean'
+          'boolean'.freeze
         end
 
         def coerce(input)

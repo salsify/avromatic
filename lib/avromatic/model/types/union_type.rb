@@ -13,7 +13,7 @@ module Avromatic
         end
 
         def name
-          "union[#{member_types.map(&:name).join(', ')}]"
+          "union[#{member_types.map(&:name).join(', ')}]".freeze
         end
 
         def coerce(input)

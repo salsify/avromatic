@@ -11,7 +11,7 @@ module Avromatic
         end
 
         def name
-          "fixed(#{size})"
+          "fixed(#{size})".freeze
         end
 
         def value_classes

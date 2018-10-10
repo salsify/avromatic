@@ -9,7 +9,7 @@ module Avromatic
         end
 
         def name
-          'integer'
+          'integer'.freeze
         end
 
         def coerce(input)

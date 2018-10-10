@@ -8,7 +8,7 @@ module Avromatic
       class TimestampMillisType < Avromatic::Model::Types::AbstractTimestampType
 
         def name
-          'timestamp-millis'
+          'timestamp-millis'.freeze
         end
 
         def coerced?(value)

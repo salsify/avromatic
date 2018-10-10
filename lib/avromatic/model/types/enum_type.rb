@@ -11,7 +11,7 @@ module Avromatic
         end
 
         def name
-          "enum#{allowed_values.to_a}"
+          "enum#{allowed_values.to_a}".freeze
         end
 
         def value_classes

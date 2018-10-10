@@ -14,7 +14,7 @@ module Avromatic
         end
 
         def name
-          "array[#{value_type.name}]"
+          "array[#{value_type.name}]".freeze
         end
 
         def coerce(input)

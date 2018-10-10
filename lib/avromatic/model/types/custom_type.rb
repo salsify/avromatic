@@ -19,7 +19,7 @@ module Avromatic
         end
 
         def name
-          custom_type_configuration.value_class ? custom_type_configuration.value_class.name.to_s : default_type.name
+          custom_type_configuration.value_class ? custom_type_configuration.value_class.name.to_s.freeze : default_type.name
         end
 
         def coerce(input)

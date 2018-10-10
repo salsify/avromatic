@@ -8,7 +8,7 @@ module Avromatic
       class TimestampMicrosType < Avromatic::Model::Types::AbstractTimestampType
 
         def name
-          'timestamp-micros'
+          'timestamp-micros'.freeze
         end
 
         def coerced?(value)

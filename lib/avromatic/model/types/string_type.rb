@@ -9,7 +9,7 @@ module Avromatic
         end
 
         def name
-          'string'
+          'string'.freeze
         end
 
         def coerce(input)

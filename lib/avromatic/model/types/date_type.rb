@@ -9,7 +9,7 @@ module Avromatic
         end
 
         def name
-          'date'
+          'date'.freeze
         end
 
         def coerce(input)

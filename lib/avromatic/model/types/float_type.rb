@@ -9,7 +9,7 @@ module Avromatic
         end
 
         def name
-          'float'
+          'float'.freeze
         end
 
         def coerce(input)

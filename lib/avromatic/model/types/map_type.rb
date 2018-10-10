@@ -12,7 +12,7 @@ module Avromatic
         end
 
         def name
-          "map[#{key_type.name} => #{value_type.name}]"
+          "map[#{key_type.name} => #{value_type.name}]".freeze
         end
 
         def value_classes

@@ -10,7 +10,7 @@ module Avromatic
         end
 
         def name
-          record_class.name.to_s
+          record_class.name.to_s.freeze
         end
 
         def coerce(input)
