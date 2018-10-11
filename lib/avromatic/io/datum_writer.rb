@@ -28,7 +28,8 @@ module Avromatic
 
       def write_record(writers_schema, datum, encoder)
         if datum.is_a?(Hash) && datum.key?(Avromatic::IO::ENCODING_PROVIDER)
-          encoder.write(datum[Avromatic::IO::ENCODING_PROVIDER].avro_raw_value)
+          # This is only used for recursive serialization so validation has already been done
+          encoder.write(datum[Avromatic::IO::ENCODING_PROVIDER].avro_raw_value(validate: false))
         else
           super
         end

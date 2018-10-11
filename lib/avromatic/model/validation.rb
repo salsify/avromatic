@@ -4,52 +4,71 @@ module Avromatic
   module Model
     module Validation
       extend ActiveSupport::Concern
+      include ActiveModel::Validations
 
-      module ClassMethods
+      EMPTY_ARRAY = [].freeze
 
-        # Returns an array of messages
-        def validate_nested_value(value)
-          case value
-          when Avromatic::Model::Attributes
-            validate_record_value(value)
-          when Array
-            value.flat_map.with_index do |element, index|
-              validate_nested_value(element).map do |message|
-                "[#{index}]#{message}"
-              end
-            end
-          when Hash
-            value.flat_map do |key, map_value|
-              # keys for the Avro map type are always strings and do not require
-              # validation
-              validate_nested_value(map_value).map do |message|
-                "['#{key}']#{message}"
-              end
-            end
+      def self.missing_nested_attributes(attribute, value)
+        if value.is_a?(Array)
+          results = []
+          value.each_with_index do |element, index|
+            nested_results = missing_nested_attributes("#{attribute}[#{index}]", element)
+            results.concat(nested_results)
+          end
+          results
+        elsif value.is_a?(Hash)
+          results = []
+          value.each do |key, element|
+            nested_results = missing_nested_attributes("#{attribute}['#{key}']", element)
+            results.concat(nested_results)
+          end
+          results
+        elsif value.respond_to?(:missing_avro_attributes)
+          value.missing_avro_attributes.map do |missing_child_attribute|
+            "#{attribute}.#{missing_child_attribute}"
+          end
+        else
+          EMPTY_ARRAY
+        end
+      end
+
+      included do
+        # Support the ActiveModel::Validations interface for backwards compatibility
+        validate do |model|
+          model.missing_avro_attributes.each do |missing_attribute|
+            errors.add(:base, "#{missing_attribute} can't be nil")
+          end
+        end
+      end
+
+      def avro_validate!
+        results = missing_avro_attributes
+        if results.present?
+          raise Avromatic::Model::ValidationError.new("#{self.class.name}(#{attributes.inspect}) cannot be " \
+            "serialized because the following attributes are nil: #{results.join(', ')}")
+        end
+      end
+
+      def missing_avro_attributes
+        return @missing_attributes if instance_variable_defined?(:@missing_attributes)
+
+        missing_attributes = []
+
+        self.class.attribute_definitions.each_value do |attribute_definition|
+          value = send(attribute_definition.name)
+          field = attribute_definition.field
+          if value.nil? && field.type.type_sym != :null && attribute_definition.required?
+            missing_attributes << field.name
           else
-            []
+            missing_attributes.concat(Avromatic::Model::Validation.missing_nested_attributes(field.name, value))
           end
         end
 
-        private
-
-        def validate_complex(field_name)
-          validate do |instance|
-            value = instance.send(field_name)
-            messages = self.class.validate_nested_value(value)
-            messages.each { |message| instance.errors.add(field_name.to_sym, message) }
-          end
+        unless self.class.config.mutable
+          @missing_attributes = missing_attributes.deep_freeze
         end
 
-        def validate_record_value(record)
-          if record && record.invalid?
-            record.errors.map do |key, message|
-              ".#{key} #{message}".gsub(' .', '.')
-            end
-          else
-            []
-          end
-        end
+        missing_attributes
       end
     end
   end

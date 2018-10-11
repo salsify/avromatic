@@ -5,6 +5,7 @@ require 'active_model'
 require 'avromatic/model/configuration'
 require 'avromatic/model/value_object'
 require 'avromatic/model/configurable'
+require 'avromatic/model/field_helper'
 require 'avromatic/model/nested_models'
 require 'avromatic/model/validation'
 require 'avromatic/model/types/type_factory'
@@ -41,7 +42,6 @@ module Avromatic
 
       def inclusions
         [
-          ActiveModel::Validations,
           Avromatic::Model::Configurable,
           Avromatic::Model::NestedModels,
           Avromatic::Model::Validation,

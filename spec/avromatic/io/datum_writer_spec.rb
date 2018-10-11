@@ -8,6 +8,7 @@ describe Avromatic::IO::DatumWriter do
   end
   let(:values) do
     {
+      header: 'foo',
       message: { bar_message: 'bar' }
     }
   end

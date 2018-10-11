@@ -14,46 +14,47 @@ module Avromatic
         delegate :datum_writer, :datum_reader, to: :class
         private :datum_writer, :datum_reader
 
-        def avro_raw_value
+        def avro_raw_value(validate: true)
           if self.class.config.mutable
-            avro_raw_encode(value_attributes_for_avro, :value)
+            avro_raw_encode(value_attributes_for_avro(validate: validate), :value)
           else
-            @avro_raw_value ||= avro_raw_encode(value_attributes_for_avro, :value)
+            @avro_raw_value ||= avro_raw_encode(value_attributes_for_avro(validate: validate), :value)
           end
         end
 
-        def avro_raw_key
+        def avro_raw_key(validate: true)
           raise 'Model has no key schema' unless key_avro_schema
-          avro_raw_encode(key_attributes_for_avro, :key)
+          avro_raw_encode(key_attributes_for_avro(validate: validate), :key)
         end
 
-        def value_attributes_for_avro
+        def value_attributes_for_avro(validate: true)
           if self.class.config.mutable
-            avro_hash(value_avro_field_names)
+            avro_hash(value_avro_field_names, validate: validate)
           else
-            @value_attributes_for_avro ||= avro_hash(value_avro_field_names)
+            @value_attributes_for_avro ||= avro_hash(value_avro_field_names, validate: validate)
           end
         end
 
-        def key_attributes_for_avro
-          avro_hash(key_avro_field_names)
+        def key_attributes_for_avro(validate: true)
+          avro_hash(key_avro_field_names, validate: validate)
         end
 
-        def avro_value_datum
+        def avro_value_datum(validate: true)
           if self.class.config.mutable
-            avro_hash(value_avro_field_names, strict: true)
+            avro_hash(value_avro_field_names, strict: true, validate: validate)
           else
-            @avro_datum ||= avro_hash(value_avro_field_names, strict: true)
+            @avro_datum ||= avro_hash(value_avro_field_names, strict: true, validate: validate)
           end
         end
 
-        def avro_key_datum
-          avro_hash(key_avro_field_names, strict: true)
+        def avro_key_datum(validate: true)
+          avro_hash(key_avro_field_names, strict: true, validate: validate)
         end
 
         private
 
-        def avro_hash(fields, strict: false)
+        def avro_hash(fields, strict: false, validate:)
+          avro_validate! if validate
           attributes.slice(*fields).each_with_object(Hash.new) do |(key, value), result|
             result[key.to_s] = attribute_definitions[key].serialize(value, strict: strict)
           end

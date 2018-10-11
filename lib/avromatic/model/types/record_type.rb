@@ -44,7 +44,8 @@ module Avromatic
             # hash but then we'd have no place to stash the union member index...
             { Avromatic::IO::ENCODING_PROVIDER => value }
           else
-            strict ? value.avro_value_datum : value.value_attributes_for_avro
+            # This is only used for recursive serialization so validation has already been done
+            strict ? value.avro_value_datum(validate: false) : value.value_attributes_for_avro(validate: false)
           end
         end
       end

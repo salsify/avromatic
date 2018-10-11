@@ -38,6 +38,10 @@ module Avromatic
                      end
         end
 
+        def required?
+          FieldHelper.required?(field)
+        end
+
         def coerce(input)
           type.coerce(input)
         rescue StandardError
@@ -131,7 +135,7 @@ module Avromatic
           end
 
           schema.fields.each do |field|
-            raise OptionalFieldError.new(field) if !allow_optional && optional?(field)
+            raise OptionalFieldError.new(field) if !allow_optional && FieldHelper.optional?(field)
 
             symbolized_field_name = field.name.to_sym
             attribute_definition = AttributeDefinition.new(
@@ -147,44 +151,12 @@ module Avromatic
               _attributes[symbolized_field_name] = attribute_definitions[symbolized_field_name].coerce(value)
             end
 
-            unless config.mutable
+            unless config.mutable # rubocop:disable Style/Next
               private("#{field.name}=")
               define_method(:clone) { self }
               define_method(:dup) { self }
             end
-
-            add_validation(attribute_definition)
           end
-        end
-
-        def add_validation(attribute_definition)
-          if [:record, :array, :map, :union].include?(attribute_definition.field.type.type_sym)
-            validate_complex(attribute_definition.field.name)
-          end
-
-          add_required_validation(attribute_definition.field)
-        end
-
-        def add_required_validation(field)
-          if required?(field) && field.default == :no_default
-            case field.type.type_sym
-            when :array, :map, :boolean
-              validates(field.name, exclusion: { in: [nil], message: "can't be nil" })
-            else
-              validates(field.name, presence: true)
-            end
-          end
-        end
-
-        # An optional field is represented as a union where the first member
-        # is null.
-        def optional?(field)
-          field.type.type_sym == :union &&
-            field.type.schemas.first.type_sym == :null
-        end
-
-        def required?(field)
-          !optional?(field)
         end
 
         def create_type(field)
