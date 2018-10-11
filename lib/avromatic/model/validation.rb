@@ -21,7 +21,7 @@ module Avromatic
             results.concat(nested_results)
           end
           results
-        elsif value.is_a?(Avromatic::Model::Validation)
+        elsif value.respond_to?(:missing_avro_attributes)
           value.missing_avro_attributes.map do |missing_child_attribute|
             "#{attribute}.#{missing_child_attribute}"
           end
