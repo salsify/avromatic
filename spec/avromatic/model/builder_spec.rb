@@ -393,6 +393,28 @@ describe Avromatic::Model::Builder do
       allow(Avromatic).to receive(:allow_unknown_attributes).and_return(true)
       expect { test_class.new(unknown: true) }.not_to raise_error
     end
+
+    context "when the model has a super class" do
+      let(:parent_class) do
+        Class.new do
+          attr_reader :parent_initialized
+          def initialize
+            @parent_initialized = true
+          end
+        end
+      end
+
+      let(:test_class) do
+        Class.new(parent_class) do
+          include Avromatic::Model.build(schema_name: 'test.primitive_types')
+        end
+      end
+
+      it "calls the super class' initialize method" do
+        instance = test_class.new(s: 's')
+        expect(instance.parent_initialized).to eq(true)
+      end
+    end
   end
 
   context "coercion" do

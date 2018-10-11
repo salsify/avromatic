@@ -55,6 +55,8 @@ module Avromatic
       end
 
       def initialize(data = {})
+        super()
+
         valid_keys = []
         attribute_definitions.each do |attribute_name, attribute_definition|
           if data.include?(attribute_name)
