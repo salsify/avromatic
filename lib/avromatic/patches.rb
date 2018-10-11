@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 loaded_avro_patches = begin
     require 'avro-patches'
     true

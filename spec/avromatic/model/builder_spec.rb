@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 describe Avromatic::Model::Builder do
   let(:schema_store) { Avromatic.schema_store }
   let(:schema) { schema_store.find(schema_name) }
@@ -791,6 +793,43 @@ describe Avromatic::Model::Builder do
       it "coerces record members" do
         expect(test_class.new(value1).message.foo_message).to eq('foo')
         expect(test_class.new(value2).message.bar_message).to eq('bar')
+      end
+    end
+
+    context "union of records with overlapping fields" do
+      let(:schema) do
+        Avro::Builder.build_schema do
+          record :sub1 do
+            required :a, :string
+          end
+
+          record :sub2 do
+            required :a, :string
+            required :b, :int
+          end
+
+          record :sub3 do
+            required :a, :string
+            required :b, :string
+          end
+
+          record :sub4 do
+            required :a, :string
+            required :b, :string
+            optional :c, :string
+          end
+
+          record :with_union do
+            required :u, :union, types: [:sub1, :sub2, :sub3, :sub4]
+          end
+        end
+      end
+
+      it "coerces to the first union member with all of the specified attribute values with the correct types" do
+        instance = test_class.new(u: { a: :foo, b: :bar })
+        expect(instance.u.a).to eq('foo')
+        expect(instance.u.b).to eq('bar')
+        expect(instance.u).to be_an_instance_of(Avromatic.nested_models['sub3'])
       end
     end
 

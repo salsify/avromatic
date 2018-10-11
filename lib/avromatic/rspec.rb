@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'webmock/rspec'
 require 'avro_schema_registry/test/fake_server'
 

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'avromatic/model/custom_type_configuration'
 
 module Avromatic

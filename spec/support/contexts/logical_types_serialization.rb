@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # This examples expects let-variables to be defined for:
 #   decoded: a model instance based on the encoded_value
 shared_examples_for "logical type encoding and decoding" do

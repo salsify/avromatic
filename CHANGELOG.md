@@ -10,6 +10,7 @@
   [ActiveModel::Validations](https://edgeapi.rubyonrails.org/classes/ActiveModel/Validations.html) interface
   but errors will now appear under the `:base` key.  
 - Support for custom types in unions with more than one non-null type.
+- Drop support for Ruby < 2.3 and Rails < 5.0.
 
 ## v1.0.0
 - No changes.

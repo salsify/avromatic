@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'avromatic/model/builder'
 require 'avromatic/model/coercion_error'
 require 'avromatic/model/message_decoder'

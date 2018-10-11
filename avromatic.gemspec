@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 lib = File.expand_path('../lib', __FILE__)
 $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
 require 'avromatic/version'
@@ -18,8 +20,10 @@ Gem::Specification.new do |spec|
   spec.executables   = spec.files.grep(%r{^exe/}) { |f| File.basename(f) }
   spec.require_paths = ['lib']
 
-  spec.add_runtime_dependency 'activemodel', '>= 4.1', '< 5.3'
-  spec.add_runtime_dependency 'activesupport', '>= 4.1', '< 5.3'
+  spec.required_ruby_version = '>= 2.3'
+
+  spec.add_runtime_dependency 'activemodel', '>= 5.0', '< 5.3'
+  spec.add_runtime_dependency 'activesupport', '>= 5.0', '< 5.3'
   spec.add_runtime_dependency 'avro', '>= 1.7.7'
   spec.add_runtime_dependency 'avro_schema_registry-client', '>= 0.3.0'
   spec.add_runtime_dependency 'avro_turf'

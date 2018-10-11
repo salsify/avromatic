@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Avromatic
   module Model
     module Types
@@ -12,7 +14,7 @@ module Avromatic
         end
 
         def name
-          "map[#{key_type.name} => #{value_type.name}]".freeze
+          "map[#{key_type.name} => #{value_type.name}]"
         end
 
         def value_classes

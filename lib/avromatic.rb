@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'avromatic/version'
 require 'avro_schema_registry-client'
 require 'ice_nine'

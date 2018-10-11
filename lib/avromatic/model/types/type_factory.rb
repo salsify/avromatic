@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'avromatic/model/types/array_type'
 require 'avromatic/model/types/boolean_type'
 require 'avromatic/model/types/custom_type'

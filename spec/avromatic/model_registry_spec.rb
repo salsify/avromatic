@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 describe Avromatic::ModelRegistry do
   let(:model) { Avromatic::Model.model(schema_name: 'test.nested_record') }
   let(:instance) { described_class.new }

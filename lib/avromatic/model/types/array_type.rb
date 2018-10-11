@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Avromatic
   module Model
     module Types
@@ -14,7 +16,7 @@ module Avromatic
         end
 
         def name
-          "array[#{value_type.name}]".freeze
+          "array[#{value_type.name}]"
         end
 
         def coerce(input)
