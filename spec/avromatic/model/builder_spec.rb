@@ -796,6 +796,43 @@ describe Avromatic::Model::Builder do
       end
     end
 
+    context "union of records with overlapping fields" do
+      let(:schema) do
+        Avro::Builder.build_schema do
+          record :sub1 do
+            required :a, :string
+          end
+
+          record :sub2 do
+            required :a, :string
+            required :b, :int
+          end
+
+          record :sub3 do
+            required :a, :string
+            required :b, :string
+          end
+
+          record :sub4 do
+            required :a, :string
+            required :b, :string
+            optional :c, :string
+          end
+
+          record :with_union do
+            required :u, :union, types: [:sub1, :sub2, :sub3, :sub4]
+          end
+        end
+      end
+
+      it "coerces to the first union member with all of the specified attribute values with the correct types" do
+        instance = test_class.new(u: { a: :foo, b: :bar })
+        expect(instance.u.a).to eq('foo')
+        expect(instance.u.b).to eq('bar')
+        expect(instance.u).to be_an_instance_of(Avromatic.nested_models['sub3'])
+      end
+    end
+
     context "union of arrays" do
       let(:schema) do
         Avro::Builder.build_schema do
