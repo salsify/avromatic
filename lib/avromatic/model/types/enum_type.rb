@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Avromatic
   module Model
     module Types
@@ -11,7 +13,7 @@ module Avromatic
         end
 
         def name
-          "enum#{allowed_values.to_a}".freeze
+          "enum#{allowed_values.to_a}"
         end
 
         def value_classes

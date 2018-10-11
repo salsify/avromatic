@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Avromatic
   module IO
     # Subclass DatumWriter to use additional information about union member

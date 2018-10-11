@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'avromatic/io'
 
 module Avromatic
@@ -13,7 +15,7 @@ module Avromatic
         end
 
         def name
-          "union[#{member_types.map(&:name).join(', ')}]".freeze
+          "union[#{member_types.map(&:name).join(', ')}]"
         end
 
         def coerce(input)

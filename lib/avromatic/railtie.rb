@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Avromatic
   class Railtie < Rails::Railtie
     initializer 'avromatic.configure' do

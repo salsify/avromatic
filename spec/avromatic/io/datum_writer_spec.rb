@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 describe Avromatic::IO::DatumWriter do
   let(:encoder) { instance_double(Avro::IO::BinaryEncoder) }
   let(:schema_name) { 'test.real_union' }

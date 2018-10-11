@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 describe Avromatic::Model::Builder, 'validation' do
   let(:schema) { schema_store.find(schema_name) }
   let(:test_class) do

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 namespace :test
 
 record :i_rec do

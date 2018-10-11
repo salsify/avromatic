@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Avromatic
   module Model
     module Types
@@ -11,7 +13,7 @@ module Avromatic
         end
 
         def name
-          "fixed(#{size})".freeze
+          "fixed(#{size})"
         end
 
         def value_classes

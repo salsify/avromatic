@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 describe Avromatic::Model::Builder, 'nested_models' do
   let(:schema) do
     Avro::Builder.build_schema do
