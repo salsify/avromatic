@@ -5,7 +5,7 @@ require 'simplecov'
 
 SimpleCov.start do
   add_filter 'spec'
-  minimum_coverage 95
+  # minimum_coverage 95
 end
 
 require 'avro/builder'
@@ -16,6 +16,7 @@ Dir["#{File.dirname(__FILE__)}/support/**/*.rb"].each { |f| require f }
 
 RSpec.configure do |config|
   config.extend LogicalTypesHelper
+  config.filter_run focus: true
 
   config.before do
     Avromatic.logger = Logger.new('log/test.log')
