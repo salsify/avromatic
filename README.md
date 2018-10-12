@@ -53,7 +53,9 @@ Avromatic with unreleased Avro features.
   option is useful for defining models that will be extended when the load order
   is important.
 * **allow_unknown_attributes**: Optionally allow model constructors to silently
-  ignore unknown attributes. Defaults to `false`.
+  ignore unknown attributes. Defaults to `false`. WARNING: Setting this to `true` 
+  will result in incorrect union member coercions if an earlier union member is 
+  satisfied by a subset of the latter union member's attributes.
 
 #### Custom Types
 
