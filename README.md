@@ -53,7 +53,9 @@ Avromatic with unreleased Avro features.
   option is useful for defining models that will be extended when the load order
   is important.
 * **allow_unknown_attributes**: Optionally allow model constructors to silently
-  ignore unknown attributes. Defaults to `false`.
+  ignore unknown attributes. Defaults to `false`. WARNING: Setting this to `true` 
+  will result in incorrect union member coercions if an earlier union member is 
+  satisfied by a subset of the latter union member's attributes.
 
 #### Custom Types
 
@@ -433,13 +435,6 @@ using Avromatic with a fake schema registry during tests.
 Requiring this file configures a RSpec before hook that directs any schema
 registry requests to a fake, in-memory schema registry and rebuilds the
 `Avromatic::Messaging` object for each example.
-
-## Upgrading to 2.0
-
-TODO:
-* Coercion validation in initialize/setters
-* Unknown attributes not allowed 
-* Required field validation when serializing to Avro
 
 ## Development
 

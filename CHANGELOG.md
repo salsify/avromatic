@@ -1,17 +1,19 @@
 # avromatic changelog
 
 ## v2.0.0 (unreleased)
-- Remove Virtus dependency.
-- Raise `Avromatic::Model::CoercionError` when attribute values can't be coerced to the target type.
-- Prevent model instances from being constructed with unknown attributes by default. This can be disabled
-  by setting `Avromatic.allow_unknown_attributes` to `false`.
+- Remove [virtus](https://github.com/solnic/virtus) dependency resulting in a 3x performance improvement in model instantation and 1.4x - 2.0x performance improvement in Avro serialization and Avromatic code simplification.
+- Raise `Avromatic::Model::CoercionError` when attribute values can't be coerced to the target type in model constructors and attribute setters. Previously coercion errors weren't detected until Avro serialization or an explicit call to `valid?`.
+- Prevent model instances from being constructed with unknown attributes. Previously unknown attributes were ignored. 
+  This can be disabled by setting `Avromatic.allow_unknown_attributes` to `true`.
+  WARNING: Setting `Avromatic.allow_unknown_attributes` to `true` will result in incorrect union member coercions 
+  if an earlier union member is satisfied by a subset of the latter union member's attributes.
 - Validate required attributes are present when serializing to Avro for better error messages. Explicit 
   validation can still be done by calling the `valid?` or `invalid?` methods from the 
   [ActiveModel::Validations](https://edgeapi.rubyonrails.org/classes/ActiveModel/Validations.html) interface
-  but errors will now appear under the `:base` key.  
+  but errors will now appear under the `:base` key. Previously these errors were detected late in the Avro serialization process resulting in hard to understand error messages. 
 - Support for custom types in unions with more than one non-null type.
 - Drop support for Ruby < 2.3 and Rails < 5.0.
-- Call `super()` in model constructor.
+- Call `super()` in model constructor making it easier to define class/module hierarchies for models.
 
 ## v1.0.0
 - No changes.
