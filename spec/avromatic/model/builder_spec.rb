@@ -270,7 +270,7 @@ describe Avromatic::Model::Builder do
           expect(instance.ts_msec).to eq(::Time.at(time.to_i, time.usec / 1000 * 1000))
         end
 
-        it "coerces an ActiveSupport::TimeWithZone", focus: true do
+        it "coerces an ActiveSupport::TimeWithZone", focus: true do # rubocop:disable RSpec/Focus
           1_000_000.times do
             time = Time.zone.now
             instance = test_class.new(ts_msec: time)
@@ -296,10 +296,12 @@ describe Avromatic::Model::Builder do
           expect(instance.ts_usec).to eq(::Time.at(time.to_i, time.usec))
         end
 
-        it "coerces an ActiveSupport::TimeWithZone" do
-          time = Time.zone.now
-          instance = test_class.new(ts_usec: time)
-          expect(instance.ts_usec).to eq(::Time.at(time.to_i, time.usec))
+        it "coerces an ActiveSupport::TimeWithZone", focus: true do # rubocop:disable RSpec/Focus
+          1_000_000.times do
+            time = Time.zone.now
+            instance = test_class.new(ts_usec: time)
+            expect(instance.ts_usec).to eq(::Time.at(time.to_i, time.usec))
+          end
         end
 
         it "raises an Avromatic::Model::CoercionError when the value is a Date" do

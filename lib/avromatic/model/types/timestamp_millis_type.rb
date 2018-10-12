@@ -14,7 +14,7 @@ module Avromatic
         end
 
         def coerced?(value)
-          value.is_a?(::Time) && value.usec % 1000 == 0
+          value.is_a?(::Time) && value.class != ActiveSupport::TimeWithZone && value.usec % 1000 == 0
         end
 
         private
