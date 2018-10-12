@@ -13,11 +13,11 @@ module Avromatic
           'timestamp-millis'
         end
 
-        def coerced?(value)
-          value.is_a?(::Time) && value.class != ActiveSupport::TimeWithZone && value.usec % 1000 == 0
-        end
-
         private
+
+        def truncated?(value)
+          value.usec % 1000 == 0
+        end
 
         def coerce_time(input)
           # value is coerced to a local Time

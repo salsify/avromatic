@@ -24,8 +24,11 @@ module Avromatic
           input.nil? || input.is_a?(::Time) || input.is_a?(::DateTime)
         end
 
-        def coerced?(_value)
-          raise "#{__method__} must be overridden by #{self.class.name}"
+        def coerced?(value)
+          # ActiveSupport::TimeWithZone overrides is_a? is to make it look like a Time
+          # even though it's not which can lead to unexpected behavior if we don't force
+          # a coercion
+          value.is_a?(::Time) && value.class != ActiveSupport::TimeWithZone && truncated?(value)
         end
 
         def serialize(value, **)
@@ -33,6 +36,10 @@ module Avromatic
         end
 
         private
+
+        def truncated?(_value)
+          raise "#{__method__} must be overridden by #{self.class.name}"
+        end
 
         def coerce_time(_input)
           raise "#{__method__} must be overridden by #{self.class.name}"
