@@ -271,7 +271,6 @@ describe Avromatic::Model::Builder do
         end
 
         it "coerces an ActiveSupport::TimeWithZone" do
-          Time.zone = 'GMT'
           time = Time.zone.now
           instance = test_class.new(ts_msec: time)
           expect(instance.ts_msec).to eq(::Time.at(time.to_i, time.usec / 1000 * 1000))
@@ -296,7 +295,6 @@ describe Avromatic::Model::Builder do
         end
 
         it "coerces an ActiveSupport::TimeWithZone" do
-          Time.zone = 'GMT'
           time = Time.zone.now
           instance = test_class.new(ts_usec: time)
           expect(instance.ts_usec).to eq(::Time.at(time.to_i, time.usec))

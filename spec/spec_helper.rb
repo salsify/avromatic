@@ -24,6 +24,8 @@ RSpec.configure do |config|
     Avromatic.schema_store = AvroTurf::SchemaStore.new(path: 'spec/avro/schema')
     Avromatic.custom_type_registry.clear
     Avromatic.nested_models = Avromatic::ModelRegistry.new
+
+    Time.zone = 'GMT'
   end
 end
 
