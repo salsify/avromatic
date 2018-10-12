@@ -434,13 +434,6 @@ Requiring this file configures a RSpec before hook that directs any schema
 registry requests to a fake, in-memory schema registry and rebuilds the
 `Avromatic::Messaging` object for each example.
 
-## Upgrading to 2.0
-
-TODO:
-* Coercion validation in initialize/setters
-* Unknown attributes not allowed 
-* Required field validation when serializing to Avro
-
 ## Development
 
 After checking out the repo, run `bin/setup` to install dependencies. Then, run `rake spec` to run the tests. You can also run `bin/console` for an interactive prompt that will allow you to experiment.
