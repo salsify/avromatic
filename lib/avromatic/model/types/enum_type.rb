@@ -1,10 +1,13 @@
 # frozen_string_literal: true
 
+require 'avromatic/model/types/abstract_type'
+
 module Avromatic
   module Model
     module Types
-      class EnumType
+      class EnumType < AbstractType
         VALUE_CLASSES = [::String].freeze
+        INPUT_CLASSES = [::String, ::Symbol].freeze
 
         attr_reader :allowed_values
 
@@ -18,6 +21,10 @@ module Avromatic
 
         def value_classes
           VALUE_CLASSES
+        end
+
+        def input_classes
+          INPUT_CLASSES
         end
 
         def coerce(input)

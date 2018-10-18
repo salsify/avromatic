@@ -383,13 +383,14 @@ describe Avromatic::Model::Builder do
   describe "#initialize" do
     let(:schema_name) { 'test.primitive_types' }
 
-    it "raises an ArgumentError when passed an unknown attribute when allow_unknown_attributes is false" do
+    it "raises an Avromatic::Model::UnknownAttributeError when passed an unknown attribute when allow_unknown_attributes is false" do
+      input = { unknown: true }
       expect do
-        test_class.new(unknown: true)
-      end.to raise_error(ArgumentError, 'Unexpected attributes for PrimitiveType: unknown. Complete arguments: {:unknown=>true}')
+        test_class.new(input)
+      end.to raise_error(Avromatic::Model::UnknownAttributeError, "Unexpected arguments for PrimitiveType#initialize: unknown. Provided arguments: #{input.inspect}")
     end
 
-    it "does not raise an ArgumentError when passed an unknown attribute when allow_unknown_attributes is true" do
+    it "does not raise an Avromatic::Model::UnknownAttributeError when passed an unknown attribute when allow_unknown_attributes is true" do
       allow(Avromatic).to receive(:allow_unknown_attributes).and_return(true)
       expect { test_class.new(unknown: true) }.not_to raise_error
     end
@@ -669,7 +670,22 @@ describe Avromatic::Model::Builder do
       end
 
       it "does not coerce a string" do
-        expect { test_class.new(sub: 'foobar') }.to raise_error(Avromatic::Model::CoercionError)
+        sub_input = 'foobar'
+        expect do
+          test_class.new(sub: sub_input)
+        end.to raise_error(Avromatic::Model::CoercionError,
+                           'Value for NestedRecord#sub could not be coerced to a NestedRecordSubRecord ' \
+                           'because a String was provided but expected one of NestedRecordSubRecord or Hash. ' \
+                           "Provided argument: #{sub_input.inspect}")
+      end
+
+      it "does not coerce hashes with additional attributes" do
+        sub_input = { 'str' => 'a', 'i' => 1, 'b' => 1 }
+        expect do
+          test_class.new(sub: sub_input)
+        end.to raise_error(Avromatic::Model::CoercionError,
+                           'Value for NestedRecord#sub could not be coerced to a NestedRecordSubRecord because the ' \
+                           "following unexpected attributes were provided: b. Provided argument: #{sub_input.inspect}")
       end
     end
 

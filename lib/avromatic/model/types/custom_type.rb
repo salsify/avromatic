@@ -1,9 +1,11 @@
 # frozen_string_literal: true
 
+require 'avromatic/model/types/abstract_type'
+
 module Avromatic
   module Model
     module Types
-      class CustomType
+      class CustomType < AbstractType
         IDENTITY_PROC = Proc.new { |value| value }
 
         attr_reader :custom_type_configuration, :value_classes, :default_type
@@ -20,6 +22,10 @@ module Avromatic
                            end
         end
 
+        def input_classes
+          # We don't know the valid input classes for a custom type
+        end
+
         def name
           custom_type_configuration.value_class ? custom_type_configuration.value_class.name.to_s.freeze : default_type.name
         end
@@ -31,6 +37,7 @@ module Avromatic
             @deserializer.call(input)
           end
         rescue StandardError => e
+          # TODO: Don't swallow this
           raise ArgumentError.new("Could not coerce '#{input.inspect}' to #{name}: #{e.message}")
         end
 

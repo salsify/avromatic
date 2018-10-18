@@ -1,13 +1,20 @@
 # frozen_string_literal: true
 
+require 'avromatic/model/types/abstract_type'
+
 module Avromatic
   module Model
     module Types
       class StringType
         VALUE_CLASSES = [::String].freeze
+        INPUT_CLASSES = [::String, ::Symbol].freeze
 
         def value_classes
           VALUE_CLASSES
+        end
+
+        def input_classes
+          INPUT_CLASSES
         end
 
         def name

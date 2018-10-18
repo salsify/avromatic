@@ -44,8 +44,19 @@ module Avromatic
 
         def coerce(input)
           type.coerce(input)
+        rescue Avromatic::Model::UnknownAttributeError => e
+          raise Avromatic::Model::CoercionError.new("Value for #{owner.name}##{name} could not be coerced to a #{type.name} " \
+            "because the following unexpected attributes were provided: #{e.attributes.join(', ')}. " \
+            "Provided argument: #{input.inspect}")
         rescue StandardError
-          raise Avromatic::Model::CoercionError.new("Could not coerce '#{input.inspect}' to #{type.name} when setting #{owner.name}##{name}")
+          if type.input_classes && type.input_classes.none? { |input_class| input.is_a?(input_class) }
+            raise Avromatic::Model::CoercionError.new("Value for #{owner.name}##{name} could not be coerced to a #{type.name} " \
+              "because a #{input.class.name} was provided but expected one of #{type.input_classes.map(&:name).to_sentence(two_words_connector: ' or ', last_word_connector: ', or ')}. " \
+              "Provided argument: #{input.inspect}")
+          else
+            raise Avromatic::Model::CoercionError.new("Value for #{owner.name}##{name} could not be coerced to a #{type.name}. " \
+              "Provided argument: #{input.inspect}")
+          end
         end
       end
 
@@ -73,7 +84,10 @@ module Avromatic
         end
 
         unless Avromatic.allow_unknown_attributes || valid_keys.size == data.size
-          raise ArgumentError.new("Unexpected attributes for #{self.class.name}: #{(data.keys - valid_keys).map(&:to_s).join(', ')}. Complete arguments: #{data}")
+          unknown_attributes = data.keys.map(&:to_s) - valid_keys.map(&:to_s)
+          message = "Unexpected arguments for #{self.class.name}#initialize: #{unknown_attributes.join(', ')}. " \
+            "Provided arguments: #{data.inspect}"
+          raise Avromatic::Model::UnknownAttributeError.new(message, unknown_attributes)
         end
       end
 

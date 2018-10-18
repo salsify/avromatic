@@ -1,14 +1,17 @@
 # frozen_string_literal: true
 
+require 'avromatic/model/types/abstract_type'
+
 module Avromatic
   module Model
     module Types
-      class RecordType
-        attr_reader :record_class, :value_classes
+      class RecordType < AbstractType
+        attr_reader :record_class, :value_classes, :input_classes
 
         def initialize(record_class:)
           @record_class = record_class
           @value_classes = [record_class].freeze
+          @input_classes = [record_class, Hash].freeze
         end
 
         def name
