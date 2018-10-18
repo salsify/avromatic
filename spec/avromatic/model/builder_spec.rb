@@ -832,6 +832,15 @@ describe Avromatic::Model::Builder do
         expect(test_class.new(value1).message.foo_message).to eq('foo')
         expect(test_class.new(value2).message.bar_message).to eq('bar')
       end
+
+      it "does not coerce hashes with keys that don't match a union member's type" do
+        message_input = { foo_message: 'foo', bar_message: 'bar' }
+        expect do
+          test_class.new(header: 'B', message: message_input)
+        end.to raise_error(Avromatic::Model::CoercionError,
+                           'Value for RealUnion#message could not be coerced to a union[Foo, Bar] ' \
+                              "because no union member type has all of the provided attributes: #{message_input.inspect}")
+      end
     end
 
     context "union of records with overlapping fields" do
