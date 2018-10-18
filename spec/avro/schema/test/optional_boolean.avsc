@@ -1,0 +1,15 @@
+{
+  "type": "record",
+  "name": "optional_boolean",
+  "namespace": "test",
+  "fields": [
+    {
+      "name": "b",
+      "type": [
+        "null",
+        "boolean"
+      ],
+      "default": null
+    }
+  ]
+}
