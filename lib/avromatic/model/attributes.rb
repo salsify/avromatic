@@ -51,7 +51,7 @@ module Avromatic
         rescue StandardError
           if type.input_classes && type.input_classes.none? { |input_class| input.is_a?(input_class) }
             raise Avromatic::Model::CoercionError.new("Value for #{owner.name}##{name} could not be coerced to a #{type.name} " \
-              "because a #{input.class.name} was provided but expected one of #{type.input_classes.map(&:name).to_sentence(two_words_connector: ' or ', last_word_connector: ', or ')}. " \
+              "because a #{input.class.name} was provided but expected a #{type.input_classes.map(&:name).to_sentence(two_words_connector: ' or ', last_word_connector: ', or ')}. " \
               "Provided argument: #{input.inspect}")
           else
             raise Avromatic::Model::CoercionError.new("Value for #{owner.name}##{name} could not be coerced to a #{type.name}. " \

@@ -675,7 +675,7 @@ describe Avromatic::Model::Builder do
           test_class.new(sub: sub_input)
         end.to raise_error(Avromatic::Model::CoercionError,
                            'Value for NestedRecord#sub could not be coerced to a NestedRecordSubRecord ' \
-                           'because a String was provided but expected one of NestedRecordSubRecord or Hash. ' \
+                           'because a String was provided but expected a NestedRecordSubRecord or Hash. ' \
                            "Provided argument: #{sub_input.inspect}")
       end
 
