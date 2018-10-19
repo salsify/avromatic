@@ -148,6 +148,7 @@ module Avromatic
             attribute_definitions[symbolized_field_name] = attribute_definition
 
             define_method(field.name) { _attributes[symbolized_field_name] }
+            define_method("#{field.name}?") { !!_attributes[symbolized_field_name] } if boolean?(field)
 
             define_method("#{field.name}=") do |value|
               _attributes[symbolized_field_name] = attribute_definitions[symbolized_field_name].coerce(value)
@@ -159,6 +160,11 @@ module Avromatic
               define_method(:dup) { self }
             end
           end
+        end
+
+        def boolean?(field)
+          field.type.type_sym == :boolean ||
+            (FieldHelper.optional?(field) && field.type.schemas.last.type_sym == :boolean)
         end
 
         def create_type(field)

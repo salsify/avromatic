@@ -77,6 +77,30 @@ describe Avromatic::Model::Builder do
       let(:schema_name) { 'test.primitive_types' }
 
       it_behaves_like "a generated model"
+
+      it "defines a boolean accessor that returns false for a false value" do
+        instance = test_class.new(tf: false)
+        expect(instance.tf?).to eq(false)
+      end
+
+      it "defines a boolean accessor that returns true for a true value" do
+        instance = test_class.new(tf: true)
+        expect(instance.tf?).to eq(true)
+      end
+
+      it "defines a boolean accessor that returns false for a null value" do
+        instance = test_class.new(tf: nil)
+        expect(instance.tf?).to eq(false)
+      end
+
+      context "with an optional boolean" do
+        let(:schema_name) { 'test.optional_boolean' }
+
+        it "defines a boolean accessor" do
+          instance = test_class.new(b: true)
+          expect(instance.b?).to eq(true)
+        end
+      end
     end
 
     context "with a schema" do
