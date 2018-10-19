@@ -1,10 +1,13 @@
 # frozen_string_literal: true
 
+require 'avromatic/model/types/abstract_type'
+
 module Avromatic
   module Model
     module Types
-      class ArrayType
+      class ArrayType < AbstractType
         VALUE_CLASSES = [::Array].freeze
+
         attr_reader :value_type
 
         def initialize(value_type:)

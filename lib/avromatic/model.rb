@@ -5,6 +5,7 @@ require 'avromatic/model/coercion_error'
 require 'avromatic/model/message_decoder'
 require 'avromatic/model/custom_type_registry'
 require 'avromatic/model/validation_error'
+require 'avromatic/model/unknown_attribute_error'
 
 module Avromatic
   module Model

@@ -1,13 +1,20 @@
 # frozen_string_literal: true
 
+require 'active_support/time_with_zone'
+
 module Avromatic
   module Model
     module Types
-      class AbstractTimestampType
+      class AbstractTimestampType < AbstractType
         VALUE_CLASSES = [::Time].freeze
+        INPUT_CLASSES = [::Time, ::DateTime, ::ActiveSupport::TimeWithZone].freeze
 
         def value_classes
           VALUE_CLASSES
+        end
+
+        def input_classes
+          INPUT_CLASSES
         end
 
         def coerce(input)

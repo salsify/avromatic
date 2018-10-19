@@ -1,17 +1,19 @@
 # frozen_string_literal: true
 
 require 'avromatic/io'
+require 'avromatic/model/types/abstract_type'
 
 module Avromatic
   module Model
     module Types
-      class UnionType
+      class UnionType < AbstractType
         MEMBER_INDEX = ::Avromatic::IO::DatumReader::UNION_MEMBER_INDEX
-        attr_reader :member_types, :value_classes
+        attr_reader :member_types, :value_classes, :input_classes
 
         def initialize(member_types:)
           @member_types = member_types
           @value_classes = member_types.flat_map(&:value_classes)
+          @input_classes = member_types.flat_map(&:input_classes).uniq
         end
 
         def name
