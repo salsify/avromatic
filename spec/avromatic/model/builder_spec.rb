@@ -387,7 +387,10 @@ describe Avromatic::Model::Builder do
       input = { unknown: true }
       expect do
         test_class.new(input)
-      end.to raise_error(Avromatic::Model::UnknownAttributeError, "Unexpected arguments for PrimitiveType#initialize: unknown. Provided arguments: #{input.inspect}")
+      end.to raise_error(Avromatic::Model::UnknownAttributeError,
+                         'Unexpected arguments for PrimitiveType#initialize: unknown. ' \
+                          "Only the following arguments are allowed: #{test_class.attribute_definitions.keys.map(&:to_s).sort.join(', ')}. " \
+                          "Provided arguments: #{input.inspect}")
     end
 
     it "does not raise an Avromatic::Model::UnknownAttributeError when passed an unknown attribute when allow_unknown_attributes is true" do
@@ -675,8 +678,8 @@ describe Avromatic::Model::Builder do
           test_class.new(sub: sub_input)
         end.to raise_error(Avromatic::Model::CoercionError,
                            'Value for NestedRecord#sub could not be coerced to a NestedRecordSubRecord ' \
-                           'because a String was provided but expected a NestedRecordSubRecord or Hash. ' \
-                           "Provided argument: #{sub_input.inspect}")
+                             'because a String was provided but expected a NestedRecordSubRecord or Hash. ' \
+                             "Provided argument: #{sub_input.inspect}")
       end
 
       it "does not coerce hashes with additional attributes" do
@@ -685,7 +688,8 @@ describe Avromatic::Model::Builder do
           test_class.new(sub: sub_input)
         end.to raise_error(Avromatic::Model::CoercionError,
                            'Value for NestedRecord#sub could not be coerced to a NestedRecordSubRecord because the ' \
-                           "following unexpected attributes were provided: b. Provided argument: #{sub_input.inspect}")
+                             'following unexpected attributes were provided: b. Only the following attributes are allowed: i, str. ' \
+                             "Provided argument: #{sub_input.inspect}")
       end
     end
 

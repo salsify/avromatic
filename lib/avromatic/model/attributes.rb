@@ -46,7 +46,8 @@ module Avromatic
           type.coerce(input)
         rescue Avromatic::Model::UnknownAttributeError => e
           raise Avromatic::Model::CoercionError.new("Value for #{owner.name}##{name} could not be coerced to a #{type.name} " \
-            "because the following unexpected attributes were provided: #{e.attributes.join(', ')}. " \
+            "because the following unexpected attributes were provided: #{e.unknown_attributes.join(', ')}. " \
+            "Only the following attributes are allowed: #{e.allowed_attributes.join(', ')}. " \
             "Provided argument: #{input.inspect}")
         rescue StandardError
           if type.input_classes && type.input_classes.none? { |input_class| input.is_a?(input_class) }
@@ -87,10 +88,12 @@ module Avromatic
         end
 
         unless Avromatic.allow_unknown_attributes || valid_keys.size == data.size
-          unknown_attributes = data.keys.map(&:to_s) - valid_keys.map(&:to_s)
+          unknown_attributes = (data.keys.map(&:to_s) - valid_keys.map(&:to_s)).sort
+          allowed_attributes = attribute_definitions.keys.map(&:to_s).sort
           message = "Unexpected arguments for #{self.class.name}#initialize: #{unknown_attributes.join(', ')}. " \
-            "Provided arguments: #{data.inspect}"
-          raise Avromatic::Model::UnknownAttributeError.new(message, unknown_attributes)
+            "Only the following arguments are allowed: #{allowed_attributes.join(', ')}. Provided arguments: #{data.inspect}"
+          raise Avromatic::Model::UnknownAttributeError.new(message, unknown_attributes: unknown_attributes,
+                                                            allowed_attributes: allowed_attributes)
         end
       end
 

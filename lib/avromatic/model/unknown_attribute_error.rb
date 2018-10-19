@@ -3,11 +3,12 @@
 module Avromatic
   module Model
     class UnknownAttributeError < StandardError
-      attr_reader :attributes
+      attr_reader :unknown_attributes, :allowed_attributes
 
-      def initialize(message, attributes)
+      def initialize(message, unknown_attributes:, allowed_attributes:)
         super(message)
-        @attributes = attributes
+        @unknown_attributes = unknown_attributes
+        @allowed_attributes = allowed_attributes
       end
     end
   end
