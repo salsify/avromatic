@@ -66,6 +66,38 @@ describe Avromatic::Model::Builder do
       end
     end
 
+    context "when there are incompatible embedded schemas" do
+      let(:outer_schema) do
+        Avro::Builder.build_schema do
+          record :inner_record do
+            required :a, :string
+          end
+
+          record :outer_record do
+            required :inner, :inner_record
+          end
+        end
+      end
+
+      let(:incompatible_inner_schema) do
+        Avro::Builder.build_schema do
+          record :inner_record do
+            required :a, :int
+          end
+        end
+      end
+
+      before do
+        described_class.model(schema: incompatible_inner_schema)
+      end
+
+      it "raises an error during model definition" do
+        expect do
+          described_class.model(schema: outer_schema)
+        end.to raise_error('The InnerRecord model is already registered with an incompatible version of the inner_record schema')
+      end
+    end
+
     shared_examples_for "a generated model" do
       it "defines a model with the expected attributes" do
         expect(attribute_names)

@@ -95,9 +95,21 @@ module Avromatic
           fullname = nested_models.remove_prefix(schema.fullname)
 
           if nested_models.registered?(fullname)
-            nested_models[fullname]
+            nested_model = nested_models[fullname]
+            unless schema_fingerprint(schema) == schema_fingerprint(nested_model.avro_schema)
+              raise "The #{nested_model.name} model is already registered with an incompatible version of the #{schema.fullname} schema"
+            end
+            nested_model
           else
             Avromatic::Model.model(schema: schema, nested_models: nested_models)
+          end
+        end
+
+        def schema_fingerprint(schema)
+          if schema.respond_to?(:sha256_resolution_fingerprint)
+            schema.sha256_resolution_fingerprint
+          else
+            schema.sha256_fingerprint
           end
         end
       end
