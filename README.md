@@ -123,6 +123,26 @@ The Avro schema can be specified by name and loaded using the schema store:
 class MyModel
   include Avromatic::Model.build(schema_name :my_model)
 end
+
+# Construct instances by passing in a hash of attributes
+instance = MyModel.new(id: 123, name: 'Tesla Model 3', enabled: true)
+
+# Access attribute values with readers
+instance.name # => "Tesla Model 3"
+
+# Models are immutable by default
+instance.name = 'Tesla Model X' # => NoMethodError (private method `name=' called for #<MyModel:0x00007ff711e64e60>) 
+
+# Booleans can also be accessed by '?' readers that coerce nil to false
+instance.enabled? # => true
+
+# Models implement ===, eql? and hash
+instance == MyModel.new(id: 123, name: 'Tesla Model 3', enabled: true) # => true
+instance.eql?(MyModel.new(id: 123, name: 'Tesla Model 3', enabled: true)) # => true
+instance.hash # => -1279155042741869898
+
+# Retrieve a hash of the model's attributes via to_h, to_hash or attributes
+instance .to_h # => {:id=>123, :name=>"Tesla Model 3", :enabled=>true}
 ```
 
 Or an `Avro::Schema` object can be specified directly:
