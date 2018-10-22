@@ -1,6 +1,6 @@
 # avromatic changelog
 
-## v2.0.0 (unreleased)
+## v2.0.0
 - Remove [virtus](https://github.com/solnic/virtus) dependency resulting in a 3x performance improvement in model instantation and 1.4x - 2.0x performance improvement in Avro serialization and Avromatic code simplification.
 - Raise `Avromatic::Model::CoercionError` when attribute values can't be coerced to the target type in model constructors and attribute setters. Previously coercion errors weren't detected until Avro serialization or an explicit call to `valid?`.
 - Prevent model instances from being constructed with unknown attributes. Previously unknown attributes were ignored. 

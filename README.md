@@ -8,8 +8,8 @@
 `Avromatic` generates Ruby models from [Avro](http://avro.apache.org/) schemas
 and provides utilities to encode and decode them.
 
-**This README reflects unreleased changes in Avromatic 2.0. Please see the 
-[1-0-stable](https://github.com/salsify/avromatic/blob/1-0-stable/README.md) branch for the latest stable release.**
+**This README reflects Avromatic 2.0. Please see the 
+[1-0-stable](https://github.com/salsify/avromatic/blob/1-0-stable/README.md) branch for Avromatic 1.0.**
 
 ## Installation
 
