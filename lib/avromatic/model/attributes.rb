@@ -56,7 +56,7 @@ module Avromatic
               "Provided argument: #{input.inspect}")
           elsif input.is_a?(Hash) && type.is_a?(Avromatic::Model::Types::UnionType)
             raise Avromatic::Model::CoercionError.new("Value for #{owner.name}##{name} could not be coerced to a #{type.name} " \
-              "because no union member type has all of the provided attributes: #{input.inspect}")
+              "because no union member type matches the provided attributes: #{input.inspect}")
           else
             raise Avromatic::Model::CoercionError.new("Value for #{owner.name}##{name} could not be coerced to a #{type.name}. " \
               "Provided argument: #{input.inspect}")
