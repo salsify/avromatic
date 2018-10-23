@@ -1068,7 +1068,10 @@ describe Avromatic::Model::Builder do
             puts i + 1 if (i + 1) % 1000 == 0
             now = Time.now
             instance = test_class.new(u: now)
-            expect(instance.u).to eq(Time.at(now.to_i, now.usec / 1000 * 1000))
+            expected = Time.at(now.to_i, now.usec / 1000 * 1000)
+            unless instance.u == expected
+              raise "Expected #{expected.class.name}(#{expected.inspect}, #{expected.to_f}) but got #{instance.u.class.name}(#{instance.u.inspect}, #{instance.u.to_f})"
+            end
           end
         end
       end
