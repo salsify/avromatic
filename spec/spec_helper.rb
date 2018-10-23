@@ -17,6 +17,8 @@ Dir["#{File.dirname(__FILE__)}/support/**/*.rb"].each { |f| require f }
 RSpec.configure do |config|
   config.extend LogicalTypesHelper
 
+  config.filter_run check_me_out: true
+
   config.before do
     Avromatic.logger = Logger.new('log/test.log')
     Avromatic.registry_url = 'http://registry.example.com'
