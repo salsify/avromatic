@@ -1047,10 +1047,13 @@ describe Avromatic::Model::Builder do
           end
         end
 
-        it "coerces a time to a union member" do
-          now = Time.now
-          instance = test_class.new(u: now)
-          expect(instance.u).to eq(Time.at(now.to_i, now.usec))
+        it "coerces a time to a union member", check_me_out: true do
+          10_000_000.times do |i|
+            puts i + 1 if (i + 1) % 1000 == 0
+            now = Time.now
+            instance = test_class.new(u: now)
+            expect(instance.u).to eq(Time.at(now.to_i, now.usec))
+          end
         end
       end
 
@@ -1064,8 +1067,9 @@ describe Avromatic::Model::Builder do
         end
 
         it "coerces a time to a union member", check_me_out: true do
-          1_000_000.times do |i|
+          10_000_000.times do |i|
             puts i + 1 if (i + 1) % 1000 == 0
+            # now = Time.at(1540332724.4770002)
             now = Time.now
             instance = test_class.new(u: now)
             expected = Time.at(now.to_i, now.usec / 1000 * 1000)
