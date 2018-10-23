@@ -7,9 +7,6 @@ describe Avromatic::Model::Builder do
   let(:test_class) do
     described_class.model(schema_name: schema_name)
   end
-  let(:mutable_test_class) do
-    described_class.model(schema_name: schema_name, mutable: true)
-  end
   let(:values) { { s: 'foo', tf: true, i: 42 } }
 
   let(:attribute_names) do
@@ -1158,12 +1155,26 @@ describe Avromatic::Model::Builder do
 
   context "mutable models" do
     let(:schema_name) { 'test.primitive_types' }
+    let(:mutable_test_class) do
+      described_class.model(schema_name: schema_name, mutable: true) do
+        attr_reader :subclass_called
+
+        def s=(*)
+          @subclass_called = true
+          super
+        end
+      end
+    end
     let(:mutable_model) { mutable_test_class.new(s: 'old value') }
 
     it "allows changes to models" do
-      expect do
-        mutable_model.s = 'new value'
-      end.not_to raise_error
+      mutable_model.s = 'new value'
+      expect(mutable_model.s).to eq('new value')
+    end
+
+    it "allows setters to be overridden" do
+      mutable_model.s = 'new value'
+      expect(mutable_model.subclass_called).to eq(true)
     end
   end
 

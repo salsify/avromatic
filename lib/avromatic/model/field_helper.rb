@@ -15,6 +15,11 @@ module Avromatic
       def required?(field)
         !optional?(field)
       end
+
+      def boolean?(field)
+        field.type.type_sym == :boolean ||
+          (FieldHelper.optional?(field) && field.type.schemas.last.type_sym == :boolean)
+      end
     end
   end
 end

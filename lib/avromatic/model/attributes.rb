@@ -111,7 +111,7 @@ module Avromatic
       end
 
       module ClassMethods
-        def add_avro_fields
+        def add_avro_fields(generated_methods_module)
           # models are registered in Avromatic.nested_models at this point to
           # ensure that they are available as fields for recursive models.
           register!
@@ -119,13 +119,13 @@ module Avromatic
           if key_avro_schema
             check_for_field_conflicts!
             begin
-              define_avro_attributes(key_avro_schema,
+              define_avro_attributes(key_avro_schema, generated_methods_module,
                                      allow_optional: config.allow_optional_key_fields)
             rescue OptionalFieldError => ex
               raise "Optional field '#{ex.field.name}' not allowed in key schema."
             end
           end
-          define_avro_attributes(avro_schema)
+          define_avro_attributes(avro_schema, generated_methods_module)
         end
 
         private
@@ -151,7 +151,7 @@ module Avromatic
             value_avro_fields_by_name[name].to_avro
         end
 
-        def define_avro_attributes(schema, allow_optional: true)
+        def define_avro_attributes(schema, generated_methods_module, allow_optional: true)
           if schema.type_sym != :record
             raise "Unsupported schema type '#{schema.type_sym}', only 'record' schemas are supported."
           end
@@ -163,32 +163,24 @@ module Avromatic
             attribute_definition = AttributeDefinition.new(
               owner: self,
               field: field,
-              type: create_type(field)
+              type: Avromatic::Model::Types::TypeFactory.create(schema: field.type, nested_models: nested_models)
             )
             attribute_definitions[symbolized_field_name] = attribute_definition
 
-            define_method(field.name) { _attributes[symbolized_field_name] }
-            define_method("#{field.name}?") { !!_attributes[symbolized_field_name] } if boolean?(field)
+            # Add all generated methods to a module so they can be overridden
+            generated_methods_module.send(:define_method, field.name) { _attributes[symbolized_field_name] }
+            generated_methods_module.send(:define_method, "#{field.name}?") { !!_attributes[symbolized_field_name] } if FieldHelper.boolean?(field)
 
-            define_method("#{field.name}=") do |value|
+            generated_methods_module.send(:define_method, "#{field.name}=") do |value|
               _attributes[symbolized_field_name] = attribute_definitions[symbolized_field_name].coerce(value)
             end
 
             unless config.mutable # rubocop:disable Style/Next
-              private("#{field.name}=")
-              define_method(:clone) { self }
-              define_method(:dup) { self }
+              generated_methods_module.send(:private, "#{field.name}=")
+              generated_methods_module.send(:define_method, :clone) { self }
+              generated_methods_module.send(:define_method, :dup) { self }
             end
           end
-        end
-
-        def boolean?(field)
-          field.type.type_sym == :boolean ||
-            (FieldHelper.optional?(field) && field.type.schemas.last.type_sym == :boolean)
-        end
-
-        def create_type(field)
-          Avromatic::Model::Types::TypeFactory.create(schema: field.type, nested_models: nested_models)
         end
       end
 

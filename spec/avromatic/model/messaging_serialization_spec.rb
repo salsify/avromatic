@@ -111,14 +111,14 @@ describe Avromatic::Model::MessagingSerialization do
           end
 
           record :with_embedded do
-            required :hash, :map, values: :submodel
+            required :map, :map, values: :submodel
           end
         end
         Avromatic::Model.model(schema: schema)
       end
       let(:values) do
         {
-          hash: {
+          map: {
             foo: { length: 3, str: 'bar' },
             baz: { length: 6, str: 'foobar' }
           }
@@ -132,7 +132,7 @@ describe Avromatic::Model::MessagingSerialization do
       end
 
       it "encodes the value for the model" do
-        first_value = instance.hash['foo']
+        first_value = instance.map['foo']
         expect(first_value.length).to eq(3)
         expect(first_value.str).to eq('bar')
         message_value = instance.avro_message_value

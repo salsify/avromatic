@@ -22,7 +22,7 @@ module Avromatic
       attr_reader :mod, :config
 
       # For options see Avromatic::Model.build
-      def self.model(**options)
+      def self.model(**options, &block)
         Class.new do
           include Avromatic::Model::Builder.new(**options).mod
 
@@ -30,6 +30,8 @@ module Avromatic
           def self.name
             super || (@name ||= config.avro_schema.name.classify)
           end
+
+          class_eval(&block) if block
         end
       end
 
@@ -55,17 +57,13 @@ module Avromatic
       private
 
       def define_included_method
-        with_builder do |builder|
-          mod.define_singleton_method(:included) do |model_class|
-            model_class.include(*builder.inclusions)
-            model_class.config = builder.config
-            model_class.add_avro_fields
-          end
+        local_mod = mod
+        local_builder = self
+        mod.define_singleton_method(:included) do |model_class|
+          model_class.include(*local_builder.inclusions)
+          model_class.config = local_builder.config
+          model_class.add_avro_fields(local_mod)
         end
-      end
-
-      def with_builder
-        yield(self)
       end
     end
   end
