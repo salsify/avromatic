@@ -1044,13 +1044,10 @@ describe Avromatic::Model::Builder do
           end
         end
 
-        it "coerces a time to a union member", check_me_out: true do
-          10_000_000.times do |i|
-            puts i + 1 if (i + 1) % 1000 == 0
-            now = Time.now
-            instance = test_class.new(u: now)
-            expect(instance.u).to eq(Time.at(now.to_i, now.usec))
-          end
+        it "coerces a time to a union member" do
+          time = Time.at(1540332724, 123456.789)
+          instance = test_class.new(u: time)
+          expect(instance.u).to eq(Time.at(1540332724, 123456))
         end
       end
 
@@ -1063,17 +1060,10 @@ describe Avromatic::Model::Builder do
           end
         end
 
-        it "coerces a time to a union member", check_me_out: true do
-          10_000_000.times do |i|
-            puts i + 1 if (i + 1) % 1000 == 0
-            # now = Time.at(1540332724.4770002)
-            now = Time.now
-            instance = test_class.new(u: now)
-            expected = Time.at(now.to_i, now.usec / 1000 * 1000)
-            unless instance.u == expected
-              raise "Expected #{expected.class.name}(#{expected.inspect}, #{expected.to_f}) but got #{instance.u.class.name}(#{instance.u.inspect}, #{instance.u.to_f})"
-            end
-          end
+        it "coerces a time to a union member" do
+          time = Time.at(1540332724, 123456.789)
+          instance = test_class.new(u: time)
+          expect(instance.u).to eq(Time.at(1540332724, 123_000))
         end
       end
 
