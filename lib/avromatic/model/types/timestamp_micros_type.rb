@@ -16,7 +16,7 @@ module Avromatic
         private
 
         def truncated?(value)
-          value.nsec % 1000 == 0
+          value.nsec % 1_000 == 0
         end
 
         def coerce_time(input)

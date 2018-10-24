@@ -2,6 +2,8 @@
 
 ## v2.0.1
 - Allow generated model attribute accessors to be overridden. This was a regression in Avromatic 2.0.0.
+- Ensure that timestamp-millis are coerced when the number of microseconds is divisible by 1,000 but the
+  number of nanoseconds is not divisible by 1,000,000.
 
 ## v2.0.0
 - Remove [virtus](https://github.com/solnic/virtus) dependency resulting in a 3x performance improvement in model instantation and 1.4x - 2.0x performance improvement in Avro serialization and Avromatic code simplification.

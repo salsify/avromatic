@@ -311,23 +311,28 @@ describe Avromatic::Model::Builder do
       it_behaves_like "a generated model"
 
       context "timestamp-millis" do
-        it "coerces a Time" do
-          time = Time.now
+        it "coerces a Time to a Time with millisecond precision" do
+          time = Time.at(1540332724, 123456.789)
           instance = test_class.new(ts_msec: time)
-          expect(instance.ts_msec).to eq(::Time.at(time.to_i, time.usec / 1000 * 1000))
+          expect(instance.ts_msec).to eq(::Time.at(1540332724, 123_000))
         end
 
-        it "coerces a DateTime" do
-          time = DateTime.now # rubocop:disable Style/DateTime
+        it "coerces a Time to a Time with millisecond precision even if the number of microseconds is divisible by 1000" do
+          time = Time.at(1540332724, 123_000.789)
           instance = test_class.new(ts_msec: time)
-          expect(instance.ts_msec).to eq(::Time.at(time.to_i, time.usec / 1000 * 1000))
+          expect(instance.ts_msec).to eq(::Time.at(1540332724, 123_000))
         end
 
-        it "coerces an ActiveSupport::TimeWithZone" do
-          Time.zone = 'GMT'
-          time = Time.zone.now
+        it "coerces a DateTime to a Time with millisecond precision" do
+          time = Time.at(1540332724, 123456.789).to_datetime
           instance = test_class.new(ts_msec: time)
-          expect(instance.ts_msec).to eq(::Time.at(time.to_i, time.usec / 1000 * 1000))
+          expect(instance.ts_msec).to eq(::Time.at(1540332724, 123_000))
+        end
+
+        it "coerces an ActiveSupport::TimeWithZone to a Time with millisecond precision" do
+          time = Time.zone.at(1540332724.123456789)
+          instance = test_class.new(ts_msec: time)
+          expect(instance.ts_msec).to eq(::Time.at(1540332724, 123_000))
         end
 
         it "raises an Avromatic::Model::CoercionError when the value is a Date" do
@@ -336,23 +341,22 @@ describe Avromatic::Model::Builder do
       end
 
       context "timestamp-micros" do
-        it "coerces a Time" do
-          time = Time.now
+        it "coerces a Time to a Time with microsecond precision" do
+          time = Time.at(1540332724, 123456.789)
           instance = test_class.new(ts_usec: time)
-          expect(instance.ts_usec).to eq(::Time.at(time.to_i, time.usec))
+          expect(instance.ts_usec).to eq(::Time.at(1540332724, 123456))
         end
 
-        it "coerces a DateTime" do
-          time = DateTime.now # rubocop:disable Style/DateTime
+        it "coerces a DateTime to a Time with microsecond precision" do
+          time = Time.at(1540332724, 123456.789).to_datetime
           instance = test_class.new(ts_usec: time)
-          expect(instance.ts_usec).to eq(::Time.at(time.to_i, time.usec))
+          expect(instance.ts_usec).to eq(::Time.at(1540332724, 123456))
         end
 
-        it "coerces an ActiveSupport::TimeWithZone" do
-          Time.zone = 'GMT'
-          time = Time.zone.now
+        it "coerces an ActiveSupport::TimeWithZone to a Time with microsecond precision" do
+          time = Time.zone.at(1540332724.123456789)
           instance = test_class.new(ts_usec: time)
-          expect(instance.ts_usec).to eq(::Time.at(time.to_i, time.usec))
+          expect(instance.ts_usec).to eq(::Time.at(1540332724, 123456))
         end
 
         it "raises an Avromatic::Model::CoercionError when the value is a Date" do
@@ -1045,9 +1049,9 @@ describe Avromatic::Model::Builder do
         end
 
         it "coerces a time to a union member" do
-          now = Time.now
-          instance = test_class.new(u: now)
-          expect(instance.u).to eq(Time.at(now.to_i, now.usec))
+          time = Time.at(1540332724)
+          instance = test_class.new(u: time)
+          expect(instance.u).to eq(Time.at(1540332724))
         end
       end
 
@@ -1061,9 +1065,9 @@ describe Avromatic::Model::Builder do
         end
 
         it "coerces a time to a union member" do
-          now = Time.now
-          instance = test_class.new(u: now)
-          expect(instance.u).to eq(Time.at(now.to_i, now.usec / 1000 * 1000))
+          time = Time.at(1540332724)
+          instance = test_class.new(u: time)
+          expect(instance.u).to eq(Time.at(1540332724))
         end
       end
 
