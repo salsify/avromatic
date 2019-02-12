@@ -21,7 +21,7 @@ module Avromatic
       end
 
       class AttributeDefinition
-        attr_reader :name, :setter_name, :type, :field, :default, :owner
+        attr_reader :name, :name_string, :setter_name, :type, :field, :default, :owner
         delegate :serialize, to: :type
 
         def initialize(owner:, field:, type:)
@@ -29,6 +29,7 @@ module Avromatic
           @field = field
           @type = type
           @name = field.name.to_sym
+          @name_string = field.name.to_s.dup.freeze
           @setter_name = "#{field.name}=".to_sym
           @default = if field.default == :no_default
                        nil
@@ -79,9 +80,9 @@ module Avromatic
             valid_keys << attribute_name
             value = data.fetch(attribute_name)
             send(attribute_definition.setter_name, value)
-          elsif data.include?(attribute_name.to_s)
+          elsif data.include?(attribute_definition.name_string)
             valid_keys << attribute_name
-            value = data[attribute_name.to_s]
+            value = data[attribute_definition.name_string]
             send(attribute_definition.setter_name, value)
           elsif !attributes.include?(attribute_name)
             send(attribute_definition.setter_name, attribute_definition.default)
