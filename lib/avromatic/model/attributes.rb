@@ -29,7 +29,7 @@ module Avromatic
           @field = field
           @type = type
           @name = field.name.to_sym
-          @name_string = field.name.to_s.freeze
+          @name_string = field.name.to_s.dup.freeze
           @setter_name = "#{field.name}=".to_sym
           @default = if field.default == :no_default
                        nil
