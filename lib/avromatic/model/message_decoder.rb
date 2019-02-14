@@ -9,8 +9,12 @@ module Avromatic
       MAGIC_BYTE = [0].pack('C').freeze
 
       class UnexpectedKeyError < StandardError
-        def initialize(schema_key)
-          super("Unexpected schemas #{schema_key}")
+        attr_reader :key_schema_name, :value_schema_name
+
+        def initialize(key_schema_name, value_schema_name)
+          super("Unexpected schemas #{[key_schema_name, value_schema_name]}")
+          @key_schema_name = key_schema_name
+          @value_schema_name = value_schema_name
         end
       end
 
@@ -84,7 +88,7 @@ module Avromatic
       def extract_decode_args(*args)
         message_key, message_value = extract_key_and_value(*args)
         model_key = model_key_for_message(message_key, message_value)
-        raise UnexpectedKeyError.new(model_key) unless model_map.key?(model_key)
+        raise UnexpectedKeyError.new(*model_key) unless model_map.key?(model_key)
         [model_map[model_key], message_key, message_value]
       end
 

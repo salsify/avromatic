@@ -52,17 +52,38 @@ describe Avromatic::Model::MessageDecoder do
 
     context "when the schema name is not known by the decoder" do
       let(:unknown_model) do
-        Avromatic::Model.model(schema_name: 'test.defaults')
+        Avromatic::Model.model(
+          value_schema_name: 'test.defaults',
+          key_schema_name: 'test.encode_key'
+        )
+      end
+      let(:key_value) do
+        unknown_model.new(id: 0).avro_message_key
       end
       let(:message_value) do
-        unknown_model.new.avro_message_value
+        unknown_model.new(id: 0).avro_message_value
       end
 
-      it "raises an error" do
+      it "raises an UnexpectedKeyError when the unknown model only has a value schema" do
         expect do
           instance.send(method_name, message_value)
-        end.to raise_error(described_class::UnexpectedKeyError,
-                           'Unexpected schemas [nil, "test.defaults"]')
+        end.to raise_error do |error|
+          expect(error).to be_a(described_class::UnexpectedKeyError)
+          expect(error.message).to eq('Unexpected schemas [nil, "test.defaults"]')
+          expect(error.key_schema_name).to be_nil
+          expect(error.value_schema_name).to eq('test.defaults')
+        end
+      end
+
+      it "raises an UnexpectedKeyError when the unknown model has a key schema and a value schema" do
+        expect do
+          instance.send(method_name, key_value, message_value)
+        end.to raise_error do |error|
+          expect(error).to be_a(described_class::UnexpectedKeyError)
+          expect(error.message).to eq('Unexpected schemas ["test.encode_key", "test.defaults"]')
+          expect(error.key_schema_name).to eq('test.encode_key')
+          expect(error.value_schema_name).to eq('test.defaults')
+        end
       end
     end
   end
