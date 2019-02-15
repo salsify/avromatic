@@ -1,5 +1,8 @@
 # avromatic changelog
 
+## v2.1.0
+- Add `key_schema_name` and `value_schema_name` attributes to `UnexpectedKeyError`.
+
 ## v2.0.2
 - Optimize model initialization and decoding
 
