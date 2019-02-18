@@ -1,0 +1,15 @@
+[package]
+name = "avromatic"
+version = "0.1.0"
+authors = ["Kyle Phelps <kphelps@salsify.com>"]
+edition = "2018"
+
+[dependencies]
+failure = "*"
+lazy_static = "*"
+rutie = "0.5.3"
+avro-rs = { path = "../../dev/avro-rs" }
+
+[lib]
+name = "avromatic"
+crate-type = ["dylib"]

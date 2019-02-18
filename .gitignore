@@ -9,3 +9,6 @@
 /tmp/
 /gemfiles/*.lock
 /log/*
+
+/target
+**/*.rs.bk

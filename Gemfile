@@ -1,6 +1,10 @@
 # frozen_string_literal: true
 
-source 'https://rubygems.org'
+source 'https://gems.salsify.com'
 
 # Specify your gem's dependencies in avromatic.gemspec
 gemspec
+
+gem 'benchmark-ips'
+gem 'benchmark-memory'
+gem 'salsify_avro'

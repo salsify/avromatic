@@ -9,8 +9,11 @@ require 'avromatic/model_registry'
 require 'avromatic/messaging'
 require 'active_support/core_ext/string/inflections'
 require 'avromatic/patches'
+require 'rutie'
 
 module Avromatic
+  Rutie.new(:avromatic).init('Init_avromatic', __dir__)
+
   class << self
     attr_accessor :schema_registry, :registry_url, :schema_store, :logger,
                   :messaging, :custom_type_registry, :nested_models,
