@@ -13,8 +13,9 @@ pub fn to_avro<'a, I>(
 {
     let out = match (value, schema.kind()) {
         (AvromaticValue::Null, SchemaKind::Null) => Value::Null,
-        (AvromaticValue::String(rstring), SchemaKind::Fixed) =>
-            Value::Fixed(schema.fixed_size(), rstring.to_vec_u8_unchecked()),
+        ((AvromaticValue::String(rstring), SchemaKind::Fixed)) => {
+            Value::Fixed(schema.fixed_size(), rstring.to_vec_u8_unchecked())
+        },
         (AvromaticValue::String(rstring), SchemaKind::String) => Value::String(rstring.to_string()),
         (AvromaticValue::Long(integer), SchemaKind::Int) => Value::Long(integer.to_i64()),
         (AvromaticValue::Long(integer), SchemaKind::Long) => Value::Long(integer.to_i64()),

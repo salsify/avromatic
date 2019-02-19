@@ -38,10 +38,10 @@ extern fn rb_initialize(argc: Argc, argv: *const AnyObject, mut itself: AnyObjec
             &arg
         );
     };
+    let arg_obj: AnyObject = arg.into();
     let data: HashMap<String, AnyObject> = if arg.is_nil() {
         HashMap::new()
     } else {
-        let arg_obj: AnyObject = arg.into();
         let hash = argument_check!(arg_obj.try_convert_to::<Hash>());
         let mut values = HashMap::new();
         hash.each(|key, value| {
@@ -113,8 +113,16 @@ methods!(
     fn rb_avro_message_value() -> AnyObject {
         let encoding = Encoding::find("ASCII-8BIT").unwrap();
         let bytes = itself.serialize();
-        let rstring: RString = RString::from_bytes(&bytes, &encoding);
+        let rstring = RString::from_bytes(&bytes, &encoding);
         rstring.into()
+    }
+
+    fn rb_avro_message_decode(data: RString) -> AnyObject {
+        let data = argument_check!(data);
+        let schema = itself.send("_schema", None);
+        let descriptor = schema.get_data(&*MODEL_DESCRIPTOR_WRAPPER);
+        descriptor.deserialize(&Class::from(itself.value()), &data.to_bytes_unchecked())
+            .unwrap()
     }
 );
 
@@ -147,6 +155,8 @@ methods!(
         let descriptor = _itself.instance_variable_get("@_schema");
         model_class.instance_variable_set("@_schema", descriptor);
         model_class.singleton_class().attr_reader("_schema");
+
+        model_class.def_self("avro_message_decode", rb_avro_message_decode);
 
         NilClass::new().into()
     }

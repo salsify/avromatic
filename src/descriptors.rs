@@ -1,9 +1,10 @@
 use avro_rs::{
     FullSchema,
     Schema,
-    schema::{RecordField, SchemaKind, SchemaIter, SchemaRef},
+    schema::{RecordField, SchemaKind, SchemaIter, SchemaRef, UnionRef},
+    types::Value as AvroValue,
 };
-use crate::model::AvromaticModel;
+use crate::model::{AvromaticModel, ModelStorage, MODEL_STORAGE_WRAPPER};
 use crate::serializer;
 use crate::values::AvromaticValue;
 use failure::{Error, Fail};
@@ -55,6 +56,22 @@ impl ModelDescriptorInner {
         serializer::serialize(&self.schema, attributes)
     }
 
+    pub fn deserialize(&self, class: &Class, data: &[u8]) -> Result<AnyObject, Error> {
+        let mut cursor = std::io::Cursor::new(data);
+        // TODO: need to get writer schema
+        let value = avro_rs::from_avro_datum(&self.schema, &mut cursor, None)?;
+        self.avro_to_model(class, value)
+    }
+
+    fn avro_to_model(&self, class: &Class, value: AvroValue) -> Result<AnyObject, Error> {
+        let attributes = self.descriptor.avro_to_attributes(value)?;
+        let storage = ModelStorage { attributes };
+        let mut model = class.allocate().to_any_object();
+        let wrapped_storage: AnyObject = class.wrap_data(storage, &*MODEL_STORAGE_WRAPPER);
+        model.instance_variable_set("@_attributes", wrapped_storage);
+        Ok(model)
+    }
+
     pub fn each_field<F>(&self, mut f: F)
         where F: FnMut(&str, &AttributeDescriptor)
     {
@@ -95,6 +112,23 @@ impl RecordDescriptor {
     fn mark(&self) {
         self.attributes.values().for_each(AttributeDescriptor::mark);
     }
+
+    fn avro_to_attributes(&self, value: AvroValue) -> Result<HashMap<String, AvromaticValue>, Error> {
+        match value {
+            AvroValue::Record(fields) => {
+                let mut attributes = HashMap::new();
+                fields.into_iter().map(|(key, value)| {
+                    let descriptor = self.attributes.get(&key)
+                        .unwrap();
+                    let attribute = descriptor.avro_to_attribute(value)?;
+                    attributes.insert(key, attribute);
+                    Ok(())
+                }).collect::<Result<Vec<()>, Error>>()?;
+                Ok(attributes)
+            },
+            _ => unimplemented!(),
+        }
+    }
 }
 
 #[derive(Debug)]
@@ -125,6 +159,10 @@ impl AttributeDescriptor {
             v.mark();
         }
     }
+
+    fn avro_to_attribute(&self, value: AvroValue) -> Result<AvromaticValue, Error> {
+        self.type_descriptor.avro_to_attribute(value)
+    }
 }
 
 #[derive(Debug)]
@@ -145,7 +183,7 @@ enum TypeDescriptor  {
     Map(Box<TypeDescriptor>),
 //     Custom,
     Record(Class),
-    Union(Vec<TypeDescriptor>),
+    Union(HashMap<UnionRef, usize>, Vec<TypeDescriptor>),
 }
 
 impl TypeDescriptor {
@@ -169,13 +207,13 @@ impl TypeDescriptor {
                 TypeDescriptor::Map(Box::new(inner))
             },
             SchemaKind::Union => {
-                let variants = schema
-                    .union_schema()
+                let union_schema = schema.union_schema();
+                let variants = union_schema
                     .variants()
                     .into_iter()
                     .map(TypeDescriptor::build)
                     .collect();
-                TypeDescriptor::Union(variants)
+                TypeDescriptor::Union(union_schema.union_ref_map(), variants)
             },
             SchemaKind::Record => {
                 let inner = AvromaticModel::build_model(schema.as_full_schema());
@@ -192,7 +230,7 @@ impl TypeDescriptor {
             TypeDescriptor::Integer => coerce_integer(value),
             TypeDescriptor::Fixed(length) => coerce_fixed(value, *length),
             TypeDescriptor::Array(inner) => coerce_array(value, inner),
-            TypeDescriptor::Union(variants) => coerce_union(value, variants),
+            TypeDescriptor::Union(_, variants) => coerce_union(value, variants),
             TypeDescriptor::Record(inner) => coerce_record(value, inner),
             _ => Err(AvromaticError::Fuck.into()),
         }
@@ -201,10 +239,68 @@ impl TypeDescriptor {
     fn mark(&self) {
         match self {
             TypeDescriptor::Array(inner) => inner.mark(),
-            TypeDescriptor::Union(variants) => variants.iter().for_each(TypeDescriptor::mark),
+            TypeDescriptor::Union(_, variants) => variants.iter().for_each(TypeDescriptor::mark),
             TypeDescriptor::Record(inner) => GC::mark(inner),
             _ => (),
         }
+    }
+
+    fn avro_to_attribute(&self, value: AvroValue) -> Result<AvromaticValue, Error> {
+        let out = match self {
+            TypeDescriptor::Null => AvromaticValue::Null,
+            TypeDescriptor::String => {
+                if let AvroValue::String(s) = value {
+                    AvromaticValue::String(s.into())
+                } else {
+                    unimplemented!()
+                }
+            },
+            TypeDescriptor::Integer => {
+                match value {
+                    AvroValue::Int(n) => AvromaticValue::Long((n as i64).into()),
+                    AvroValue::Long(n) => AvromaticValue::Long(n.into()),
+                    _ => unimplemented!()
+                }
+            },
+            TypeDescriptor::Fixed(usize) => {
+                if let AvroValue::Fixed(_, bytes) = value {
+                    let encoding = Encoding::find("ASCII-8BIT").unwrap();
+                    let rstring = RString::from_bytes(&bytes, &encoding);
+                    AvromaticValue::String(rstring)
+                } else {
+                    unimplemented!()
+                }
+            },
+            TypeDescriptor::Array(inner) => {
+                if let AvroValue::Array(values) = value {
+                    let attributes = values.into_iter()
+                        .map(|v| inner.avro_to_attribute(v))
+                        .collect::<Result<Vec<AvromaticValue>, Error>>()?;
+                    AvromaticValue::Array(attributes)
+                } else {
+                    unimplemented!()
+                }
+            },
+            TypeDescriptor::Union(ref_index, schemas) => {
+                if let AvroValue::Union(union_ref, value) = value {
+                    if let Some(index) = ref_index.get(&union_ref) {
+                        let value = schemas[*index].avro_to_attribute(*value)?;
+                        AvromaticValue::Union(*index, Box::new(value))
+                    } else {
+                        unimplemented!()
+                    }
+                } else {
+                    unimplemented!()
+                }
+            },
+            TypeDescriptor::Record(inner) => {
+                let schema = inner.send("_schema", None);
+                let descriptor = schema.get_data(&*MODEL_DESCRIPTOR_WRAPPER);
+                AvromaticValue::Record(descriptor.avro_to_model(inner, value)?)
+            },
+            _ => unimplemented!(),
+        };
+        Ok(out)
     }
 }
 
@@ -277,10 +373,9 @@ fn coerce_record(value: &AnyObject, record_class: &Class)
     if valid_object {
         return Ok(AvromaticValue::Record(value.to_any_object()))
     }
-    let out = record_class.protect_send("new", Some(&[value.to_any_object()]))
+    record_class.protect_send("new", Some(&[value.to_any_object()]))
         .map(|object| AvromaticValue::Record(object))
-        .map_err(|_| bad_coercion(value, "record"));
-    out
+        .map_err(|_| bad_coercion(value, "record"))
 }
 
 pub fn initialize() {

@@ -47,18 +47,19 @@ values = {
     id: SalsifyUuid.generate.to_s,
     type: 'products'
   },
-  property_value_modifications: [
-    {
-      property: {
-        id: SalsifyUuid.generate.to_s,
-        type: 'properties'
-      },
-      new_value_data_type: 'string',
-      new_values: {
-        values: []
-      }
-    }
-  ] * 100
+  property_value_modifications: []
+  # property_value_modifications: [
+  #   {
+  #     property: {
+  #       id: SalsifyUuid.generate.to_s,
+  #       type: 'properties'
+  #     },
+  #     new_value_data_type: 'string',
+  #     new_values: {
+  #       values: []
+  #     }
+  #   }
+  # ] * 1
 }
 
 x_values = {
@@ -73,12 +74,25 @@ y = Y.new(values.deep_dup)
 # puts "X ser"
 # puts x['system_message_timestamp']
 
-x.avro_message_value
+y_data = y.avro_message_value
+x_data = x.avro_message_value
 # puts "Y ser"
 # puts y.avro_message_value.inspect[5...-1]
 # puts x.avro_message_value == y.avro_message_value[5...-1]
 # puts Y.avro_message_decode(y.avro_message_value[0...5] + x.avro_message_value).inspect
 # puts y.inspect
+
+Benchmark.ips do |z|
+  z.report('ruby') { Y.avro_message_decode(y_data).avro_message_value }
+  z.report('rust') { X.avro_message_decode(x_data).avro_message_value }
+  z.compare!
+end
+
+Benchmark.ips do |z|
+  z.report('ruby') { Y.avro_message_decode(y_data) }
+  z.report('rust') { X.avro_message_decode(x_data) }
+  z.compare!
+end
 
 Benchmark.ips do |z|
   z.report('ruby') { Y.new(values) }
