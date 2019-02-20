@@ -45,8 +45,8 @@ impl ModelDescriptorInner {
         Self { schema, descriptor }
     }
 
-    pub fn coerce(&self, key: &str, value: AnyObject) -> Result<AvromaticValue, Error> {
-        self.descriptor.coerce(key, value)
+    pub fn coerce(&self, key: &str, value: AnyObject, guard: &mut HeapGuard) -> Result<AvromaticValue, Error> {
+        self.descriptor.coerce(key, value, guard)
     }
 
     pub fn serialize(&self, attributes: &HashMap<String, AvromaticValue>)
@@ -105,10 +105,10 @@ impl RecordDescriptor {
         Self { attributes }
     }
 
-    pub fn coerce(&self, key: &str, value: AnyObject) -> Result<AvromaticValue, Error> {
+    pub fn coerce(&self, key: &str, value: AnyObject, guard: &mut HeapGuard) -> Result<AvromaticValue, Error> {
         self.attributes.get(key)
             .ok_or_else(|| AvromaticError::InvalidAttribute{ name: key.to_string() }.into())
-            .and_then(|descriptor| descriptor.coerce(value))
+            .and_then(|descriptor| descriptor.coerce(value, guard))
     }
 
     fn mark(&self) {
@@ -149,8 +149,8 @@ impl AttributeDescriptor {
         }
     }
 
-    pub fn coerce(&self, value: AnyObject) -> Result<AvromaticValue, Error> {
-        self.type_descriptor.coerce(&value)
+    pub fn coerce(&self, value: AnyObject, guard: &mut HeapGuard) -> Result<AvromaticValue, Error> {
+        self.type_descriptor.coerce(&value, guard)
     }
 
     pub fn default(&self) -> AnyObject {
@@ -229,15 +229,15 @@ impl TypeDescriptor {
         }
     }
 
-    pub fn coerce(&self, value: &AnyObject) -> Result<AvromaticValue, Error> {
+    pub fn coerce(&self, value: &AnyObject, guard: &mut HeapGuard) -> Result<AvromaticValue, Error> {
         match self {
             TypeDescriptor::Null => coerce_null(value),
-            TypeDescriptor::String => coerce_string(value),
-            TypeDescriptor::Integer => coerce_integer(value),
-            TypeDescriptor::Fixed(length) => coerce_fixed(value, *length),
-            TypeDescriptor::Array(inner) => coerce_array(value, inner),
-            TypeDescriptor::Union(_, variants) => coerce_union(value, variants),
-            TypeDescriptor::Record(inner) => coerce_record(value, inner),
+            TypeDescriptor::String => coerce_string(value, guard),
+            TypeDescriptor::Integer => coerce_integer(value, guard),
+            TypeDescriptor::Fixed(length) => coerce_fixed(value, *length, guard),
+            TypeDescriptor::Array(inner) => coerce_array(value, inner, guard),
+            TypeDescriptor::Union(_, variants) => coerce_union(value, variants, guard),
+            TypeDescriptor::Record(inner) => coerce_record(value, inner, guard),
             _ => unimplemented!(),
         }
     }
@@ -332,61 +332,75 @@ fn coerce_null(value: &AnyObject) -> Result<AvromaticValue, Error> {
     }
 }
 
-fn coerce_string(value: &AnyObject) -> Result<AvromaticValue, Error> {
+fn coerce_string(value: &AnyObject, guard: &mut HeapGuard) -> Result<AvromaticValue, Error> {
     value.try_convert_to::<RString>()
         .or_else(|_| {
             value.try_convert_to::<Symbol>()
                 .and_then(|symbol| symbol.send("to_s", None).try_convert_to())
         })
+        .map(|string| {
+            guard.guard(string.to_any_object());
+            string
+        })
         .map(AvromaticValue::String)
         .or_else(|_| Err(bad_coercion(value, "string")))
 }
 
-fn coerce_fixed(value: &AnyObject, length: usize) -> Result<AvromaticValue, Error> {
+fn coerce_fixed(value: &AnyObject, length: usize, guard: &mut HeapGuard) -> Result<AvromaticValue, Error> {
     value.try_convert_to::<RString>()
         .ok()
         .and_then(|rstring| if rstring.to_str().len() != length {
             None
         } else {
+            guard.guard(rstring.to_any_object());
             Some(AvromaticValue::String(rstring))
         })
         .ok_or_else(|| bad_coercion(value, &format!("fixed({})", length)))
 }
 
-fn coerce_integer(value: &AnyObject) -> Result<AvromaticValue, Error> {
+fn coerce_integer(value: &AnyObject, guard: &mut HeapGuard) -> Result<AvromaticValue, Error> {
     value.try_convert_to::<Integer>()
+        .map(|int| {
+            guard.guard(int.to_any_object());
+            int
+        })
         .map(AvromaticValue::Long)
         .or_else(|_| Err(bad_coercion(value, "integer")))
 }
 
-fn coerce_array(value: &AnyObject, inner: &TypeDescriptor)
+fn coerce_array(value: &AnyObject, inner: &TypeDescriptor, guard: &mut HeapGuard)
     -> Result<AvromaticValue, Error>
 {
     value.try_convert_to::<Array>()
         .map_err(|_| bad_coercion(value, "array"))
-        .and_then(|array| array.into_iter().map(|element| inner.coerce(&element)).collect())
+        .and_then(|array| array.into_iter().map(|element| inner.coerce(&element, guard)).collect())
         .map(AvromaticValue::Array)
 }
 
-fn coerce_union(value: &AnyObject, variants: &[TypeDescriptor])
+fn coerce_union(value: &AnyObject, variants: &[TypeDescriptor], guard: &mut HeapGuard)
     -> Result<AvromaticValue, Error>
 {
     let out = variants.iter()
         .enumerate()
-        .map(|(i, variant)| Ok(AvromaticValue::Union(i, Box::new(variant.coerce(&value)?))))
+        .map(|(i, variant)| Ok(AvromaticValue::Union(i, Box::new(variant.coerce(&value, guard)?))))
         .find(Result::is_ok)
         .unwrap_or_else(|| Err(bad_coercion(value, "union")));
     out
 }
 
-fn coerce_record(value: &AnyObject, record_class: &Class)
+fn coerce_record(value: &AnyObject, record_class: &Class, guard: &mut HeapGuard)
     -> Result<AvromaticValue, Error>
 {
     let valid_object = value.class().ancestors().iter().any(|class| class.is_eql(record_class));
     if valid_object {
+        guard.guard(value.to_any_object());
         return Ok(AvromaticValue::Record(value.to_any_object()))
     }
     record_class.protect_send("new", Some(&[value.to_any_object()]))
+        .map(|record| {
+            guard.guard(record.to_any_object());
+            record
+        })
         .map(|object| AvromaticValue::Record(object))
         .map_err(|_| bad_coercion(value, "record"))
 }

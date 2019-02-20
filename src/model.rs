@@ -60,7 +60,7 @@ extern fn rb_initialize(argc: Argc, argv: *const AnyObject, mut itself: AnyObjec
     let mut guard = HeapGuard::new();
     descriptor.each_field(|key, attribute| {
         let v = data.get(key).map(Object::to_any_object).unwrap_or(attribute.default());
-        match attribute.coerce(v) {
+        match attribute.coerce(v, &mut guard) {
             Ok(coerced) => {
                  storage.attributes.insert(key.to_string(), coerced);
             },
@@ -83,9 +83,10 @@ methods!(
         let key = argument_check!(key);
         let key = key.to_str();
         let value = argument_check!(value);
+        let mut guard = HeapGuard::new();
         let avromatic_value_result = itself.class().send("_schema", None)
             .get_data(&*MODEL_DESCRIPTOR_WRAPPER)
-            .coerce(key, value);
+            .coerce(key, value, &mut guard);
         if let Err(err) = avromatic_value_result {
             let message = format!("{}", err);
             VM::raise(Class::from_existing("ArgumentError"), &message);
