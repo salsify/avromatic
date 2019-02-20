@@ -13,3 +13,6 @@ avro-rs = { git = "https://github.com/kphelps/avro-rs", branch = "feature/refere
 [lib]
 name = "avromatic"
 crate-type = ["dylib"]
+
+[profile.release]
+debug = true

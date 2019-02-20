@@ -12,8 +12,8 @@ require 'benchmark/memory'
 #   )
 # end
 
-SalsifyAvro.add_path('/Users/kphelps/sandbox/salsify_avro/avro/schema')
-SalsifyAvro.add_path('/Users/kphelps/sandbox/dandelion/schemas_gem/avro/schema')
+SalsifyAvro.add_path('/home/kphelps/salsify/salsify_avro/avro/schema')
+SalsifyAvro.add_path('/home/kphelps/salsify/dandelion/schemas_gem/avro/schema')
 Avromatic.configure do |config|
   config.schema_store = SalsifyAvro.build_schema_store
   config.nested_models = Avromatic::ModelRegistry.new(
@@ -47,19 +47,18 @@ values = {
     id: SalsifyUuid.generate.to_s,
     type: 'products'
   },
-  property_value_modifications: []
-  # property_value_modifications: [
-  #   {
-  #     property: {
-  #       id: SalsifyUuid.generate.to_s,
-  #       type: 'properties'
-  #     },
-  #     new_value_data_type: 'string',
-  #     new_values: {
-  #       values: []
-  #     }
-  #   }
-  # ] * 1
+  property_value_modifications: [
+    {
+      property: {
+        id: SalsifyUuid.generate.to_s,
+        type: 'properties'
+      },
+      new_value_data_type: 'string',
+      new_values: {
+        values: []
+      }
+    }
+  ] * 50
 }
 
 x_values = {
@@ -82,32 +81,40 @@ x_data = x.avro_message_value
 # puts Y.avro_message_decode(y.avro_message_value[0...5] + x.avro_message_value).inspect
 # puts y.inspect
 
+Y.avro_message_decode(y_data).avro_message_value
+
+# TODO: GUARD COERCION
+puts '--- Ctor -> Ser (publishing use case) ---'
 Benchmark.ips do |z|
-  z.report('ruby') { Y.avro_message_decode(y_data).avro_message_value }
-  z.report('rust') { X.avro_message_decode(x_data).avro_message_value }
+  z.report('ruby') { Y.new(values).avro_message_value }
+  z.report('rust') { X.new(x_values).avro_message_value }
   z.compare!
 end
 
+puts '--- De ---'
 Benchmark.ips do |z|
   z.report('ruby') { Y.avro_message_decode(y_data) }
   z.report('rust') { X.avro_message_decode(x_data) }
   z.compare!
 end
 
+puts '--- Ctor ---'
 Benchmark.ips do |z|
   z.report('ruby') { Y.new(values) }
   z.report('rust') { X.new(x_values) }
   z.compare!
 end
 
+puts '--- Ser ---'
 Benchmark.ips do |z|
   z.report('ruby') { y.avro_message_value }
   z.report('rust') { x.avro_message_value }
   z.compare!
 end
 
-# Benchmark.memory do |z|
-#   z.report('ruby') { Y.new(values).avro_message_value }
-#   z.report('rust') { X.new(x_values).avro_message_value }
-#   z.compare!
-# end
+puts '--- De -> Ser (mutable state use case) ---'
+Benchmark.ips do |z|
+  z.report('ruby') { Y.avro_message_decode(y_data).avro_message_value }
+  z.report('rust') { X.avro_message_decode(x_data).avro_message_value }
+  z.compare!
+end

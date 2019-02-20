@@ -13,7 +13,7 @@ pub fn to_avro<'a, I>(
 {
     let out = match (value, schema.kind()) {
         (AvromaticValue::Null, SchemaKind::Null) => Value::Null,
-        ((AvromaticValue::String(rstring), SchemaKind::Fixed)) => {
+        (AvromaticValue::String(rstring), SchemaKind::Fixed) => {
             Value::Fixed(schema.fixed_size(), rstring.to_vec_u8_unchecked())
         },
         (AvromaticValue::String(rstring), SchemaKind::String) => Value::String(rstring.to_string()),
@@ -42,7 +42,7 @@ pub fn to_avro<'a, I>(
             let storage = attributes.get_data_mut(&*MODEL_STORAGE_WRAPPER);
             build_avro_record(&storage.attributes, schema)?
         },
-        _ => bail!("Crikes: {:?} {:?}", value, schema.schema()),
+        _ => bail!("bad to avro: {:?} {:?}", value, schema.schema()),
     };
     Ok(out)
 }

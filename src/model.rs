@@ -57,11 +57,12 @@ extern fn rb_initialize(argc: Argc, argv: *const AnyObject, mut itself: AnyObjec
     let object = itself.class().send("_schema", None);
     let descriptor = object.get_data(&*MODEL_DESCRIPTOR_WRAPPER);
     let mut storage = ModelStorage::default();
+    let mut guard = HeapGuard::new();
     descriptor.each_field(|key, attribute| {
         let v = data.get(key).map(Object::to_any_object).unwrap_or(attribute.default());
         match attribute.coerce(v) {
             Ok(coerced) => {
-                storage.attributes.insert(key.to_string(), coerced);
+                 storage.attributes.insert(key.to_string(), coerced);
             },
             Err(err) => {
                 let message = format!("error initializing {}: {}", key, err);
@@ -122,7 +123,7 @@ methods!(
         let data = argument_check!(data);
         let schema = itself.send("_schema", None);
         let descriptor = schema.get_data(&*MODEL_DESCRIPTOR_WRAPPER);
-        let mut guard = HeapGuard::default();
+        let mut guard = HeapGuard::new();
         descriptor.deserialize(
             &Class::from(itself.value()),
             &data.to_bytes_unchecked(),
@@ -193,7 +194,7 @@ impl AvromaticModel {
     pub fn build_model(schema: FullSchema) -> Class {
         let mut registry_obj = Class::from_existing("ModelRegistry")
             .send("global", None);
-        let mut registry = ModelRegistry::get(&mut registry_obj);
+        let registry = ModelRegistry::get(&mut registry_obj);
 
         let model_name = (&schema).fullname().unwrap();
         if let Some(class) = registry.lookup(&model_name) {

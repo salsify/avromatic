@@ -23,8 +23,6 @@ enum AvromaticError {
         value: String,
         name: String,
     },
-    #[fail(display = "fuck")]
-    Fuck
 }
 
 pub struct ModelDescriptorInner {
@@ -70,6 +68,7 @@ impl ModelDescriptorInner {
         let attributes = self.descriptor.avro_to_attributes(value, guard)?;
         let storage = ModelStorage { attributes };
         let mut model = class.allocate().to_any_object();
+        guard.guard(model.to_any_object());
         let wrapped_storage: AnyObject = class.wrap_data(storage, &*MODEL_STORAGE_WRAPPER);
         model.instance_variable_set("@_attributes", wrapped_storage);
         Ok(model)
@@ -239,7 +238,7 @@ impl TypeDescriptor {
             TypeDescriptor::Array(inner) => coerce_array(value, inner),
             TypeDescriptor::Union(_, variants) => coerce_union(value, variants),
             TypeDescriptor::Record(inner) => coerce_record(value, inner),
-            _ => Err(AvromaticError::Fuck.into()),
+            _ => unimplemented!(),
         }
     }
 
@@ -259,8 +258,8 @@ impl TypeDescriptor {
             TypeDescriptor::Null => AvromaticValue::Null,
             TypeDescriptor::String => {
                 if let AvroValue::String(s) = value {
-                    let rstring = s.into();
-                    guard.guard(&rstring);
+                    let rstring: RString = s.into();
+                    guard.guard(rstring.to_any_object());
                     AvromaticValue::String(rstring)
                 } else {
                     unimplemented!()
@@ -277,7 +276,7 @@ impl TypeDescriptor {
                 if let AvroValue::Fixed(_, bytes) = value {
                     let encoding = Encoding::find("ASCII-8BIT").unwrap();
                     let rstring = RString::from_bytes(&bytes, &encoding);
-                    guard.guard(&rstring);
+                    guard.guard(rstring.to_any_object());
                     AvromaticValue::String(rstring)
                 } else {
                     unimplemented!()
@@ -309,7 +308,7 @@ impl TypeDescriptor {
                 let schema = inner.send("_schema", None);
                 let descriptor = schema.get_data(&*MODEL_DESCRIPTOR_WRAPPER);
                 let record = descriptor.avro_to_model(inner, value, guard)?;
-                guard.guard(&record);
+                guard.guard(record.to_any_object());
                 AvromaticValue::Record(record)
             }
             _ => unimplemented!(),

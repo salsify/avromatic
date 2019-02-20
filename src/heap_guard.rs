@@ -1,22 +1,27 @@
+use crate::values::AvromaticValue;
 use rutie::*;
 use rutie::types::Value;
 use std::ops::Drop;
 
-#[derive(Default)]
 pub struct HeapGuard {
-    values: Vec<AnyObject>
+    values: Array
 }
 
 impl HeapGuard {
-    pub fn guard(&mut self, v: &impl Object) {
-        GC::register(v);
-        let value = v.to_any_object();
-        self.values.push(value);
+    pub fn new() -> Self {
+        Self {
+            values: Array::new(),
+        }
     }
-}
 
-impl Drop for HeapGuard {
-    fn drop(&mut self) {
-        self.values.iter().for_each(GC::unregister)
+    pub fn guard<O: Object>(&mut self, v: O) {
+        self.values.push(v);
+    }
+
+    pub fn guard_value(&mut self, value: &AvromaticValue) {
+        self.guard(value.to_any_object())
+        // match value {
+        //     AvromaticValue::String(s) => self.guard(s),
+        // }
     }
 }
