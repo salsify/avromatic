@@ -11,7 +11,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 [[package]]
 name = "avro-rs"
 version = "0.6.4"
-source = "git+https://github.com/kphelps/avro-rs?branch=feature/reference-types#f5c55cd0063505a0ae96fd04ea28a54cf5785b2d"
+source = "git+https://github.com/kphelps/avro-rs?branch=feature/reference-types#0886ab0116fb13335e5b26b1b0fcce14a4f5a41a"
 dependencies = [
  "digest 0.8.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "failure 0.1.5 (registry+https://github.com/rust-lang/crates.io-index)",

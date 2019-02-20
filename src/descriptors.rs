@@ -174,20 +174,20 @@ impl AttributeDescriptor {
 #[derive(Debug)]
 enum TypeDescriptor  {
     Boolean,
-    Date,
-    Enum,
+    Enum(Vec<String>),
     Fixed(usize),
     Float,
     Integer,
     Null,
     String,
     Bytes,
+
+    Date,
     TimestampMicros,
     TimestampMillis,
 
     Array(Box<TypeDescriptor>),
     Map(Box<TypeDescriptor>),
-//     Custom,
     Record(Class),
     Union(HashMap<UnionRef, usize>, Vec<TypeDescriptor>),
 }
@@ -225,15 +225,19 @@ impl TypeDescriptor {
                 let inner = AvromaticModel::build_model(schema.as_full_schema());
                 TypeDescriptor::Record(inner)
             },
-            SchemaKind::Enum => TypeDescriptor::Null,
+            SchemaKind::Enum => TypeDescriptor::Enum(schema.enum_symbols().to_vec()),
         }
     }
 
     pub fn coerce(&self, value: &AnyObject, guard: &mut HeapGuard) -> Result<AvromaticValue, Error> {
         match self {
             TypeDescriptor::Null => coerce_null(value),
+            TypeDescriptor::Boolean => coerce_boolean(value),
             TypeDescriptor::String => coerce_string(value, guard),
+            TypeDescriptor::Bytes => coerce_string(value, guard),
+            TypeDescriptor::Enum(symbols) => coerce_enum(value, symbols, guard),
             TypeDescriptor::Integer => coerce_integer(value, guard),
+            TypeDescriptor::Float => coerce_float(value, guard),
             TypeDescriptor::Fixed(length) => coerce_fixed(value, *length, guard),
             TypeDescriptor::Array(inner) => coerce_array(value, inner, guard),
             TypeDescriptor::Union(_, variants) => coerce_union(value, variants, guard),
@@ -328,8 +332,14 @@ fn coerce_null(value: &AnyObject) -> Result<AvromaticValue, Error> {
     if value.is_nil() {
         Ok(AvromaticValue::Null)
     } else {
-        Err(bad_coercion(value, "null"))
+        Err(bad_coercion(value, "boolean"))
     }
+}
+
+fn coerce_boolean(value: &AnyObject) -> Result<AvromaticValue, Error> {
+    value.try_convert_to::<Boolean>()
+        .map(|b| if b.to_bool() { AvromaticValue::True } else { AvromaticValue::False })
+        .or_else(|_| Err(bad_coercion(value, "null")))
 }
 
 fn coerce_string(value: &AnyObject, guard: &mut HeapGuard) -> Result<AvromaticValue, Error> {
@@ -366,6 +376,35 @@ fn coerce_integer(value: &AnyObject, guard: &mut HeapGuard) -> Result<AvromaticV
         })
         .map(AvromaticValue::Long)
         .or_else(|_| Err(bad_coercion(value, "integer")))
+}
+
+fn coerce_float(value: &AnyObject, guard: &mut HeapGuard) -> Result<AvromaticValue, Error> {
+    value.try_convert_to::<Float>()
+        .map(|float| {
+            guard.guard(float.to_any_object());
+            float
+        })
+        .map(AvromaticValue::Float)
+        .or_else(|_| Err(bad_coercion(value, "float")))
+}
+
+fn coerce_enum(value: &AnyObject, symbols: &[String], guard: &mut HeapGuard) -> Result<AvromaticValue, Error> {
+    value.try_convert_to::<RString>()
+        .or_else(|_| {
+            value.try_convert_to::<Symbol>()
+                .and_then(|symbol| symbol.send("to_s", None).try_convert_to())
+        })
+        .ok()
+        .and_then(|string| {
+            let sym = string.to_str();
+            symbols.iter().find(|v| v.as_str() == sym).map(|_| string)
+        })
+        .map(|string| {
+            guard.guard(string.to_any_object());
+            string
+        })
+        .map(AvromaticValue::String)
+        .ok_or_else(|| bad_coercion(value, "string"))
 }
 
 fn coerce_array(value: &AnyObject, inner: &TypeDescriptor, guard: &mut HeapGuard)
