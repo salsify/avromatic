@@ -8,7 +8,7 @@ edition = "2018"
 failure = "*"
 lazy_static = "*"
 rutie = { git = "https://github.com/danielpclark/rutie", branch = "master" }
-avro-rs = { path = "../../dev/avro-rs" }
+avro-rs = { git = "https://github.com/kphelps/avro-rs", branch = "feature/reference-types" }
 
 [lib]
 name = "avromatic"
