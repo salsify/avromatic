@@ -7,6 +7,7 @@ extern crate lazy_static;
 mod macros;
 
 mod descriptors;
+mod heap_guard;
 mod model;
 mod model_pool;
 mod serializer;

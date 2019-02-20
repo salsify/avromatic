@@ -1,4 +1,5 @@
 use avro_rs::{FullSchema, Schema, schema::SchemaIter};
+use crate::heap_guard::HeapGuard;
 use crate::descriptors::{ModelDescriptor, MODEL_DESCRIPTOR_WRAPPER};
 use crate::model_pool::{ModelPool, ModelRegistry};
 use crate::values::AvromaticValue;
@@ -121,8 +122,12 @@ methods!(
         let data = argument_check!(data);
         let schema = itself.send("_schema", None);
         let descriptor = schema.get_data(&*MODEL_DESCRIPTOR_WRAPPER);
-        descriptor.deserialize(&Class::from(itself.value()), &data.to_bytes_unchecked())
-            .unwrap()
+        let mut guard = HeapGuard::default();
+        descriptor.deserialize(
+            &Class::from(itself.value()),
+            &data.to_bytes_unchecked(),
+            &mut guard
+        ).unwrap()
     }
 );
 

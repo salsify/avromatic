@@ -7,7 +7,7 @@ edition = "2018"
 [dependencies]
 failure = "*"
 lazy_static = "*"
-rutie = "0.5.3"
+rutie = { git = "https://github.com/danielpclark/rutie", branch = "master" }
 avro-rs = { path = "../../dev/avro-rs" }
 
 [lib]
