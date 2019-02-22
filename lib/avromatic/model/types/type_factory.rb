@@ -101,7 +101,7 @@ module Avromatic
             end
             nested_model
           else
-            Avromatic::Model.model(schema: schema, nested_models: nested_models)
+            Avromatic::Model.model(native: false, schema: schema, nested_models: nested_models)
           end
         end
 

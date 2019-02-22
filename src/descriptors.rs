@@ -8,7 +8,7 @@ use crate::heap_guard::HeapGuard;
 use crate::model::{AvromaticModel, ModelStorage, MODEL_STORAGE_WRAPPER};
 use crate::serializer;
 use crate::values::AvromaticValue;
-use failure::{Error, Fail};
+use failure::{Error, Fail, format_err};
 use rutie::*;
 use std::collections::HashMap;
 
@@ -40,9 +40,9 @@ wrappable_struct!(
 );
 
 impl ModelDescriptorInner {
-    pub fn new(schema: FullSchema) -> Self {
-        let descriptor = RecordDescriptor::build(&schema);
-        Self { schema, descriptor }
+    pub fn new(schema: FullSchema) -> Result<Self, Error> {
+        let descriptor = RecordDescriptor::build(&schema)?;
+        Ok(Self { schema, descriptor })
     }
 
     pub fn coerce(&self, key: &str, value: AnyObject, guard: &mut HeapGuard) -> Result<AvromaticValue, Error> {
@@ -84,10 +84,11 @@ impl ModelDescriptorInner {
 class!(ModelDescriptor);
 
 impl ModelDescriptor {
-    pub fn new(schema: FullSchema) -> Self {
-        let inner = ModelDescriptorInner::new(schema);
-        Class::from_existing("ModelDescriptor")
-            .wrap_data(inner, &*MODEL_DESCRIPTOR_WRAPPER)
+    pub fn new(schema: FullSchema) -> Result<Self, Error> {
+        let inner = ModelDescriptorInner::new(schema)?;
+        let this = Class::from_existing("ModelDescriptor")
+            .wrap_data(inner, &*MODEL_DESCRIPTOR_WRAPPER);
+        Ok(this)
     }
 }
 
@@ -97,12 +98,13 @@ struct RecordDescriptor {
 }
 
 impl RecordDescriptor {
-    pub fn build(schema: &FullSchema) -> Self {
-        let record = schema.record_schema();
+    pub fn build(schema: &FullSchema) -> Result<Self, Error> {
+        let record = schema.record_schema()
+            .ok_or_else(|| format_err!("Invalid Schema"))?;
         let attributes = record.fields().iter().map(|field| {
-            (field.name().to_string(), AttributeDescriptor::build(field.schema()))
-        }).collect();
-        Self { attributes }
+            Ok((field.name().to_string(), AttributeDescriptor::build(field.schema())?))
+        }).collect::<Result<HashMap<String, AttributeDescriptor>, Error>>()?;
+        Ok(Self { attributes })
     }
 
     pub fn coerce(&self, key: &str, value: AnyObject, guard: &mut HeapGuard) -> Result<AvromaticValue, Error> {
@@ -142,11 +144,13 @@ pub struct AttributeDescriptor {
 }
 
 impl AttributeDescriptor {
-    pub fn build<'a>(field_schema: SchemaRef<'a>) -> Self {
-        Self {
-            type_descriptor: TypeDescriptor::build(field_schema),
-            default: None,
-        }
+    pub fn build<'a>(field_schema: SchemaRef<'a>) -> Result<Self, Error> {
+        Ok(
+            Self {
+                type_descriptor: TypeDescriptor::build(field_schema)?,
+                default: None,
+            }
+        )
     }
 
     pub fn coerce(&self, value: AnyObject, guard: &mut HeapGuard) -> Result<AvromaticValue, Error> {
@@ -193,8 +197,8 @@ enum TypeDescriptor  {
 }
 
 impl TypeDescriptor {
-    pub fn build(schema: SchemaRef) -> Self {
-        match schema.kind() {
+    pub fn build(schema: SchemaRef) -> Result<Self, Error> {
+        let out = match schema.kind() {
             SchemaKind::Null => TypeDescriptor::Null,
             SchemaKind::Boolean => TypeDescriptor::Boolean,
             SchemaKind::Int => TypeDescriptor::Integer,
@@ -203,30 +207,44 @@ impl TypeDescriptor {
             SchemaKind::Double => TypeDescriptor::Float,
             SchemaKind::Bytes => TypeDescriptor::Bytes,
             SchemaKind::String => TypeDescriptor::String,
-            SchemaKind::Fixed => TypeDescriptor::Fixed(schema.fixed_size()),
+            SchemaKind::Fixed => {
+                let size = schema.fixed_size()
+                    .ok_or_else(|| format_err!("Invalid Schema"))?;
+                TypeDescriptor::Fixed(size)
+            },
             SchemaKind::Array => {
-                let inner = TypeDescriptor::build(schema.array_schema());
+                let schema = schema.array_schema()
+                    .ok_or_else(|| format_err!("Invalid Schema"))?;
+                let inner = TypeDescriptor::build(schema)?;
                 TypeDescriptor::Array(Box::new(inner))
             },
             SchemaKind::Map => {
-                let inner = TypeDescriptor::build(schema.map_schema());
+                let schema = schema.map_schema()
+                    .ok_or_else(|| format_err!("Invalid Schema"))?;
+                let inner = TypeDescriptor::build(schema)?;
                 TypeDescriptor::Map(Box::new(inner))
             },
             SchemaKind::Union => {
-                let union_schema = schema.union_schema();
+                let union_schema = schema.union_schema()
+                    .ok_or_else(|| format_err!("Invalid Schema"))?;
                 let variants = union_schema
                     .variants()
                     .into_iter()
                     .map(TypeDescriptor::build)
-                    .collect();
+                    .collect()?;
                 TypeDescriptor::Union(union_schema.union_ref_map(), variants)
             },
             SchemaKind::Record => {
                 let inner = AvromaticModel::build_model(schema.as_full_schema());
                 TypeDescriptor::Record(inner)
             },
-            SchemaKind::Enum => TypeDescriptor::Enum(schema.enum_symbols().to_vec()),
-        }
+            SchemaKind::Enum => {
+                let symbols = schema.enum_symbols()
+                    .ok_or_else(|| format_err!("Invalid Schema"))?;
+                TypeDescriptor::Enum(symbols.to_vec())
+            },
+        };
+        Ok(out)
     }
 
     pub fn coerce(&self, value: &AnyObject, guard: &mut HeapGuard) -> Result<AvromaticValue, Error> {
@@ -435,13 +453,9 @@ fn coerce_record(value: &AnyObject, record_class: &Class, guard: &mut HeapGuard)
         guard.guard(value.to_any_object());
         return Ok(AvromaticValue::Record(value.to_any_object()))
     }
-    record_class.protect_send("new", Some(&[value.to_any_object()]))
-        .map(|record| {
-            guard.guard(record.to_any_object());
-            record
-        })
-        .map(|object| AvromaticValue::Record(object))
-        .map_err(|_| bad_coercion(value, "record"))
+    let record = record_class.send("new", Some(&[value.to_any_object()]));
+    guard.guard(record.to_any_object());
+    Ok(AvromaticValue::Record(record))
 }
 
 pub fn initialize() {

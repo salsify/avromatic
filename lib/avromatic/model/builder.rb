@@ -38,11 +38,11 @@ module Avromatic
       # For options see Avromatic::Model.build
       def initialize(**options)
         @config = Avromatic::Model::Configuration.new(**options)
-        if options[:native]
-          define_native_module
-        else
+        if options[:native] == false
           @mod = Module.new
           define_included_method
+        else
+          define_native_module
         end
       end
 

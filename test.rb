@@ -28,14 +28,14 @@ end
 
 class X
   include Avromatic::Model.build(
-    schema_name: 'com.salsify.core.product_updated_event_value',
-    native: true
+    schema_name: 'com.salsify.core.product_updated_event_value'
   )
 end
 
 class Y
   include Avromatic::Model.build(
-    schema_name: 'com.salsify.core.product_updated_event_value'
+    schema_name: 'com.salsify.core.product_updated_event_value',
+    native: false
   )
 end
 
@@ -58,32 +58,21 @@ values = {
         values: []
       }
     }
-  ] * 50
+  ] * 1000
 }
 
 x_values = {
   **values,
   system_message_timestamp: values[:system_message_timestamp].to_i
 }
-puts "X ctor"
 x = X.new(x_values.deep_dup)
-puts "Y ctor"
 y = Y.new(values.deep_dup)
-
-# puts "X ser"
-# puts x['system_message_timestamp']
 
 y_data = y.avro_message_value
 x_data = x.avro_message_value
-# puts "Y ser"
-# puts y.avro_message_value.inspect[5...-1]
-# puts x.avro_message_value == y.avro_message_value[5...-1]
-# puts Y.avro_message_decode(y.avro_message_value[0...5] + x.avro_message_value).inspect
-# puts y.inspect
 
 Y.avro_message_decode(y_data).avro_message_value
 
-# TODO: GUARD COERCION
 puts '--- Ctor -> Ser (publishing use case) ---'
 Benchmark.ips do |z|
   z.report('ruby') { Y.new(values).avro_message_value }

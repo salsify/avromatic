@@ -2,7 +2,7 @@ use avro_rs::{FullSchema, Schema, UnionRef, schema::{SchemaIter, SchemaKind}, ty
 use crate::model::MODEL_STORAGE_WRAPPER;
 use crate::values::AvromaticValue;
 use failure::{Error, bail};
-use rutie::{Object, RString};
+use rutie::*;
 use std::collections::HashMap;
 
 pub fn to_avro<'a, I>(
@@ -13,38 +13,74 @@ pub fn to_avro<'a, I>(
 {
     let out = match (value, schema.kind()) {
         (AvromaticValue::Null, SchemaKind::Null) => Value::Null,
-        (AvromaticValue::String(rstring), SchemaKind::Fixed) => {
-            Value::Fixed(schema.fixed_size(), rstring.to_vec_u8_unchecked())
-        },
-        (AvromaticValue::String(rstring), SchemaKind::String) => Value::String(rstring.to_string()),
-        (AvromaticValue::Long(integer), SchemaKind::Int) => Value::Long(integer.to_i64()),
-        (AvromaticValue::Long(integer), SchemaKind::Long) => Value::Long(integer.to_i64()),
-        (AvromaticValue::Union(n, ref value), SchemaKind::Union) => {
-            let schema = schema.union_schema().variants()[*n];
-            let union_ref = UnionRef::from_schema(schema.schema());
-            Value::Union(union_ref, Box::new(to_avro(schema, &value)?))
-        },
-        (value, SchemaKind::Union) => {
-            schema.union_schema()
-                .variants()
-                .into_iter()
-                .map(|variant| to_avro(variant, value))
-                .find(Result::is_ok)
-                .unwrap_or_else(|| bail!("Bad union"))?
-        },
-        (AvromaticValue::Array(values), SchemaKind::Array) => Value::Array(
-            values.into_iter()
-                .map(|v| to_avro(schema.array_schema(), &v))
-                .collect::<Result<Vec<Value>, Error>>()?
-        ),
-        (AvromaticValue::Record(object), SchemaKind::Record) => {
-            let mut attributes = object.instance_variable_get("@_attributes");
-            let storage = attributes.get_data_mut(&*MODEL_STORAGE_WRAPPER);
-            build_avro_record(&storage.attributes, schema)?
-        },
+        (AvromaticValue::String(rstring), SchemaKind::Fixed) => fixed_to_value(rstring, schema.fixed_size()),
+        (AvromaticValue::String(rstring), SchemaKind::String) => string_to_value(rstring),
+        (AvromaticValue::Long(integer), SchemaKind::Int) => int_to_value(integer),
+        (AvromaticValue::Long(integer), SchemaKind::Long) => long_to_value(integer),
+        (AvromaticValue::Union(n, ref value), SchemaKind::Union) => union_to_value(*n, value, schema)?,
+        (value, SchemaKind::Union) => untracked_union_to_value(value, schema)?,
+        (AvromaticValue::Array(values), SchemaKind::Array) => array_to_value(values, schema)?,
+        (AvromaticValue::Record(object), SchemaKind::Record) => record_to_value(object, schema)?,
         _ => bail!("bad to avro: {:?} {:?}", value, schema.schema()),
     };
     Ok(out)
+}
+
+fn string_to_value(rstring: &RString) -> Value {
+    Value::String(rstring.to_string())
+}
+
+fn fixed_to_value(rstring: &RString, size: usize) -> Value {
+    Value::Fixed(size, rstring.to_vec_u8_unchecked())
+}
+
+fn int_to_value(integer: &Integer) -> Value {
+    Value::Int(integer.to_i64() as i32)
+}
+
+fn long_to_value(integer: &Integer) -> Value {
+    Value::Long(integer.to_i64())
+}
+
+fn union_to_value<'a, I>(index: usize, value: &AvromaticValue, schema: I) -> Result<Value, Error>
+    where I: SchemaIter<'a> + 'a
+{
+    let schema = schema.union_schema().variants()[index];
+    let union_ref = UnionRef::from_schema(schema.schema());
+    Ok(Value::Union(union_ref, Box::new(to_avro(schema, &value)?)))
+}
+
+fn untracked_union_to_value<'a, I>(value: &AvromaticValue, schema: I) -> Result<Value, Error>
+    where I: SchemaIter<'a> + 'a
+{
+    schema.union_schema()
+        .variants()
+        .into_iter()
+        .map(|variant| to_avro(variant, value))
+        .find(Result::is_ok)
+        .unwrap_or_else(|| bail!("Bad union"))
+}
+
+
+fn array_to_value<'a, I>(values: &[AvromaticValue], schema: I) -> Result<Value, Error>
+    where I: SchemaIter<'a> + 'a
+{
+    Ok(
+        Value::Array(
+        values.into_iter()
+            .map(|v| to_avro(schema.array_schema(), &v))
+            .collect::<Result<Vec<Value>, Error>>()?
+        )
+    )
+}
+
+
+fn record_to_value<'a, I>(object: &AnyObject, schema: I) -> Result<Value, Error>
+    where I: SchemaIter<'a> + 'a
+{
+    let mut attributes = object.instance_variable_get("@_attributes");
+    let storage = attributes.get_data_mut(&*MODEL_STORAGE_WRAPPER);
+    build_avro_record(&storage.attributes, schema)
 }
 
 fn build_avro_record<'a, I>(
