@@ -23,8 +23,11 @@ wrappable_struct!(
 
 module!(AvromaticModelAttributes);
 
-fn stringify(object: AnyObject) -> String {
-    object.try_convert_to::<RString>().unwrap().to_string()
+fn stringify(object: &AnyObject) -> String {
+    object.try_convert_to::<RString>()
+        .map(|s| s.to_string())
+        .or_else(|_| object.try_convert_to::<Symbol>().map(|s| s.to_string()))
+        .unwrap()
 }
 
 extern fn rb_initialize(argc: Argc, argv: *const AnyObject, mut itself: AnyObject) -> AnyObject {
@@ -75,18 +78,53 @@ extern fn rb_initialize(argc: Argc, argv: *const AnyObject, mut itself: AnyObjec
     NilClass::new().into()
 }
 
+extern fn rb_method_missing(argc: Argc, argv: *const AnyObject, mut itself: AnyObject) -> AnyObject {
+    let name_arg = RValue::from(0);
+    let args = RValue::from(0);
+
+    unsafe {
+        let p_argv: *const RValue = std::mem::transmute(argv);
+
+        rutie::rubysys::class::rb_scan_args(
+            argc,
+            p_argv,
+            rutie::util::str_to_cstring("1*").as_ptr(),
+            &name_arg,
+            &args
+        )
+    };
+
+    let name_obj = AnyObject::from(name_arg);
+    let arguments = Array::from(args);
+    let name = argument_check!(name_obj.try_convert_to::<Symbol>());
+    let s = name.to_str();
+
+    if s.ends_with("?") {
+        let (s, _) = s.split_at(s.len() - 1);
+        let args: [AnyObject; 1] = [RString::new_utf8(s).to_any_object()];
+        itself.send("_attribute_true?", Some(&args))
+    } else if s.ends_with("=") {
+        let (s, _) = s.split_at(s.len() - 1);
+        let args: [AnyObject; 2] = [RString::new_utf8(s).to_any_object(), arguments.at(1)];
+        itself.send("[]=", Some(&args))
+    } else {
+        let args: [AnyObject; 1] = [RString::new_utf8(s).to_any_object()];
+        itself.send("[]", Some(&args))
+    }
+}
+
 methods!(
     AvromaticModelAttributes,
     itself,
 
-    fn rb_set_attribute(key: RString, value: AnyObject) -> AnyObject {
+    fn rb_set_attribute(key: AnyObject, value: AnyObject) -> AnyObject {
         let key = argument_check!(key);
-        let key = key.to_str();
+        let key = stringify(&key);
         let value = argument_check!(value);
         let mut guard = HeapGuard::new();
         let avromatic_value_result = itself.class().send("_schema", None)
             .get_data(&*MODEL_DESCRIPTOR_WRAPPER)
-            .coerce(key, value, &mut guard);
+            .coerce(&key, value, &mut guard);
         if let Err(err) = avromatic_value_result {
             let message = format!("{}", err);
             VM::raise(Class::from_existing("ArgumentError"), &message);
@@ -103,7 +141,8 @@ methods!(
     }
 
     fn rb_get_attribute(key: AnyObject) -> AnyObject {
-        let key = stringify(argument_check!(key));
+        let key = argument_check!(key);
+        let key = stringify(&key);
         itself.with_storage(|storage| {
             if let Some(value) = storage.attributes.get(&key) {
                 value.to_any_object()
@@ -114,7 +153,8 @@ methods!(
     }
 
     fn rb_is_attribute_true(key: AnyObject) -> AnyObject {
-        let key = stringify(argument_check!(key));
+        let key = argument_check!(key);
+        let key = stringify(&key);
         itself.with_storage(|storage| {
             if let Some(AvromaticValue::True) = storage.attributes.get(&key) {
                 Boolean::new(true)
@@ -141,6 +181,26 @@ methods!(
             &data.to_bytes_unchecked(),
             &mut guard
         ).unwrap()
+    }
+
+    fn rb_respond_to_missing(name: Symbol, _include_all: Boolean) -> AnyObject {
+        let name = argument_check!(name);
+        let s = name.to_str();
+        let schema = itself.send("_schema", None);
+        let descriptor = schema.get_data(&*MODEL_DESCRIPTOR_WRAPPER);
+        let b = if s.ends_with("?") {
+            let (s, _) = s.split_at(s.len() - 1);
+            descriptor.get_attribute(s)
+                .map(|d| d.is_boolean())
+                .unwrap_or(false)
+        } else if s.ends_with("=") {
+            let (s, _) = s.split_at(s.len() - 1);
+            // TODO check mutable
+            descriptor.get_attribute(s).is_some()
+        } else {
+            descriptor.get_attribute(s).is_some()
+        };
+        Boolean::new(b).to_any_object()
     }
 );
 
@@ -229,6 +289,9 @@ pub fn initialize() {
         itself.def("initialize", rb_initialize);
         itself.def("[]=", rb_set_attribute);
         itself.def("[]", rb_get_attribute);
+        itself.def("_attribute_true?", rb_is_attribute_true);
+        itself.def("method_missing", rb_method_missing);
+        itself.def("respond_to_missing?", rb_respond_to_missing);
         itself.def("avro_message_value", rb_avro_message_value);
     });
     Module::new("AvromaticModel").define(|itself| {

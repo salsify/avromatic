@@ -79,6 +79,10 @@ impl ModelDescriptorInner {
     {
         self.descriptor.attributes.iter().for_each(|(k, v)| f(k, v))
     }
+
+    pub fn get_attribute(&self, name: &str) -> Option<&AttributeDescriptor> {
+        self.descriptor.attributes.get(name)
+    }
 }
 
 class!(ModelDescriptor);
@@ -135,6 +139,10 @@ impl RecordDescriptor {
             _ => unimplemented!(),
         }
     }
+
+    fn get(&self, name: &str) -> Option<&AttributeDescriptor> {
+        self.attributes.get(name)
+    }
 }
 
 #[derive(Debug)]
@@ -172,6 +180,14 @@ impl AttributeDescriptor {
         -> Result<AvromaticValue, Error>
     {
         self.type_descriptor.avro_to_attribute(value, guard)
+    }
+
+    pub fn is_boolean(&self) -> bool {
+        if let TypeDescriptor::Boolean = self.type_descriptor {
+            true
+        } else {
+            false
+        }
     }
 }
 
