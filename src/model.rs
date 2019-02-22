@@ -113,6 +113,17 @@ methods!(
         })
     }
 
+    fn rb_is_attribute_true(key: AnyObject) -> AnyObject {
+        let key = stringify(argument_check!(key));
+        itself.with_storage(|storage| {
+            if let Some(AvromaticValue::True) = storage.attributes.get(&key) {
+                Boolean::new(true)
+            } else {
+                Boolean::new(false)
+            }
+        }).to_any_object()
+    }
+
     fn rb_avro_message_value() -> AnyObject {
         let encoding = Encoding::find("ASCII-8BIT").unwrap();
         let bytes = itself.serialize();
@@ -183,12 +194,15 @@ impl AvromaticModel {
             .try_convert_to::<Module>()
             .unwrap();
 
-        let descriptor = ModelDescriptor::new(schema);
-        module.instance_variable_set("@_schema", descriptor);
-
-        module.define(|itself| {
-            itself.def_self("included", rb_included_hook);
-        });
+        match ModelDescriptor::new(schema) {
+            Ok(descriptor) => {
+                module.instance_variable_set("@_schema", descriptor);
+                module.define(|itself| {
+                    itself.def_self("included", rb_included_hook);
+                });
+            },
+            Err(err) => VM::raise(Class::from_existing("StandardError"), &format!("{}", err)),
+        }
         module
     }
 
@@ -202,10 +216,10 @@ impl AvromaticModel {
             return class;
         }
         println!("Allocating model: {:?}", model_name);
-        let module = Self::from_schema(schema);
         let class = Class::new(&model_name, None);
-        class.send("include", Some(&[module.to_any_object()]));
         registry.register(model_name, class.value().into());
+        let module = Self::from_schema(schema);
+        class.send("include", Some(&[module.to_any_object()]));
         class
     }
 }

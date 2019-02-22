@@ -13,7 +13,8 @@ pub fn to_avro<'a, I>(
 {
     let out = match (value, schema.kind()) {
         (AvromaticValue::Null, SchemaKind::Null) => Value::Null,
-        (AvromaticValue::String(rstring), SchemaKind::Fixed) => fixed_to_value(rstring, schema.fixed_size()),
+        (AvromaticValue::String(rstring), SchemaKind::Fixed) =>
+            fixed_to_value(rstring, schema.fixed_size().unwrap()),
         (AvromaticValue::String(rstring), SchemaKind::String) => string_to_value(rstring),
         (AvromaticValue::Long(integer), SchemaKind::Int) => int_to_value(integer),
         (AvromaticValue::Long(integer), SchemaKind::Long) => long_to_value(integer),
@@ -45,7 +46,7 @@ fn long_to_value(integer: &Integer) -> Value {
 fn union_to_value<'a, I>(index: usize, value: &AvromaticValue, schema: I) -> Result<Value, Error>
     where I: SchemaIter<'a> + 'a
 {
-    let schema = schema.union_schema().variants()[index];
+    let schema = schema.union_schema().unwrap().variants()[index];
     let union_ref = UnionRef::from_schema(schema.schema());
     Ok(Value::Union(union_ref, Box::new(to_avro(schema, &value)?)))
 }
@@ -54,6 +55,7 @@ fn untracked_union_to_value<'a, I>(value: &AvromaticValue, schema: I) -> Result<
     where I: SchemaIter<'a> + 'a
 {
     schema.union_schema()
+        .unwrap()
         .variants()
         .into_iter()
         .map(|variant| to_avro(variant, value))
@@ -68,7 +70,7 @@ fn array_to_value<'a, I>(values: &[AvromaticValue], schema: I) -> Result<Value, 
     Ok(
         Value::Array(
         values.into_iter()
-            .map(|v| to_avro(schema.array_schema(), &v))
+            .map(|v| to_avro(schema.array_schema().unwrap(), &v))
             .collect::<Result<Vec<Value>, Error>>()?
         )
     )
@@ -89,7 +91,7 @@ fn build_avro_record<'a, I>(
 ) -> Result<Value, Error>
     where I: SchemaIter<'a> + 'a
 {
-    let schema = schema.record_schema();
+    let schema = schema.record_schema().unwrap();
     let mut record = schema.new_record();
     schema.fields().iter().map(|field| {
         let value = attributes.get(field.name()).unwrap_or(&AvromaticValue::Null);
