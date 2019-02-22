@@ -1,7 +1,6 @@
 use avro_rs::{
     FullSchema,
-    Schema,
-    schema::{RecordField, SchemaKind, SchemaIter, SchemaRef, UnionRef},
+    schema::{SchemaKind, SchemaIter, SchemaRef, UnionRef},
     types::Value as AvroValue,
 };
 use crate::heap_guard::HeapGuard;
@@ -13,12 +12,12 @@ use rutie::*;
 use std::collections::HashMap;
 
 #[derive(Debug, Fail)]
-enum AvromaticError {
+pub enum AvromaticError {
     #[fail(display = "attribute '{}' does not exist", name)]
     InvalidAttribute {
         name: String,
     },
-    #[fail(display = "cannot coerce '{}' to '{}'", value, name)]
+    #[fail(display = "cannot coerce {} to {}", value, name)]
     InvalidValue {
         value: String,
         name: String,

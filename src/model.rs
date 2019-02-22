@@ -1,7 +1,7 @@
 use avro_rs::{FullSchema, Schema, schema::SchemaIter};
 use crate::heap_guard::HeapGuard;
 use crate::descriptors::{ModelDescriptor, MODEL_DESCRIPTOR_WRAPPER};
-use crate::model_pool::{ModelPool, ModelRegistry};
+use crate::model_pool::ModelRegistry;
 use crate::values::AvromaticValue;
 use rutie::*;
 use rutie::types::{Argc, Value as RValue};
@@ -68,8 +68,11 @@ extern fn rb_initialize(argc: Argc, argv: *const AnyObject, mut itself: AnyObjec
                  storage.attributes.insert(key.to_string(), coerced);
             },
             Err(err) => {
+                let class = Module::from_existing("Avromatic")
+                    .get_nested_module("Model")
+                    .get_nested_class("CoercionError");
                 let message = format!("error initializing {}: {}", key, err);
-                VM::raise(Class::from_existing("ArgumentError"), &message);
+                VM::raise(class, &message);
             },
         };
     });
