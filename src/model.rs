@@ -148,7 +148,9 @@ methods!(
         let key = stringify(&key);
         itself.with_storage(|storage| {
             if let Some(value) = storage.attributes.get(&key) {
-                value.to_any_object()
+                let schema = itself.class().send("_schema", None);
+                let descriptor = schema.get_data(&*MODEL_DESCRIPTOR_WRAPPER);
+                descriptor.to_ruby(&key, &value)
             } else {
                 NilClass::new().into()
             }

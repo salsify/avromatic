@@ -11,6 +11,7 @@ mod heap_guard;
 mod model;
 mod model_pool;
 mod serializer;
+mod util;
 mod values;
 
 #[allow(non_snake_case)]

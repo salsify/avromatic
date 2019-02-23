@@ -6,6 +6,7 @@ use avro_rs::{
 use crate::heap_guard::HeapGuard;
 use crate::model::{AvromaticModel, ModelStorage, MODEL_STORAGE_WRAPPER};
 use crate::serializer;
+use crate::util::{instance_of, RDate, RDateTime, RTime};
 use crate::values::AvromaticValue;
 use failure::{Error, Fail, format_err};
 use rutie::*;
@@ -46,6 +47,10 @@ impl ModelDescriptorInner {
 
     pub fn coerce(&self, key: &str, value: AnyObject, guard: &mut HeapGuard) -> Result<AvromaticValue, Error> {
         self.descriptor.coerce(key, value, guard)
+    }
+
+    pub fn to_ruby(&self, key: &str, value: &AvromaticValue) -> AnyObject {
+        self.descriptor.to_ruby(key, value)
     }
 
     pub fn serialize(&self, attributes: &HashMap<String, AvromaticValue>)
@@ -116,6 +121,12 @@ impl RecordDescriptor {
             .and_then(|descriptor| descriptor.coerce(value, guard))
     }
 
+    pub fn to_ruby(&self, key: &str, value: &AvromaticValue) -> AnyObject {
+        self.attributes.get(key)
+            .map(|descriptor| descriptor.to_ruby(value))
+            .unwrap_or_else(|| NilClass::new().into())
+    }
+
     fn mark(&self) {
         self.attributes.values().for_each(AttributeDescriptor::mark);
     }
@@ -162,6 +173,10 @@ impl AttributeDescriptor {
 
     pub fn coerce(&self, value: AnyObject, guard: &mut HeapGuard) -> Result<AvromaticValue, Error> {
         self.type_descriptor.coerce(&value, guard)
+    }
+
+    pub fn to_ruby(&self, value: &AvromaticValue) -> AnyObject {
+        self.type_descriptor.to_ruby(&value)
     }
 
     pub fn default(&self) -> AnyObject {
@@ -222,6 +237,11 @@ impl TypeDescriptor {
             SchemaKind::Double => TypeDescriptor::Float,
             SchemaKind::Bytes => TypeDescriptor::Bytes,
             SchemaKind::String => TypeDescriptor::String,
+            SchemaKind::Date => TypeDescriptor::Date,
+            SchemaKind::TimestampMicros => TypeDescriptor::TimestampMicros,
+            SchemaKind::TimestampMillis => TypeDescriptor::TimestampMillis,
+            SchemaKind::TimeMillis => unimplemented!(),
+            SchemaKind::TimeMicros => unimplemented!(),
             SchemaKind::Fixed => {
                 let size = schema.fixed_size()
                     .ok_or_else(|| format_err!("Invalid Schema"))?;
@@ -273,6 +293,9 @@ impl TypeDescriptor {
             TypeDescriptor::Bytes => coerce_string(value, guard),
             TypeDescriptor::Enum(symbols) => coerce_enum(value, symbols, guard),
             TypeDescriptor::Integer => coerce_integer(value, guard),
+            TypeDescriptor::Date => coerce_date(value, guard),
+            TypeDescriptor::TimestampMillis => coerce_timestamp_millis(value, guard),
+            TypeDescriptor::TimestampMicros => coerce_timestamp_micros(value, guard),
             TypeDescriptor::Float => coerce_float(value, guard),
             TypeDescriptor::Fixed(length) => coerce_fixed(value, *length, guard),
             TypeDescriptor::Array(inner) => coerce_array(value, inner, guard),
@@ -280,6 +303,35 @@ impl TypeDescriptor {
             TypeDescriptor::Record(inner) => coerce_record(value, inner, guard),
             TypeDescriptor::Map(inner) => coerce_map(value, inner, guard),
             _ => unimplemented!(),
+        }
+    }
+
+    pub fn to_ruby(&self, value: &AvromaticValue) -> AnyObject {
+        match (value, self) {
+            (AvromaticValue::Null, _) => NilClass::new().into(),
+            (AvromaticValue::True, _) => Boolean::new(true).to_any_object(),
+            (AvromaticValue::False, _) => Boolean::new(false).to_any_object(),
+            (AvromaticValue::String(string), _) => string.to_any_object(),
+            (AvromaticValue::Long(n), TypeDescriptor::Date) => RDate::from_i64(n),
+            (AvromaticValue::Long(n), TypeDescriptor::TimestampMillis) => RTime::from_millis(n),
+            (AvromaticValue::Long(n), TypeDescriptor::TimestampMicros) => RTime::from_micros(n),
+            (AvromaticValue::Long(n), _) => n.to_any_object(),
+            (AvromaticValue::Float(f), _) => f.to_any_object(),
+            (AvromaticValue::Array(values), TypeDescriptor::Array(inner)) => {
+                values.iter().map(|v| inner.to_ruby(v)).collect::<Array>().to_any_object()
+            },
+            (AvromaticValue::Union(index, value), TypeDescriptor::Union(_, variants)) => {
+                variants[*index].to_ruby(value)
+            },
+            (AvromaticValue::Record(value), _) => value.to_any_object(),
+            (AvromaticValue::Map(value), TypeDescriptor::Map(inner)) => {
+                let mut hash = Hash::new();
+                value.iter().for_each(|(k, v)| {
+                    hash.store(RString::new_utf8(k), inner.to_ruby(v));
+                });
+                hash.to_any_object()
+            },
+            _ => unreachable!(),
         }
     }
 
@@ -409,6 +461,60 @@ fn coerce_fixed(value: &AnyObject, length: usize, guard: &mut HeapGuard) -> Resu
         .ok_or_else(|| bad_coercion(value, &format!("fixed({})", length)))
 }
 
+fn coerce_date(value: &AnyObject, guard: &mut HeapGuard) -> Result<AvromaticValue, Error> {
+    let n = if let Ok(date) = value.try_convert_to::<RDate>() {
+        date.days_since_epoch()
+    } else if let Ok(datetime) = value.try_convert_to::<RDateTime>() {
+        datetime.days_since_epoch()
+    } else if let Ok(time) = value.try_convert_to::<RTime>() {
+        time.days_since_epoch()
+    } else {
+        return Err(bad_coercion(value, "date"))
+    };
+    guard.guard(n.to_any_object());
+    Ok(AvromaticValue::Long(n))
+}
+
+fn coerce_timestamp_millis(value: &AnyObject, guard: &mut HeapGuard) -> Result<AvromaticValue, Error> {
+    if instance_of(value, Class::from_existing("Numeric")) {
+        let n = value.send("to_i", None).try_convert_to::<Integer>()
+            .map_err(|_| bad_coercion(value, "timestamp-millis"))?;
+        guard.guard(n.to_any_object());
+        return Ok(AvromaticValue::Long(n));
+    }
+
+    if value.class() == Class::from_existing("Date") {
+        return Err(bad_coercion(value, "timestamp-millis"));
+    }
+
+    let n = value.send("to_time", None)
+        .try_convert_to::<RTime>()
+        .map(|time| time.to_millis())
+        .map_err(|_| bad_coercion(value, "timestamp-millis"))?;
+    guard.guard(n.to_any_object());
+    Ok(AvromaticValue::Long(n))
+}
+
+fn coerce_timestamp_micros(value: &AnyObject, guard: &mut HeapGuard) -> Result<AvromaticValue, Error> {
+    if instance_of(value, Class::from_existing("Numeric")) {
+        let n = value.send("to_i", None).try_convert_to::<Integer>()
+            .map_err(|_| bad_coercion(value, "timestamp-micros"))?;
+        guard.guard(n.to_any_object());
+        return Ok(AvromaticValue::Long(n));
+    }
+
+    if value.class() == Class::from_existing("Date") {
+        return Err(bad_coercion(value, "timestamp-micros"));
+    }
+
+    let n = value.send("to_time", None)
+        .try_convert_to::<RTime>()
+        .map(|time| time.to_micros())
+        .map_err(|_| bad_coercion(value, "timestamp-micros"))?;
+    guard.guard(n.to_any_object());
+    Ok(AvromaticValue::Long(n))
+}
+
 fn coerce_integer(value: &AnyObject, guard: &mut HeapGuard) -> Result<AvromaticValue, Error> {
     value.try_convert_to::<Integer>()
         .map(|int| {
@@ -421,12 +527,16 @@ fn coerce_integer(value: &AnyObject, guard: &mut HeapGuard) -> Result<AvromaticV
 
 fn coerce_float(value: &AnyObject, guard: &mut HeapGuard) -> Result<AvromaticValue, Error> {
     value.try_convert_to::<Float>()
+        .or_else(|_|
+            value.try_convert_to::<Integer>()
+                .map(|i| Float::new(i.to_i64() as f64))
+        )
         .map(|float| {
             guard.guard(float.to_any_object());
             float
         })
         .map(AvromaticValue::Float)
-        .or_else(|_| Err(bad_coercion(value, "float")))
+        .map_err(|_| bad_coercion(value, "float"))
 }
 
 fn coerce_enum(value: &AnyObject, symbols: &[String], guard: &mut HeapGuard) -> Result<AvromaticValue, Error> {

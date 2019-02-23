@@ -1075,7 +1075,7 @@ describe Avromatic::Model::Builder do
         let(:schema) do
           Avro::Builder.build_schema do
             record :with_date_union do
-              required :u, :union, types: [:string, long(logical_type: 'date')]
+              required :u, :union, types: [:string, int(logical_type: 'date')]
             end
           end
         end
