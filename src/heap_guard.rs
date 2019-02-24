@@ -1,7 +1,4 @@
-use crate::values::AvromaticValue;
 use rutie::*;
-use rutie::types::Value;
-use std::ops::Drop;
 
 pub struct HeapGuard {
     values: Array

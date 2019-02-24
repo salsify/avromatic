@@ -13,32 +13,35 @@ macro_rules! argument_check {
 }
 
 macro_rules! ruby_class {
-    ($ruby_name:expr, $rust_name:ident) => {
+    ($rust_name:ident, $ruby_name:expr) => {
+        ruby_class!($rust_name, $ruby_name, Class::from_existing($ruby_name));
+    };
+    ($rust_name:ident, $ruby_name:expr, $ruby_class:expr) => {
         #[derive(Clone, Debug)]
         pub struct $rust_name {
-            value: Value,
+            value: rutie::types::Value,
         }
 
-        impl From<Value> for $rust_name {
-            fn from(value: Value) -> Self {
+        impl From<rutie::types::Value> for $rust_name {
+            fn from(value: rutie::types::Value) -> Self {
                 $rust_name { value }
             }
         }
 
-        impl Into<Value> for $rust_name {
-            fn into(self) -> Value {
+        impl Into<rutie::types::Value> for $rust_name {
+            fn into(self) -> rutie::types::Value {
                 self.value
             }
         }
 
-        impl Borrow<Value> for $rust_name {
-            fn borrow(&self) -> &Value {
+        impl std::borrow::Borrow<rutie::types::Value> for $rust_name {
+            fn borrow(&self) -> &rutie::types::Value {
                 &self.value
             }
         }
 
-        impl AsRef<Value> for $rust_name {
-            fn as_ref(&self) -> &Value {
+        impl AsRef<rutie::types::Value> for $rust_name {
+            fn as_ref(&self) -> &rutie::types::Value {
                 &self.value
             }
         }
@@ -50,34 +53,41 @@ macro_rules! ruby_class {
             }
         }
 
-        impl Object for $rust_name {
+        impl rutie::Object for $rust_name {
             #[inline]
-            fn value(&self) -> Value {
+            fn value(&self) -> rutie::types::Value {
                 self.value
             }
         }
 
-        impl Deref for $rust_name {
-            type Target = Value;
+        impl std::ops::Deref for $rust_name {
+            type Target = rutie::types::Value;
 
-            fn deref(&self) -> &Value {
+            fn deref(&self) -> &rutie::types::Value {
                 &self.value
             }
         }
 
-        impl VerifiedObject for $rust_name {
-            fn is_correct_type<T: Object>(obj: &T) -> bool {
-                instance_of(obj, Class::from_existing($ruby_name))
+        impl rutie::VerifiedObject for $rust_name {
+            fn is_correct_type<T: rutie::Object>(obj: &T) -> bool {
+                $crate::util::instance_of(obj, $ruby_class)
             }
 
             fn error_message() -> &'static str {
-                "Error converting to Time"
+                concat!("Error converting to ", $ruby_name)
             }
         }
 
         impl PartialEq for $rust_name {
             fn eq(&self, other: &Self) -> bool {
+                use rutie::Object;
                 self.equals(other)
+            }
+        }
+
+        impl $rust_name {
+            pub fn class() -> Class {
+                $ruby_class
             }
         }
     }

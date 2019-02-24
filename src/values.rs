@@ -1,8 +1,7 @@
 use rutie::*;
-use rutie::rubysys::value::ValueType;
 use std::collections::HashMap;
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum AvromaticValue {
     Null,
     True,

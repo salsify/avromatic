@@ -1,4 +1,3 @@
-#[macro_use]
 extern crate rutie;
 #[macro_use]
 extern crate lazy_static;
@@ -6,6 +5,7 @@ extern crate lazy_static;
 #[macro_use]
 mod macros;
 
+mod configuration;
 mod descriptors;
 mod heap_guard;
 mod model;

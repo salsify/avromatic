@@ -1,4 +1,4 @@
-use avro_rs::{FullSchema, Schema, UnionRef, schema::{SchemaIter, SchemaKind}, types::{Record, Value, ToAvro}};
+use avro_rs::{FullSchema, UnionRef, schema::{SchemaIter, SchemaKind}, types::{Value, ToAvro}};
 use crate::model::MODEL_STORAGE_WRAPPER;
 use crate::values::AvromaticValue;
 use failure::{Error, bail};
@@ -18,6 +18,9 @@ pub fn to_avro<'a, I>(
         (AvromaticValue::String(rstring), SchemaKind::String) => string_to_value(rstring),
         (AvromaticValue::Long(integer), SchemaKind::Int) => int_to_value(integer),
         (AvromaticValue::Long(integer), SchemaKind::Long) => long_to_value(integer),
+        (AvromaticValue::Long(integer), SchemaKind::Date) => date_to_value(integer),
+        (AvromaticValue::Long(integer), SchemaKind::TimestampMillis) => timestamp_millis_to_value(integer),
+        (AvromaticValue::Long(integer), SchemaKind::TimestampMicros) => timestamp_micros_to_value(integer),
         (AvromaticValue::Union(n, ref value), SchemaKind::Union) => union_to_value(*n, value, schema)?,
         (value, SchemaKind::Union) => untracked_union_to_value(value, schema)?,
         (AvromaticValue::Array(values), SchemaKind::Array) => array_to_value(values, schema)?,
@@ -43,6 +46,18 @@ fn long_to_value(integer: &Integer) -> Value {
     Value::Long(integer.to_i64())
 }
 
+fn date_to_value(integer: &Integer) -> Value {
+    Value::Date(integer.to_i64() as i32)
+}
+
+fn timestamp_millis_to_value(integer: &Integer) -> Value {
+    Value::TimestampMillis(integer.to_i64())
+}
+
+fn timestamp_micros_to_value(integer: &Integer) -> Value {
+    Value::TimestampMicros(integer.to_i64())
+}
+
 fn union_to_value<'a, I>(index: usize, value: &AvromaticValue, schema: I) -> Result<Value, Error>
     where I: SchemaIter<'a> + 'a
 {
@@ -58,7 +73,10 @@ fn untracked_union_to_value<'a, I>(value: &AvromaticValue, schema: I) -> Result<
         .unwrap()
         .variants()
         .into_iter()
-        .map(|variant| to_avro(variant, value))
+        .map(|variant| {
+            let val = Box::new(to_avro(variant, value)?);
+            Ok(Value::Union(UnionRef::from_schema(variant.schema()), val))
+        })
         .find(Result::is_ok)
         .unwrap_or_else(|| bail!("Bad union"))
 }

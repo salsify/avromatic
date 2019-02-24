@@ -12,7 +12,7 @@ require 'avromatic/patches'
 require 'rutie'
 
 module Avromatic
-  Rutie.new(:avromatic, release: 'debug').init('Init_avromatic', __dir__)
+  Rutie.new(:avromatic).init('Init_avromatic', __dir__)
 
   class << self
     attr_accessor :schema_registry, :registry_url, :schema_store, :logger,

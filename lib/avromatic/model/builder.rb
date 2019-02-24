@@ -65,8 +65,7 @@ module Avromatic
       private
 
       def define_native_module
-        schema = config.avro_schema
-        @mod = AvromaticModel.build(schema.to_s)
+        @mod = AvromaticModel.build(config)
       end
 
       def define_included_method

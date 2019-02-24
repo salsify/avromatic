@@ -21,7 +21,6 @@ describe Avromatic::Model::Builder do
 
     it "returns a new model class" do
       expect(klass).to be_a(Class)
-      expect(klass.ancestors).to include(Avromatic::Model::Attributes)
       expect(klass.attribute_definitions.keys.map(&:to_s))
         .to match_array(schema.fields.map(&:name))
     end

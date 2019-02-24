@@ -1,13 +1,24 @@
 use rutie::*;
-use rutie::types::Value;
-use std::borrow::Borrow;
-use std::ops::Deref;
 
 pub fn instance_of(object: &impl Object, class: Class) -> bool {
     object.class().ancestors().iter().any(|obj_class| *obj_class == class)
 }
 
-ruby_class!("Date", RDate);
+pub fn ancestor_send(object: &impl Object, method: &str) -> AnyObject {
+    class_ancestor_send(&object.class(), method)
+}
+
+pub fn class_ancestor_send(class: &Class, method: &str) -> AnyObject {
+    for class in class.ancestors().iter() {
+        let value = class.send(method, None);
+        if !value.is_nil() {
+            return value;
+        }
+    }
+    return NilClass::new().into();
+}
+
+ruby_class!(RDate, "Date");
 
 impl RDate {
     pub fn from_i64(n: &Integer) -> AnyObject {
@@ -29,7 +40,7 @@ impl RDate {
     }
 }
 
-ruby_class!("DateTime", RDateTime);
+ruby_class!(RDateTime, "DateTime");
 
 impl RDateTime {
     pub fn days_since_epoch(&self) -> Integer {
@@ -40,7 +51,7 @@ impl RDateTime {
     }
 }
 
-ruby_class!("Time", RTime);
+ruby_class!(RTime, "Time");
 
 impl RTime {
     pub fn days_since_epoch(&self) -> Integer {

@@ -5,14 +5,13 @@ authors = ["Kyle Phelps <kphelps@salsify.com>"]
 edition = "2018"
 
 [dependencies]
+avro-rs = { path = "../../dev/avro-rs" }
 failure = "*"
 lazy_static = "*"
 rutie = { git = "https://github.com/danielpclark/rutie", branch = "master" }
-avro-rs = { git = "https://github.com/kphelps/avro-rs", branch = "master" }
+serde_json = "*"
+sha2 = "*"
 
 [lib]
 name = "avromatic"
 crate-type = ["dylib"]
-
-[profile.release]
-debug = true

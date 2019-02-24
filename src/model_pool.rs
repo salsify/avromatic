@@ -46,6 +46,18 @@ impl ModelRegistry {
     pub fn get(obj: &mut AnyObject) -> &mut ModelPool {
         obj.get_data_mut(&*MODEL_POOL_WRAPPER)
     }
+
+    pub fn register(name: String, class: Class) {
+        let mut registry_obj = Class::from_existing("ModelRegistry").send("global", None);
+        let registry = Self::get(&mut registry_obj);
+        registry.register(name, class)
+    }
+
+    pub fn lookup(name: &str) -> Option<Class> {
+        let mut registry_obj = Class::from_existing("ModelRegistry").send("global", None);
+        let registry = Self::get(&mut registry_obj);
+        registry.lookup(name)
+    }
 }
 
 methods!(
