@@ -4,6 +4,7 @@ pub fn instance_of(object: &impl Object, class: Class) -> bool {
     object.class().ancestors().iter().any(|obj_class| *obj_class == class)
 }
 
+// TODO: stupid hacks
 pub fn ancestor_send(object: &impl Object, method: &str) -> AnyObject {
     class_ancestor_send(&object.class(), method)
 }

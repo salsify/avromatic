@@ -1,7 +1,7 @@
 use avro_rs::{FullSchema, UnionRef, schema::{SchemaIter, SchemaKind}, types::{Value, ToAvro}};
 use crate::model::MODEL_STORAGE_WRAPPER;
 use crate::values::AvromaticValue;
-use failure::{Error, bail};
+use failure::{Error, bail, format_err};
 use rutie::*;
 use std::collections::HashMap;
 
@@ -25,7 +25,7 @@ pub fn to_avro<'a, I>(
         (value, SchemaKind::Union) => untracked_union_to_value(value, schema)?,
         (AvromaticValue::Array(values), SchemaKind::Array) => array_to_value(values, schema)?,
         (AvromaticValue::Record(object), SchemaKind::Record) => record_to_value(object, schema)?,
-        _ => bail!("bad to avro: {:?} {:?}", value, schema.schema()),
+        _ => return Err(format_err!("bad to avro: {:?} {:?}", value, schema.schema())),
     };
     Ok(out)
 }

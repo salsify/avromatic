@@ -1259,8 +1259,21 @@ describe Avromatic::Model::Builder do
 
     describe "#inspect" do
       it "returns the class name and instance attributes" do
-        expect(model1.inspect)
-          .to eq('#<PrimitiveType s: "foo", b: nil, tf: true, i: 42, l: nil, f: nil, d: nil, n: nil, fx: nil, e: nil>')
+        expect(model1.inspect).to match(/#<PrimitiveType .*>/)
+        [
+          's: "foo"',
+          'b: nil',
+          'tf: true',
+          'i: 42',
+          'l: nil',
+          'f: nil',
+          'd: nil',
+          'n: nil',
+          'fx: nil',
+          'e: nil'
+        ].each do |part|
+          expect(model1.inspect).to match(".*#{part}.*")
+        end
       end
     end
 

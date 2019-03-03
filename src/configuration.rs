@@ -20,8 +20,16 @@ impl AvromaticConfiguration {
         Ok(instance.value().into())
     }
 
+    pub fn rb_key_schema(&self) -> AnyObject {
+        self.instance_variable_get("@key_avro_schema")
+    }
+
+    pub fn rb_value_schema(&self) -> AnyObject {
+        self.instance_variable_get("@avro_schema")
+    }
+
     pub fn key_schema(&self) -> Result<Option<FullSchema>, Error> {
-        let var = self.instance_variable_get("@key_avro_schema");
+        let var = self.rb_key_schema();
         if var.is_nil() {
             return Ok(None)
         }
@@ -30,7 +38,7 @@ impl AvromaticConfiguration {
     }
     pub fn value_schema(&self) -> Result<FullSchema, Error> {
         let s = RString::from(
-            self.instance_variable_get("@avro_schema")
+            self.rb_value_schema()
                 .send("to_s", None)
                 .value()
         );

@@ -37,6 +37,20 @@ wrappable_struct!(
 
 class!(ModelRegistry);
 
+methods!(
+    ModelRegistry,
+    itself,
+
+    fn rb_lookup(name: RString) -> AnyObject {
+        let name = argument_check!(name);
+        let pool = itself.get_data(&*MODEL_POOL_WRAPPER);
+        pool.lookup(name.to_str())
+            .as_ref()
+            .map(Class::to_any_object)
+            .unwrap_or_else(|| NilClass::new().to_any_object())
+    }
+);
+
 impl ModelRegistry {
     pub fn new() -> AnyObject {
         let pool = ModelPool::new();
@@ -48,33 +62,40 @@ impl ModelRegistry {
     }
 
     pub fn register(name: String, class: Class) {
-        let mut registry_obj = Class::from_existing("ModelRegistry").send("global", None);
+        println!("Registering: {}", name);
+        let mut registry_obj = Self::global();
         let registry = Self::get(&mut registry_obj);
         registry.register(name, class)
     }
 
     pub fn lookup(name: &str) -> Option<Class> {
-        let mut registry_obj = Class::from_existing("ModelRegistry").send("global", None);
+        let mut registry_obj = Self::global();
         let registry = Self::get(&mut registry_obj);
         registry.lookup(name)
+    }
+
+    pub fn global() -> AnyObject {
+        let mut itself = Class::from_existing("ModelRegistry");
+        let mut registry = itself.instance_variable_get("@_registry");
+        if registry.is_nil() {
+            return itself.instance_variable_set("@_registry", ModelRegistry::new());
+        }
+        registry
     }
 }
 
 methods!(
     ModelRegistry,
-    _itself,
+    itself,
 
     fn rb_global() -> AnyObject {
-        let mut registry = _itself.instance_variable_get("@_registry");
-        if registry.is_nil() {
-            return _itself.instance_variable_set("@_registry", ModelRegistry::new());
-        }
-        registry
+        ModelRegistry::global()
     }
 );
 
 pub fn initialize() {
     Class::new("ModelRegistry", None).define(|itself| {
         itself.def_self("global", rb_global);
+        itself.def("[]", rb_lookup);
     });
 }

@@ -62,37 +62,37 @@ x_data = x.avro_message_value
 
 Y.avro_message_decode(y_data).avro_message_value
 
-# puts '--- Ctor -> Ser (publishing use case) ---'
-# Benchmark.ips do |z|
-#   z.report('ruby') { Y.new(values).avro_message_value }
-#   z.report('rust') { X.new(values).avro_message_value }
-#   z.compare!
-# end
+puts '--- Ctor -> Ser (publishing use case) ---'
+Benchmark.ips do |z|
+  z.report('ruby') { Y.new(values).avro_message_value }
+  z.report('rust') { X.new(values).avro_message_value }
+  z.compare!
+end
 
-# puts '--- De ---'
-# Benchmark.ips do |z|
-#   z.report('ruby') { Y.avro_message_decode(y_data) }
-#   z.report('rust') { X.avro_message_decode(x_data) }
-#   z.compare!
-# end
+puts '--- De ---'
+Benchmark.ips do |z|
+  z.report('ruby') { Y.avro_message_decode(y_data) }
+  z.report('rust') { X.avro_message_decode(x_data) }
+  z.compare!
+end
 
-# puts '--- Ctor ---'
-# Benchmark.ips do |z|
-#   z.report('ruby') { Y.new(values) }
-#   z.report('rust') { X.new(values) }
-#   z.compare!
-# end
+puts '--- Ctor ---'
+Benchmark.ips do |z|
+  z.report('ruby') { Y.new(values) }
+  z.report('rust') { X.new(values) }
+  z.compare!
+end
 
-# puts '--- Ser ---'
-# Benchmark.ips do |z|
-#   z.report('ruby') { y.avro_message_value }
-#   z.report('rust') { x.avro_message_value }
-#   z.compare!
-# end
+puts '--- Ser ---'
+Benchmark.ips do |z|
+  z.report('ruby') { y.avro_message_value }
+  z.report('rust') { x.avro_message_value }
+  z.compare!
+end
 
-# puts '--- De -> Ser (mutable state use case) ---'
-# Benchmark.ips do |z|
-#   z.report('ruby') { Y.avro_message_decode(y_data).avro_message_value }
-#   z.report('rust') { X.avro_message_decode(x_data).avro_message_value }
-#   z.compare!
-# end
+puts '--- De -> Ser (mutable state use case) ---'
+Benchmark.ips do |z|
+  z.report('ruby') { Y.avro_message_decode(y_data).avro_message_value }
+  z.report('rust') { X.avro_message_decode(x_data).avro_message_value }
+  z.compare!
+end

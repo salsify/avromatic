@@ -6,6 +6,7 @@ extern crate lazy_static;
 mod macros;
 
 mod configuration;
+mod custom_types;
 mod descriptors;
 mod heap_guard;
 mod model;
@@ -21,19 +22,3 @@ pub extern "C" fn Init_avromatic() {
     model::initialize();
     model_pool::initialize();
 }
-
-//
-// # creates registry
-// define_avro_model do
-//   attribute :system_id, :salsify_uuid
-//   attribute :system_message_timestamp, :timestamp
-//   attribute :created_at, :timestamp
-//   attribute :updated_at, :timestamp
-//   attribute :destroyed_at, [:nil, :timestamp]
-//   attribute :list_memberships, :array, values: :string
-//   attribute :property_value_collections, :array, values: [:string_pvals, :reference_pvals]
-// end
-
-
-// class Product::Model
-//   avro_attribute :system_id, :salsify_uuid

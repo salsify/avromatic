@@ -1,11 +1,12 @@
 use avro_rs::{
     FullSchema,
     types::ToAvro,
-    schema::{SchemaKind, SchemaFingerprint, SchemaIter, SchemaRef, UnionRef},
+    schema::{SchemaKind, SchemaIter, SchemaRef, UnionRef},
     types::Value as AvroValue,
 };
+use crate::custom_types::{CustomTypeConfiguration, CustomTypeRegistry};
 use crate::heap_guard::HeapGuard;
-use crate::model::{AvromaticModel, ModelStorage, MODEL_STORAGE_WRAPPER};
+use crate::model::{AvromaticModel, AvromaticModelAttributes, ModelStorage, MODEL_STORAGE_WRAPPER};
 use crate::serializer;
 use crate::util::{instance_of, RDate, RDateTime, RTime};
 use crate::values::AvromaticValue;
@@ -13,6 +14,7 @@ use failure::{Error, Fail, format_err};
 use rutie::*;
 use sha2::Sha256;
 use std::collections::HashMap;
+use std::rc::Rc;
 
 #[derive(Debug, Fail)]
 pub enum AvromaticError {
@@ -36,6 +38,13 @@ impl ModelRecord {
     fn new(schema: FullSchema) -> Result<Self, Error> {
         let descriptor = RecordDescriptor::build(&schema)?;
         Ok(Self { schema, descriptor })
+    }
+
+    fn serialize(&self, values: &HashMap<String, AvromaticValue>)
+        -> Result<Vec<u8>, Error>
+    {
+        let datum = self.descriptor.serialize(values, &self.schema)?;
+        avro_rs::to_avro_datum(&self.schema, datum)
     }
 }
 
@@ -80,17 +89,33 @@ impl ModelDescriptorInner {
     }
 
     pub fn coerce(&self, key: &str, value: AnyObject, guard: &mut HeapGuard) -> Result<AvromaticValue, Error> {
-        self.value.descriptor.coerce(key, value, guard)
+        self.value.descriptor.coerce(key, value.to_any_object(), guard).or_else(|err| {
+            self.key.as_ref().map(|k| k.descriptor.coerce(key, value, guard))
+                .unwrap_or(Err(err))
+        })
     }
 
     pub fn to_ruby(&self, key: &str, value: &AvromaticValue) -> AnyObject {
-        self.value.descriptor.to_ruby(key, value)
+        self.key.as_ref()
+            .and_then(|k| k.descriptor.to_ruby(key, value))
+            .or_else(|| self.value.descriptor.to_ruby(key, value))
+            .unwrap_or_else(|| NilClass::new().into())
     }
 
-    pub fn serialize(&self, attributes: &HashMap<String, AvromaticValue>)
+    pub fn serialize_key(&self, attributes: &HashMap<String, AvromaticValue>)
+                           -> Result<Vec<u8>, Error>
+    {
+        self.key
+            .as_ref()
+            .map(|key| key.serialize(attributes))
+            .ok_or_else(|| format_err!("No key schema"))
+            .and_then(|x| x)
+    }
+
+    pub fn serialize_value(&self, attributes: &HashMap<String, AvromaticValue>)
         -> Result<Vec<u8>, Error>
     {
-        serializer::serialize(&self.value.schema, attributes)
+        self.value.serialize(attributes)
     }
 
     pub fn deserialize(&self, class: &Class, data: &[u8], guard: &mut HeapGuard) -> Result<AnyObject, Error> {
@@ -121,13 +146,22 @@ impl ModelDescriptorInner {
         self.value.descriptor.attributes.iter().for_each(|(k, v)| f(k, v));
     }
 
-    pub fn get_attribute(&self, name: &str) -> Option<&AttributeDescriptor> {
-        self.value.descriptor.attributes.get(name)
+    pub fn each_key_field<F>(&self, mut f: F)
+    where F: FnMut(&str, &AttributeDescriptor)
+    {
+        if let Some(ref key) = self.key {
+            key.descriptor.attributes.iter().for_each(|(k, v)| f(k, v));
+        }
     }
 
-    pub fn fingerprint(&self) -> Vec<u8> {
-        println!("{:?}", self.value.schema.schema);
-        self.value.schema.schema.fingerprint::<Sha256>().bytes
+    pub fn each_value_field<F>(&self, mut f: F)
+    where F: FnMut(&str, &AttributeDescriptor)
+    {
+        self.value.descriptor.attributes.iter().for_each(|(k, v)| f(k, v));
+    }
+
+    pub fn get_attribute(&self, name: &str) -> Option<&AttributeDescriptor> {
+        self.value.descriptor.attributes.get(name)
     }
 
     pub fn value_schema(&self) -> &FullSchema {
@@ -171,10 +205,24 @@ impl RecordDescriptor {
             .and_then(|descriptor| descriptor.coerce(value, guard))
     }
 
-    pub fn to_ruby(&self, key: &str, value: &AvromaticValue) -> AnyObject {
+    pub fn to_ruby(&self, key: &str, value: &AvromaticValue) -> Option<AnyObject> {
         self.attributes.get(key)
             .map(|descriptor| descriptor.to_ruby(value))
-            .unwrap_or_else(|| NilClass::new().into())
+    }
+
+    pub fn serialize<'a, I>(&self, values: &HashMap<String, AvromaticValue>, schema: I)
+        -> Result<AvroValue, Error>
+        where I: SchemaIter<'a> + 'a
+    {
+        let schema = schema.record_schema().unwrap();
+        let mut record = schema.new_record();
+        schema.fields().iter().map(|field| {
+            let value = values.get(field.name()).unwrap_or(&AvromaticValue::Null);
+            let attribute = &self.attributes[field.name()];
+            record.put(field.name(), attribute.serialize(value, field.schema())?);
+            Ok(())
+        }).collect::<Result<(), Error>>()?;
+        Ok(record.avro())
     }
 
     fn mark(&self) {
@@ -208,7 +256,10 @@ pub struct AttributeDescriptor {
 }
 
 impl AttributeDescriptor {
-    pub fn build<'a>(field_schema: SchemaRef<'a>, default: Option<AvroValue>) -> Result<Self, Error> {
+    pub fn build<'a>(
+        field_schema: SchemaRef<'a>,
+        default: Option<AvroValue>,
+    ) -> Result<Self, Error> {
         let type_descriptor = TypeDescriptor::build(field_schema)?;
         let default = default.map(|v| {
             type_descriptor.avro_to_attribute(&v, &mut HeapGuard::new())
@@ -260,6 +311,13 @@ impl AttributeDescriptor {
             false
         }
     }
+
+    pub fn serialize<'a, I>(&self, value: &AvromaticValue, schema: I)
+        -> Result<AvroValue, Error>
+        where I: SchemaIter<'a> + 'a
+    {
+        self.type_descriptor.serialize(value, schema)
+    }
 }
 
 #[derive(Debug, PartialEq)]
@@ -281,6 +339,8 @@ enum TypeDescriptor  {
     Map(Box<TypeDescriptor>),
     Record(Class),
     Union(HashMap<UnionRef, usize>, Vec<TypeDescriptor>),
+
+    Custom(CustomTypeConfiguration, Box<TypeDescriptor>),
 }
 
 impl TypeDescriptor {
@@ -319,10 +379,16 @@ impl TypeDescriptor {
             SchemaKind::Union => {
                 let union_schema = schema.union_schema()
                     .ok_or_else(|| format_err!("Invalid Schema"))?;
+                let maybe_null_index = union_schema.variants().iter().position(|variant| {
+                    variant.kind() == SchemaKind::Null
+                });
+                if maybe_null_index.map(|x| x != 0).unwrap_or(false) {
+                    return Err(format_err!("a null type in a union must be the first member"));
+                }
                 let variants = union_schema
                     .variants()
                     .into_iter()
-                    .map(TypeDescriptor::build)
+                    .map(|variant| TypeDescriptor::build(variant))
                     .collect::<Result<Vec<TypeDescriptor>, Error>>()?;
                 TypeDescriptor::Union(union_schema.union_ref_map(), variants)
             },
@@ -336,6 +402,13 @@ impl TypeDescriptor {
                 TypeDescriptor::Enum(symbols.to_vec())
             },
         };
+
+        if let Some(fullname) = schema.fullname() {
+            if let Some(custom_type) = CustomTypeRegistry::global().fetch(&fullname) {
+                return Ok(TypeDescriptor::Custom(custom_type, Box::new(out)));
+            }
+        }
+
         Ok(out)
     }
 
@@ -359,6 +432,7 @@ impl TypeDescriptor {
             TypeDescriptor::Union(_, variants) => coerce_union(value, variants, guard),
             TypeDescriptor::Record(inner) => coerce_record(value, inner, guard),
             TypeDescriptor::Map(inner) => coerce_map(value, inner, guard),
+            TypeDescriptor::Custom(custom, _) => coerce_custom(value, custom, guard),
         }
     }
 
@@ -379,7 +453,11 @@ impl TypeDescriptor {
             (AvromaticValue::Union(index, value), TypeDescriptor::Union(_, variants)) => {
                 variants[*index].to_ruby(value)
             },
-            (AvromaticValue::Record(value), _) => value.to_any_object(),
+            (AvromaticValue::Record(value), _) => {
+                value.to_any_object()
+                // let model = unsafe { value.to::<AvromaticModelAttributes>() };
+                // model.attribute_hash_for_value().into()
+            },
             (AvromaticValue::Map(value), TypeDescriptor::Map(inner)) => {
                 let mut hash = Hash::new();
                 value.iter().for_each(|(k, v)| {
@@ -387,6 +465,7 @@ impl TypeDescriptor {
                 });
                 hash.to_any_object()
             },
+            (AvromaticValue::Custom(value), TypeDescriptor::Custom(_, _)) => value.to_any_object(),
             _ => unreachable!(),
         }
     }
@@ -394,8 +473,13 @@ impl TypeDescriptor {
     fn mark(&self) {
         match self {
             TypeDescriptor::Array(inner) => inner.mark(),
+            TypeDescriptor::Map(inner) => inner.mark(),
             TypeDescriptor::Union(_, variants) => variants.iter().for_each(TypeDescriptor::mark),
             TypeDescriptor::Record(inner) => GC::mark(inner),
+            TypeDescriptor::Custom(custom_type, default) => {
+                GC::mark(custom_type);
+                default.mark();
+            },
             _ => (),
         }
     }
@@ -412,14 +496,22 @@ impl TypeDescriptor {
             (TypeDescriptor::Bytes, AvroValue::Bytes(bytes)) |
             (TypeDescriptor::Fixed(_), AvroValue::Fixed(_, bytes)) => {
                 let encoding = Encoding::find("ASCII-8BIT").unwrap();
-                let rstring = RString::from_bytes(&bytes, &encoding);
+                let mut rstring = RString::from_bytes(&bytes, &encoding);
+                rstring.freeze();
+                guard.guard(rstring.to_any_object());
+                AvromaticValue::String(rstring)
+            },
+            (TypeDescriptor::Fixed(length), AvroValue::String(s)) if s.len() == *length => {
+                let mut rstring = RString::new_utf8(s);
+                rstring.freeze();
                 guard.guard(rstring.to_any_object());
                 AvromaticValue::String(rstring)
             },
             (TypeDescriptor::Enum(_), AvroValue::Enum(_, s)) |
             (TypeDescriptor::Enum(_), AvroValue::String(s)) |
             (TypeDescriptor::String, AvroValue::String(s)) => {
-                let rstring: RString = RString::new_utf8(s);
+                let mut rstring = RString::new_utf8(s);
+                rstring.freeze();
                 guard.guard(rstring.to_any_object());
                 AvromaticValue::String(rstring)
             },
@@ -477,7 +569,57 @@ impl TypeDescriptor {
                 guard.guard(record.to_any_object());
                 AvromaticValue::Record(record)
             },
+            (TypeDescriptor::Custom(inner, default), value) => {
+                let raw = default.avro_to_attribute(value, guard)?;
+                let rb_raw = default.to_ruby(&raw);
+                let custom_value = inner.deserialize(rb_raw);
+                AvromaticValue::Custom(custom_value)
+            },
             _ => return Err(format_err!("Failed to convert avro '{:?}' to {:?}", value, self)),
+        };
+        Ok(out)
+    }
+
+    pub fn serialize<'a, I>(&self, value: &AvromaticValue, schema: I)
+        -> Result<AvroValue, Error>
+        where I: SchemaIter<'a> + 'a
+    {
+        let out = match (self, value) {
+            (TypeDescriptor::Null, AvromaticValue::Null) => AvroValue::Null,
+            (TypeDescriptor::Boolean, AvromaticValue::True) => AvroValue::Boolean(true),
+            (TypeDescriptor::Boolean, AvromaticValue::False) => AvroValue::Boolean(false),
+            (TypeDescriptor::String, AvromaticValue::String(rstring)) => serialize_string(rstring),
+            (TypeDescriptor::Bytes, AvromaticValue::String(rstring)) => serialize_bytes(rstring),
+            (TypeDescriptor::Enum(symbols), AvromaticValue::String(rstring)) =>
+                serialize_enum(rstring, symbols)?,
+            (TypeDescriptor::Integer, AvromaticValue::Long(integer))
+                if schema.kind() == SchemaKind::Int =>
+                serialize_integer(integer),
+            (TypeDescriptor::Integer, AvromaticValue::Long(integer))
+                if schema.kind() == SchemaKind::Long =>
+                serialize_long(integer),
+            (TypeDescriptor::Date, AvromaticValue::Long(integer)) => serialize_date(integer),
+            (TypeDescriptor::TimestampMillis, AvromaticValue::Long(value)) =>
+                serialize_timestamp_millis(value),
+            (TypeDescriptor::TimestampMicros, AvromaticValue::Long(value)) =>
+                serialize_timestamp_micros(value),
+            (TypeDescriptor::Float, AvromaticValue::Float(float))
+                if schema.kind() == SchemaKind::Float =>
+                serialize_float(float),
+            (TypeDescriptor::Float, AvromaticValue::Float(float))
+                if schema.kind() == SchemaKind::Double =>
+                serialize_double(float),
+            (TypeDescriptor::Fixed(length), AvromaticValue::String(value)) =>
+                serialize_fixed(value, *length),
+            (TypeDescriptor::Array(inner), AvromaticValue::Array(value)) =>
+                serialize_array(value, inner, schema)?,
+            // (TypeDescriptor::Union(_, variants)) => serialize_union(value, variants, schema),
+            (TypeDescriptor::Record(inner), AvromaticValue::Record(object)) =>
+                serialize_record(object, inner)?,
+            (TypeDescriptor::Map(inner), AvromaticValue::Map(value)) =>
+                serialize_map(value, inner, schema)?,
+            // (TypeDescriptor::Custom(custom, default)) => serialize_custom(value, custom, default, schema),
+            _ => return Err(format_err!("bad to avro: {:?} {:?}", value, schema.schema())),
         };
         Ok(out)
     }
@@ -494,7 +636,7 @@ fn coerce_null(value: &AnyObject) -> Result<AvromaticValue, Error> {
     if value.is_nil() {
         Ok(AvromaticValue::Null)
     } else {
-        Err(bad_coercion(value, "boolean"))
+        Err(bad_coercion(value, "null"))
     }
 }
 
@@ -510,6 +652,7 @@ fn convert_string(value: &AnyObject) -> Result<RString, AnyException> {
             value.try_convert_to::<Symbol>()
                 .and_then(|symbol| symbol.send("to_s", None).try_convert_to())
         })
+        .map(|mut s| s.freeze())
 }
 
 fn coerce_string(value: &AnyObject, guard: &mut HeapGuard) -> Result<AvromaticValue, Error> {
@@ -525,9 +668,10 @@ fn coerce_string(value: &AnyObject, guard: &mut HeapGuard) -> Result<AvromaticVa
 fn coerce_fixed(value: &AnyObject, length: usize, guard: &mut HeapGuard) -> Result<AvromaticValue, Error> {
     value.try_convert_to::<RString>()
         .ok()
-        .and_then(|rstring| if rstring.to_str().len() != length {
+        .and_then(|mut rstring| if rstring.to_str().len() != length {
             None
         } else {
+            rstring.freeze();
             guard.guard(rstring.to_any_object());
             Some(AvromaticValue::String(rstring))
         })
@@ -613,11 +757,7 @@ fn coerce_float(value: &AnyObject, guard: &mut HeapGuard) -> Result<AvromaticVal
 }
 
 fn coerce_enum(value: &AnyObject, symbols: &[String], guard: &mut HeapGuard) -> Result<AvromaticValue, Error> {
-    value.try_convert_to::<RString>()
-        .or_else(|_| {
-            value.try_convert_to::<Symbol>()
-                .and_then(|symbol| symbol.send("to_s", None).try_convert_to())
-        })
+    convert_string(value)
         .ok()
         .and_then(|string| {
             let sym = string.to_str();
@@ -688,6 +828,110 @@ fn coerce_record(value: &AnyObject, record_class: &Class, guard: &mut HeapGuard)
     guard.guard(record.to_any_object());
     Ok(AvromaticValue::Record(record))
 }
+
+
+fn coerce_custom(
+    value: &AnyObject,
+    custom_type: &CustomTypeConfiguration,
+    guard: &mut HeapGuard,
+) -> Result<AvromaticValue, Error>
+{
+    let coerced = custom_type.deserialize(value.to_any_object());
+    Ok(AvromaticValue::Custom(coerced))
+}
+
+fn serialize_string(rstring: &RString) -> AvroValue {
+    AvroValue::String(rstring.to_string())
+}
+
+fn serialize_bytes(rstring: &RString) -> AvroValue {
+    AvroValue::Bytes(rstring.to_vec_u8_unchecked())
+}
+
+fn serialize_enum(rstring: &RString, symbols: &[String]) -> Result<AvroValue, Error> {
+    let value = rstring.to_str();
+    let position = symbols.iter().position(|symbol| symbol == value);
+    position
+        .map(|index| AvroValue::Enum(index as i32, value.to_string()))
+        .ok_or_else(|| format_err!("failed to serialize {:?} to enum[{:?}]", value, symbols))
+}
+
+fn serialize_integer(value: &Integer) -> AvroValue {
+    AvroValue::Int(value.to_i64() as i32)
+}
+
+fn serialize_long(value: &Integer) -> AvroValue {
+    AvroValue::Long(value.to_i64())
+}
+
+fn serialize_date(value: &Integer) -> AvroValue {
+    AvroValue::Date(value.to_i64() as i32)
+}
+
+fn serialize_timestamp_millis(value: &Integer) -> AvroValue {
+    AvroValue::TimestampMillis(value.to_i64())
+}
+
+fn serialize_timestamp_micros(value: &Integer) -> AvroValue {
+    AvroValue::TimestampMicros(value.to_i64())
+}
+
+fn serialize_float(value: &Float) -> AvroValue {
+    AvroValue::Float(value.to_f64() as f32)
+}
+
+fn serialize_double(value: &Float) -> AvroValue {
+    AvroValue::Double(value.to_f64())
+}
+
+fn serialize_fixed(rstring: &RString, size: usize) -> AvroValue {
+    AvroValue::Fixed(size, rstring.to_vec_u8_unchecked())
+}
+
+fn serialize_array<'a, I>(value: &[AvromaticValue], inner: &TypeDescriptor, schema: I)
+    -> Result<AvroValue, Error>
+    where I: SchemaIter<'a> + 'a
+{
+    let schema = schema.array_schema().unwrap();
+    let values = value
+        .iter()
+        .map(|v| inner.serialize(v, schema))
+        .collect::<Result<Vec<AvroValue>, Error>>()?;
+    Ok(AvroValue::Array(values))
+}
+
+// fn serialize_union(value: &AvromaticValue, schema: I) -> Result<AvroValue, Error>
+//     where I: SchemaIter<'a> + 'a
+// {
+// }
+
+fn serialize_record(object: &AnyObject, inner: &Class) -> Result<AvroValue, Error> {
+    let mut attributes = object.instance_variable_get("@_attributes");
+    let storage = attributes.get_data_mut(&*MODEL_STORAGE_WRAPPER);
+    let object = crate::util::class_ancestor_send(&inner, "_schema");
+    let descriptor = object.get_data(&*MODEL_DESCRIPTOR_WRAPPER);
+    descriptor.value.descriptor.serialize(&storage.attributes, &descriptor.value.schema)
+}
+
+fn serialize_map<'a, I>(value: &HashMap<String, AvromaticValue>, inner: &TypeDescriptor, schema: I)
+    -> Result<AvroValue, Error>
+    where I: SchemaIter<'a> + 'a
+{
+    let schema = schema.map_schema().unwrap();
+    let values = value
+        .iter()
+        .map(|(k, v)| Ok((k.to_string(), inner.serialize(v, schema)?)))
+        .collect::<Result<HashMap<String, AvroValue>, Error>>()?;
+    Ok(AvroValue::Map(values))
+}
+
+// fn serialize_custom(
+//     value: &AvromaticValue,
+//     custom: &CustomTypeConfiguration,
+//     default: &TypeDescriptor,
+// ) -> Result<AvroValue, Error>
+// {
+// }
 
 pub fn initialize() {
     Class::new("ModelDescriptor", None).define(|_| ());

@@ -5,6 +5,7 @@ authors = ["Kyle Phelps <kphelps@salsify.com>"]
 edition = "2018"
 
 [dependencies]
+# avro-rs = { git = "https://github.com/kphelps/avro-rs", branch = "master" }
 avro-rs = { path = "../../dev/avro-rs" }
 failure = "*"
 lazy_static = "*"
@@ -15,3 +16,6 @@ sha2 = "*"
 [lib]
 name = "avromatic"
 crate-type = ["dylib"]
+
+[profile.release]
+debug = true

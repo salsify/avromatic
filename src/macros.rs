@@ -86,6 +86,7 @@ macro_rules! ruby_class {
         }
 
         impl $rust_name {
+            #[allow(dead_code)]
             pub fn class() -> Class {
                 $ruby_class
             }
