@@ -40,11 +40,11 @@ impl ModelRecord {
         Ok(Self { schema, descriptor })
     }
 
-    fn serialize(&self, values: &HashMap<String, AvromaticValue>)
-        -> Result<Vec<u8>, Error>
+    fn serialize(&self, values: &HashMap<String, AvromaticValue>, buf: &mut Vec<u8>)
+        -> Result<(), Error>
     {
         let datum = self.descriptor.serialize(values, &self.schema)?;
-        avro_rs::to_avro_datum(&self.schema, datum)
+        avro_rs::write_avro_datum(&self.schema, datum, buf)
     }
 }
 
@@ -102,26 +102,53 @@ impl ModelDescriptorInner {
             .unwrap_or_else(|| NilClass::new().into())
     }
 
-    pub fn serialize_key(&self, attributes: &HashMap<String, AvromaticValue>)
-                           -> Result<Vec<u8>, Error>
+    pub fn serialize_key(
+        &self,
+        attributes: &HashMap<String, AvromaticValue>,
+        buf: &mut Vec<u8>,
+    ) -> Result<(), Error>
     {
         self.key
             .as_ref()
-            .map(|key| key.serialize(attributes))
-            .ok_or_else(|| format_err!("No key schema"))
+            .map(|key| key.serialize(attributes, buf))
+            .ok_or_else(|| format_err!("Model has no key schema"))
             .and_then(|x| x)
     }
 
-    pub fn serialize_value(&self, attributes: &HashMap<String, AvromaticValue>)
-        -> Result<Vec<u8>, Error>
+    pub fn serialize_value(
+        &self,
+        attributes: &HashMap<String, AvromaticValue>,
+        buf: &mut Vec<u8>,
+    ) -> Result<(), Error>
     {
-        self.value.serialize(attributes)
+        self.value.serialize(attributes, buf)
     }
 
-    pub fn deserialize(&self, class: &Class, data: &[u8], guard: &mut HeapGuard) -> Result<AnyObject, Error> {
+    pub fn deserialize_message(
+        &self,
+        class: &Class,
+        key: &[u8],
+        value: &[u8],
+        guard: &mut HeapGuard,
+    ) -> Result<AnyObject, Error> {
+        let mut key_cursor = std::io::Cursor::new(key);
+        let mut value_cursor = std::io::Cursor::new(value);
+        // TODO: need to get writer schema
+        let key = avro_rs::from_avro_datum(&self.key.as_ref().unwrap().schema, &mut key_cursor, None)?;
+        let value = avro_rs::from_avro_datum(&self.value.schema, &mut value_cursor, None)?;
+        self.avro_to_message_model(class, &key, &value, guard)
+    }
+
+    pub fn deserialize_value(
+        &self,
+        class: &Class,
+        data: &[u8],
+        writer_schema: &FullSchema,
+        guard: &mut HeapGuard,
+    ) -> Result<AnyObject, Error> {
         let mut cursor = std::io::Cursor::new(data);
         // TODO: need to get writer schema
-        let value = avro_rs::from_avro_datum(&self.value.schema, &mut cursor, None)?;
+        let value = avro_rs::from_avro_datum(&self.value.schema, &mut cursor, Some(writer_schema))?;
         self.avro_to_model(class, &value, guard)
     }
 
@@ -129,6 +156,25 @@ impl ModelDescriptorInner {
         -> Result<AnyObject, Error>
     {
         let attributes = self.value.descriptor.avro_to_attributes(value, guard)?;
+        let storage = ModelStorage { attributes };
+        let mut model = class.allocate().to_any_object();
+        guard.guard(model.to_any_object());
+        let wrapped_storage: AnyObject = class.wrap_data(storage, &*MODEL_STORAGE_WRAPPER);
+        model.instance_variable_set("@_attributes", wrapped_storage);
+        Ok(model)
+    }
+
+    fn avro_to_message_model(
+        &self,
+        class: &Class,
+        key: &AvroValue,
+        value: &AvroValue,
+        guard: &mut HeapGuard,
+    ) -> Result<AnyObject, Error>
+    {
+        let key_attributes = self.key.as_ref().unwrap().descriptor.avro_to_attributes(key, guard)?;
+        let mut attributes = self.value.descriptor.avro_to_attributes(value, guard)?;
+        attributes.extend(key_attributes);
         let storage = ModelStorage { attributes };
         let mut model = class.allocate().to_any_object();
         guard.guard(model.to_any_object());
@@ -613,12 +659,16 @@ impl TypeDescriptor {
                 serialize_fixed(value, *length),
             (TypeDescriptor::Array(inner), AvromaticValue::Array(value)) =>
                 serialize_array(value, inner, schema)?,
-            // (TypeDescriptor::Union(_, variants)) => serialize_union(value, variants, schema),
+            (TypeDescriptor::Union(_, variants), AvromaticValue::Union(index, value)) =>
+                serialize_union(value, *index, variants, schema)?,
+            (TypeDescriptor::Union(_, variants), value) =>
+                serialize_untracked_union(value, variants, schema)?,
             (TypeDescriptor::Record(inner), AvromaticValue::Record(object)) =>
                 serialize_record(object, inner)?,
             (TypeDescriptor::Map(inner), AvromaticValue::Map(value)) =>
                 serialize_map(value, inner, schema)?,
-            // (TypeDescriptor::Custom(custom, default)) => serialize_custom(value, custom, default, schema),
+            (TypeDescriptor::Custom(custom, default), AvromaticValue::Custom(value)) =>
+                serialize_custom(value, custom, default, schema)?,
             _ => return Err(format_err!("bad to avro: {:?} {:?}", value, schema.schema())),
         };
         Ok(out)
@@ -900,10 +950,40 @@ fn serialize_array<'a, I>(value: &[AvromaticValue], inner: &TypeDescriptor, sche
     Ok(AvroValue::Array(values))
 }
 
-// fn serialize_union(value: &AvromaticValue, schema: I) -> Result<AvroValue, Error>
-//     where I: SchemaIter<'a> + 'a
-// {
-// }
+fn serialize_union<'a, I>(
+    value: &AvromaticValue,
+    index: usize,
+    variants: &[TypeDescriptor],
+    schema: I,
+) -> Result<AvroValue, Error>
+    where I: SchemaIter<'a> + 'a
+{
+    let schema = schema.union_schema().unwrap().variants()[index];
+    let union_ref = UnionRef::from_schema(schema.schema());
+    let union_value = variants[index].serialize(value, schema)?;
+    Ok(AvroValue::Union(union_ref, Box::new(union_value)))
+}
+
+fn serialize_untracked_union<'a, I>(
+    value: &AvromaticValue,
+    variants: &[TypeDescriptor],
+    schema: I,
+) -> Result<AvroValue, Error>
+    where I: SchemaIter<'a> + 'a
+{
+    schema.union_schema()
+        .unwrap()
+        .variants()
+        .into_iter()
+        .enumerate()
+        .map(|(i, variant)| {
+            let descriptor = &variants[i];
+            let val = Box::new(descriptor.serialize(value, variant)?);
+            Ok(AvroValue::Union(UnionRef::from_schema(variant.schema()), val))
+        })
+        .find(Result::is_ok)
+        .unwrap_or_else(|| Err(format_err!("Invalid union")))
+}
 
 fn serialize_record(object: &AnyObject, inner: &Class) -> Result<AvroValue, Error> {
     let mut attributes = object.instance_variable_get("@_attributes");
@@ -925,13 +1005,20 @@ fn serialize_map<'a, I>(value: &HashMap<String, AvromaticValue>, inner: &TypeDes
     Ok(AvroValue::Map(values))
 }
 
-// fn serialize_custom(
-//     value: &AvromaticValue,
-//     custom: &CustomTypeConfiguration,
-//     default: &TypeDescriptor,
-// ) -> Result<AvroValue, Error>
-// {
-// }
+fn serialize_custom<'a, I>(
+    value: &AnyObject,
+    custom: &CustomTypeConfiguration,
+    default: &TypeDescriptor,
+    schema: I
+) -> Result<AvroValue, Error>
+    where I: SchemaIter<'a> + 'a
+{
+    let serialized = custom.serialize(value.to_any_object());
+    let mut guard = HeapGuard::new();
+    guard.guard(serialized.to_any_object());
+    let value = default.coerce(&serialized, &mut guard)?;
+    default.serialize(&value, schema)
+}
 
 pub fn initialize() {
     Class::new("ModelDescriptor", None).define(|_| ());

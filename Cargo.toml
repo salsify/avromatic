@@ -7,6 +7,7 @@ edition = "2018"
 [dependencies]
 # avro-rs = { git = "https://github.com/kphelps/avro-rs", branch = "master" }
 avro-rs = { path = "../../dev/avro-rs" }
+byteorder = "*"
 failure = "*"
 lazy_static = "*"
 rutie = { git = "https://github.com/danielpclark/rutie", branch = "master" }

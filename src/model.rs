@@ -1,8 +1,10 @@
 use avro_rs::{FullSchema, schema::{ SchemaIter, SchemaKind }};
+use byteorder::{BigEndian, ReadBytesExt, WriteBytesExt};
 use crate::configuration::AvromaticConfiguration;
 use crate::heap_guard::HeapGuard;
 use crate::descriptors::{ModelDescriptor, ModelDescriptorInner, MODEL_DESCRIPTOR_WRAPPER};
 use crate::model_pool::ModelRegistry;
+use crate::schema::{RAvroSchema, ModelSchema, MODEL_SCHEMA_WRAPPER};
 use crate::values::AvromaticValue;
 use failure::{Error, format_err};
 use rutie::*;
@@ -22,16 +24,6 @@ wrappable_struct!(
     mark(data) {
         data.attributes.iter().for_each(|(_, v)| v.mark());
     }
-);
-
-pub struct ModelSchema {
-    pub schema: FullSchema,
-}
-
-wrappable_struct!(
-    ModelSchema,
-    ModelSchemaWrapper,
-    MODEL_SCHEMA_WRAPPER
 );
 
 module!(AvromaticModelAttributes);
@@ -160,6 +152,43 @@ extern fn rb_method_missing(argc: Argc, argv: *const AnyObject, itself: Avromati
     NilClass::new().into()
 }
 
+
+extern fn rb_avro_message_decode(
+    argc: Argc,
+    argv: *const AnyObject,
+    itself: AvromaticModelAttributes,
+) -> AnyObject {
+    let first_arg = RValue::from(0);
+    let second_arg = RValue::from(0);
+
+    unsafe {
+        let p_argv: *const RValue = std::mem::transmute(argv);
+
+        rutie::rubysys::class::rb_scan_args(
+            argc,
+            p_argv,
+            rutie::util::str_to_cstring("11").as_ptr(),
+            &first_arg,
+            &second_arg,
+        )
+    };
+
+    let first_obj = AnyObject::from(first_arg);
+    let second_obj = AnyObject::from(second_arg);
+    let result = if second_obj.is_nil() {
+        let bytes = argument_check!(first_obj.try_convert_to::<RString>());
+        let bytes = bytes.to_bytes_unchecked();
+        itself.decode_value(bytes)
+    } else {
+        let key_bytes = argument_check!(first_obj.try_convert_to::<RString>());
+        let key_bytes = key_bytes.to_bytes_unchecked();
+        let value_bytes = argument_check!(second_obj.try_convert_to::<RString>());
+        let value_bytes = value_bytes.to_bytes_unchecked();
+        itself.decode_message(key_bytes, value_bytes)
+    };
+    raise_if_error(result)
+}
+
 methods!(
     AvromaticModelAttributes,
     itself,
@@ -230,19 +259,6 @@ methods!(
         raise_if_error(result)
     }
 
-    fn rb_avro_message_decode(data: RString) -> AnyObject {
-        let data = argument_check!(data);
-        let schema = itself.send("_schema", None);
-        let descriptor = schema.get_data(&*MODEL_DESCRIPTOR_WRAPPER);
-        let mut guard = HeapGuard::new();
-        let result = descriptor.deserialize(
-            &Class::from(itself.value()),
-            &data.to_bytes_unchecked(),
-            &mut guard
-        );
-        raise_if_error(result)
-    }
-
     fn rb_attribute_definitions() -> Hash {
         let schema = itself.send("_schema", None);
         let descriptor = schema.get_data(&*MODEL_DESCRIPTOR_WRAPPER);
@@ -255,10 +271,10 @@ methods!(
     }
 
     fn rb_register_schemas() -> NilClass {
-        let config = itself.config();
+        let config = itself.self_config();
         let key = config.rb_key_schema();
         let value = config.rb_value_schema();
-        if !key.is_nil() {
+        if let Some(key) = key {
             itself.register_schema(key);
         }
         itself.register_schema(value);
@@ -266,15 +282,19 @@ methods!(
     }
 
     fn rb_nested_models() -> AnyObject {
-        ModelRegistry::global()
+        ModelRegistry::global().to_any_object()
     }
 
     fn rb_key_avro_schema() -> AnyObject {
-        itself.config().rb_key_schema()
+        if let Some(schema) = itself.self_config().rb_key_schema() {
+            schema.to_any_object()
+        } else {
+            NilClass::new().into()
+        }
     }
 
     fn rb_value_avro_schema() -> AnyObject {
-        itself.config().rb_value_schema()
+        itself.self_config().rb_value_schema().to_any_object()
     }
 
     fn rb_respond_to_missing(name: Symbol, _include_all: Boolean) -> AnyObject {
@@ -357,16 +377,58 @@ impl AvromaticModelAttributes {
         f(storage)
     }
 
+    fn decode_message(&self, key: &[u8], value: &[u8]) -> Result<AnyObject, Error> {
+        let schema = self.send("_schema", None);
+        let descriptor = schema.get_data(&*MODEL_DESCRIPTOR_WRAPPER);
+        let mut guard = HeapGuard::new();
+        descriptor.deserialize_message(
+            &Class::from(self.value()),
+            &key[5..],
+            &value[5..],
+            &mut guard
+        )
+    }
+
+    fn decode_value(&self, bytes: &[u8]) -> Result<AnyObject, Error> {
+        let schema = self.send("_schema", None);
+        let descriptor = schema.get_data(&*MODEL_DESCRIPTOR_WRAPPER);
+        let mut guard = HeapGuard::new();
+        let mut cursor = std::io::Cursor::new(bytes);
+        let magic = cursor.read_u8()?;
+        let schema_id = cursor.read_i32::<BigEndian>()?;
+        let mut writer_schema = self.get_schema_by_id(schema_id)?;
+        descriptor.deserialize_value(
+            &Class::from(self.value()),
+            &bytes[5..],
+            &writer_schema.rust_schema()?,
+            &mut guard
+        )
+    }
+
     fn serialize_key(&self) -> Result<Vec<u8>, Error> {
         let schema = crate::util::ancestor_send(self, "_schema");
         let descriptor = schema.get_data(&*MODEL_DESCRIPTOR_WRAPPER);
-        self.with_storage(|storage| descriptor.serialize_key(&storage.attributes))
+        let rb_schema = self.config().rb_key_schema();
+        if rb_schema.is_none() {
+            return Err(format_err!("Model has no key schema"));
+        }
+        let id = self.register_schema(rb_schema.unwrap())?;
+        let mut buf = Vec::new();
+        buf.write_u8(0)?;
+        buf.write_i32::<BigEndian>(id as i32)?;
+        self.with_storage(|storage| descriptor.serialize_key(&storage.attributes, &mut buf))?;
+        Ok(buf)
     }
 
     fn serialize_value(&self) -> Result<Vec<u8>, Error> {
         let schema = crate::util::ancestor_send(self, "_schema");
         let descriptor = schema.get_data(&*MODEL_DESCRIPTOR_WRAPPER);
-        self.with_storage(|storage| descriptor.serialize_value(&storage.attributes))
+        let id = self.register_schema(self.config().rb_value_schema())?;
+        let mut buf = Vec::new();
+        buf.write_u8(0)?;
+        buf.write_i32::<BigEndian>(id as i32)?;
+        self.with_storage(|storage| descriptor.serialize_value(&storage.attributes, &mut buf))?;
+        Ok(buf)
     }
 
     pub fn attribute_hash(&self) -> Hash {
@@ -466,12 +528,27 @@ impl AvromaticModelAttributes {
         unsafe { self.class().instance_variable_get("@config").to() }
     }
 
-    fn register_schema(&self, schema: AnyObject) {
+    fn self_config(&self) -> AvromaticConfiguration {
+        unsafe { self.instance_variable_get("@config").to() }
+    }
+
+    fn register_schema(&self, schema: RAvroSchema) -> Result<i64, Error> {
         let fullname = schema.send("fullname", None);
-        Module::from_existing("Avromatic")
+        let int = Module::from_existing("Avromatic")
             .send("messaging", None)
             .send("registry", None)
-            .send("register", Some(&[fullname, schema]));
+            .send("register", Some(&[fullname, schema.to_any_object()]))
+            .try_convert_to::<Integer>()
+            .unwrap();
+        Ok(int.to_i64())
+    }
+
+    fn get_schema_by_id(&self, id: i32) -> Result<RAvroSchema, Error> {
+        Module::from_existing("Avromatic")
+            .send("messaging", None)
+            .send("schema_by_id", Some(&[Integer::new(id as i64).into()]))
+            .try_convert_to::<RAvroSchema>()
+            .map_err(|_| format_err!("Schema '{}' not found", id))
     }
 }
 
@@ -490,35 +567,22 @@ methods!(
         let inner = descriptor.get_data(&*MODEL_DESCRIPTOR_WRAPPER);
 
         let mut config = _itself.instance_variable_get("@config");
-        if config.is_nil() {
-            config = AvromaticConfiguration::new(inner.value_schema()).unwrap().to_any_object();
-        }
         let config = config.try_convert_to::<AvromaticConfiguration>().unwrap();
+
+        model_class.include("AvromaticModelAttributes");
+        AvromaticModel::define_class_methods(&mut model_class, &config);
 
         if config.is_nested_model() {
             let schema_name = inner.value_schema().fullname().unwrap();
             let model_name = _itself.instance_variable_get("@name").try_convert_to::<RString>().unwrap().to_string();
-            if let Some(ref class) = ModelRegistry::lookup(&schema_name) {
+            if let Some(ref class) = ModelRegistry::global().lookup(&schema_name) {
                 let schema = config.value_schema().unwrap();
                 AvromaticModel::validate_fingerprints(&schema, &model_name, class);
             } else {
-                ModelRegistry::register(schema_name, model_class.value().into());
+                println!("Registering nested");
+                ModelRegistry::global().register(&model_class);
             }
         }
-
-        model_class.instance_variable_set("@config", config);
-        model_class.singleton_class().attr_reader("config");
-
-        model_class.include("AvromaticModelAttributes");
-
-        model_class.def_self("avro_message_decode", rb_avro_message_decode);
-        // model_class.def_self("avro_raw_decode", rb_avro_raw_decode);
-        model_class.def_self("attribute_definitions", rb_attribute_definitions);
-        model_class.def_self("key_avro_schema", rb_key_avro_schema);
-        model_class.def_self("avro_schema", rb_value_avro_schema);
-        model_class.def_self("value_avro_schema", rb_value_avro_schema);
-        model_class.def_self("register_schemas!", rb_register_schemas);
-        model_class.def_self("nested_models", rb_nested_models);
 
         NilClass::new().into()
     }
@@ -530,6 +594,20 @@ methods!(
 );
 
 impl AvromaticModel {
+    fn define_class_methods(class: &mut Class, config: &AvromaticConfiguration) {
+        class.instance_variable_set("@config", config.to_any_object());
+        class.singleton_class().attr_reader("config");
+
+        class.def_self("avro_message_decode", rb_avro_message_decode);
+        // class.def_self("avro_raw_decode", rb_avro_raw_decode);
+        class.def_self("attribute_definitions", rb_attribute_definitions);
+        class.def_self("key_avro_schema", rb_key_avro_schema);
+        class.def_self("avro_schema", rb_value_avro_schema);
+        class.def_self("value_avro_schema", rb_value_avro_schema);
+        class.def_self("register_schemas!", rb_register_schemas);
+        class.def_self("nested_models", rb_nested_models);
+    }
+
     pub fn from_config(config: AvromaticConfiguration) -> Result<Module, Error> {
         let maybe_key_schema = config.key_schema()?;
         let value_schema = config.value_schema()?;
@@ -573,7 +651,7 @@ impl AvromaticModel {
             .try_convert_to::<RString>()
             .unwrap()
             .to_string();
-        if let Some(class) = ModelRegistry::lookup(&schema_name) {
+        if let Some(class) = ModelRegistry::global().lookup(&schema_name) {
             println!("found: {}", model_name);
             Self::validate_fingerprints(&schema, &model_name, &class);
             return class;
@@ -582,10 +660,14 @@ impl AvromaticModel {
         println!("Allocating model: {:?}", model_name);
         let mut class = Class::new(&model_name, None);
         let rb_schema = ModelSchema { schema: schema.clone() };
-        let avro_schema: AnyObject = Class::from_existing("AvroSchema").wrap_data(rb_schema, &*MODEL_SCHEMA_WRAPPER);
+        let avro_schema: AnyObject = Class::from_existing("AvroSchema")
+            .wrap_data(rb_schema, &*MODEL_SCHEMA_WRAPPER);
         class.instance_variable_set("@__schema", avro_schema);
-        ModelRegistry::register(schema_name, class.value().into());
-        let module = Self::from_schema(None, schema).unwrap();
+        let config = AvromaticConfiguration::new(&schema).unwrap();
+        Self::define_class_methods(&mut class, &config);
+        ModelRegistry::global().register(&class);
+        let mut module = Self::from_schema(None, schema).unwrap();
+        module.instance_variable_set("@config", config);
         class.send("include", Some(&[module.to_any_object()]));
         class
     }

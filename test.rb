@@ -4,10 +4,16 @@ require 'avromatic'
 require 'salsify_avro'
 require 'benchmark/ips'
 require 'benchmark/memory'
+require 'pry'
 
 SalsifyAvro.add_path('/Users/kphelps/sandbox/salsify_avro/avro/schema')
 SalsifyAvro.add_path('/Users/kphelps/sandbox/dandelion/schemas_gem/avro/schema')
 Avromatic.configure do |config|
+  config.register_type('com.salsify.salsify_uuid', SalsifyUuid) do |type|
+    type.from_avro = ->(value) { SalsifyUuid.parse(value) }
+    type.to_avro = ->(value) { value.to_s }
+  end
+
   config.schema_store = SalsifyAvro.build_schema_store
   config.nested_models = Avromatic::ModelRegistry.new(
     remove_namespace_prefix: 'com.salsify.'
@@ -21,25 +27,29 @@ end
 
 class X
   include Avromatic::Model.build(
-    schema_name: 'com.salsify.core.product_updated_event_value'
+    key_schema_name: 'com.salsify.core.product_event_key',
+    value_schema_name: 'com.salsify.core.product_updated_event_value'
   )
 end
 
 class Y
   include Avromatic::Model.build(
-    schema_name: 'com.salsify.core.product_updated_event_value',
+    key_schema_name: 'com.salsify.core.product_event_key',
+    value_schema_name: 'com.salsify.core.product_updated_event_value',
     native: false
   )
 end
 
+product_id = SalsifyUuid.generate
 values = {
   system_message_id: SalsifyUuid.generate.to_s,
   system_message_timestamp: Time.now,
-  organization_id: SalsifyUuid.generate.to_s,
+  organization_id: SalsifyUuid.generate,
   product: {
-    id: SalsifyUuid.generate.to_s,
+    id: product_id,
     type: 'products'
   },
+  product_id: product_id,
   property_value_modifications: [
     {
       property: {
@@ -51,28 +61,50 @@ values = {
         values: []
       }
     }
-  ] * 10
+  ] * 100
 }
 
 x = X.new(values.deep_dup)
 y = Y.new(values.deep_dup)
 
-y_data = y.avro_message_value
-x_data = x.avro_message_value
+y_key = y.avro_message_key
+y_value = y.avro_message_value
+x_key = x.avro_message_key
+x_value = x.avro_message_value
 
-Y.avro_message_decode(y_data).avro_message_value
+puts y_key == x_key
+puts y_value == x_value
+binding.pry
+
+Y.avro_message_decode(y_key, y_value).avro_message_key
+Y.avro_message_decode(y_key, y_value).avro_message_value
+
+puts '--- De -> Ser (mutable state use case) ---'
+Benchmark.ips do |z|
+  z.report('ruby') { Y.avro_message_decode(y_key, y_value).avro_message_value }
+  z.report('rust') { X.avro_message_decode(x_key, x_value).avro_message_value }
+  z.compare!
+end
 
 puts '--- Ctor -> Ser (publishing use case) ---'
 Benchmark.ips do |z|
-  z.report('ruby') { Y.new(values).avro_message_value }
-  z.report('rust') { X.new(values).avro_message_value }
+  z.report('ruby') do
+    a = Y.new(values)
+    a.avro_message_key
+    a.avro_message_value
+  end
+  z.report('rust') do
+    a = X.new(values)
+    a.avro_message_key
+    a.avro_message_value
+  end
   z.compare!
 end
 
 puts '--- De ---'
 Benchmark.ips do |z|
-  z.report('ruby') { Y.avro_message_decode(y_data) }
-  z.report('rust') { X.avro_message_decode(x_data) }
+  z.report('ruby') { Y.avro_message_decode(y_key, y_value) }
+  z.report('rust') { X.avro_message_decode(x_key, x_value) }
   z.compare!
 end
 
@@ -83,16 +115,9 @@ Benchmark.ips do |z|
   z.compare!
 end
 
-puts '--- Ser ---'
+puts '--- Value Ser ---'
 Benchmark.ips do |z|
   z.report('ruby') { y.avro_message_value }
   z.report('rust') { x.avro_message_value }
-  z.compare!
-end
-
-puts '--- De -> Ser (mutable state use case) ---'
-Benchmark.ips do |z|
-  z.report('ruby') { Y.avro_message_decode(y_data).avro_message_value }
-  z.report('rust') { X.avro_message_decode(x_data).avro_message_value }
   z.compare!
 end

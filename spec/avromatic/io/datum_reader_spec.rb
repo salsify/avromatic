@@ -2,7 +2,7 @@
 
 describe Avromatic::IO::DatumReader do
   let(:test_class) do
-    Avromatic::Model.model(schema_name: schema_name)
+    Avromatic::Model.model(schema_name: schema_name, native: false)
   end
   let(:instance) { test_class.new(values) }
   let(:avro_message_value) { instance.avro_message_value }

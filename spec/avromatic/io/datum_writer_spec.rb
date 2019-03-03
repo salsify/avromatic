@@ -4,7 +4,7 @@ describe Avromatic::IO::DatumWriter do
   let(:encoder) { instance_double(Avro::IO::BinaryEncoder) }
   let(:schema_name) { 'test.real_union' }
   let(:test_class) do
-    Avromatic::Model.model(schema_name: schema_name)
+    Avromatic::Model.model(schema_name: schema_name, native: false)
   end
   let(:values) do
     {

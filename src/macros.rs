@@ -17,6 +17,9 @@ macro_rules! ruby_class {
         ruby_class!($rust_name, $ruby_name, Class::from_existing($ruby_name));
     };
     ($rust_name:ident, $ruby_name:expr, $ruby_class:expr) => {
+        ruby_class!(@ $rust_name, $ruby_name, $ruby_class, validator, class_method);
+    };
+    (@ $rust_name:ident, $ruby_name:expr, $ruby_class:expr $(, $features:ident)*) => {
         #[derive(Clone, Debug)]
         pub struct $rust_name {
             value: rutie::types::Value,
@@ -68,6 +71,26 @@ macro_rules! ruby_class {
             }
         }
 
+        $(
+            ruby_class!(@ $features, $rust_name, $ruby_name, $ruby_class);
+        )*
+
+        impl PartialEq for $rust_name {
+            fn eq(&self, other: &Self) -> bool {
+                use rutie::Object;
+                self.equals(other)
+            }
+        }
+    };
+    (@ class_method, $rust_name:ident, $ruby_name:expr, $ruby_class:expr) => {
+        impl $rust_name {
+            #[allow(dead_code)]
+            pub fn class() -> Class {
+                $ruby_class
+            }
+        }
+    };
+    (@ validator, $rust_name:ident, $ruby_name:expr, $ruby_class:expr) => {
         impl rutie::VerifiedObject for $rust_name {
             fn is_correct_type<T: rutie::Object>(obj: &T) -> bool {
                 $crate::util::instance_of(obj, $ruby_class)
@@ -77,19 +100,5 @@ macro_rules! ruby_class {
                 concat!("Error converting to ", $ruby_name)
             }
         }
-
-        impl PartialEq for $rust_name {
-            fn eq(&self, other: &Self) -> bool {
-                use rutie::Object;
-                self.equals(other)
-            }
-        }
-
-        impl $rust_name {
-            #[allow(dead_code)]
-            pub fn class() -> Class {
-                $ruby_class
-            }
-        }
-    }
+    };
 }

@@ -1,101 +1,56 @@
 use rutie::*;
 use std::collections::HashMap;
 
-#[derive(Debug)]
-pub struct ModelPool {
-    models: HashMap<String, Class>
-}
-
-impl ModelPool {
-    pub fn new() -> Self {
-        Self {
-            models: HashMap::new(),
-        }
-    }
-
-    pub fn register(&mut self, name: String, class: Class) {
-        self.models.insert(name, class);
-    }
-
-    pub fn lookup(&self, name: &str) -> Option<Class> {
-        self.models.get(name).map(|class| class.value().into())
-    }
-
-    pub fn mark(&self) {
-        self.models.values().for_each(GC::mark);
-    }
-}
-
-wrappable_struct!(
-    ModelPool,
-    ModelPoolWrapper,
-    MODEL_POOL_WRAPPER,
-    mark(data) {
-        data.mark();
-    }
-);
-
-class!(ModelRegistry);
-
-methods!(
+ruby_class!(
     ModelRegistry,
-    itself,
-
-    fn rb_lookup(name: RString) -> AnyObject {
-        let name = argument_check!(name);
-        let pool = itself.get_data(&*MODEL_POOL_WRAPPER);
-        pool.lookup(name.to_str())
-            .as_ref()
-            .map(Class::to_any_object)
-            .unwrap_or_else(|| NilClass::new().to_any_object())
-    }
+    "Avromatic::ModelRegistry",
+    Module::from_existing("Avromatic").get_nested_class("ModelRegistry")
 );
 
 impl ModelRegistry {
-    pub fn new() -> AnyObject {
-        let pool = ModelPool::new();
-        Class::from_existing("ModelRegistry").wrap_data(pool, &*MODEL_POOL_WRAPPER)
+    pub fn global() -> Self {
+        Module::from_existing("Avromatic")
+            .instance_variable_get("@nested_models")
+            .try_convert_to()
+            .unwrap()
     }
 
-    pub fn get(obj: &mut AnyObject) -> &mut ModelPool {
-        obj.get_data_mut(&*MODEL_POOL_WRAPPER)
-    }
-
-    pub fn register(name: String, class: Class) {
-        println!("Registering: {}", name);
-        let mut registry_obj = Self::global();
-        let registry = Self::get(&mut registry_obj);
-        registry.register(name, class)
-    }
-
-    pub fn lookup(name: &str) -> Option<Class> {
-        let mut registry_obj = Self::global();
-        let registry = Self::get(&mut registry_obj);
-        registry.lookup(name)
-    }
-
-    pub fn global() -> AnyObject {
-        let mut itself = Class::from_existing("ModelRegistry");
-        let mut registry = itself.instance_variable_get("@_registry");
-        if registry.is_nil() {
-            return itself.instance_variable_set("@_registry", ModelRegistry::new());
+    pub fn lookup(&self, name: &str) -> Option<Class> {
+        if !self.is_registered(name) {
+            return None;
         }
-        registry
+
+        let obj = self.send("[]", Some(&[self.registry_key(name)]));
+        return obj.try_convert_to::<Class>().ok()
     }
-}
 
-methods!(
-    ModelRegistry,
-    itself,
-
-    fn rb_global() -> AnyObject {
-        ModelRegistry::global()
+    pub fn is_registered(&self, name: &str) -> bool {
+        self.send("registered?", Some(&[self.registry_key(name)]))
+            .try_convert_to::<Boolean>()
+            .map(|b| b.to_bool())
+            .unwrap_or(false)
     }
-);
 
-pub fn initialize() {
-    Class::new("ModelRegistry", None).define(|itself| {
-        itself.def_self("global", rb_global);
-        itself.def("[]", rb_lookup);
-    });
+    pub fn register(&self, class: &Class) {
+        self.send("register", Some(&[class.to_any_object()]));
+    }
+
+    fn registry_key(&self, string: &str) -> AnyObject {
+        let prefix = self.instance_variable_get("@prefix");
+        if prefix.is_nil() {
+            return RString::new_utf8(string).into();
+        }
+        let prefix = prefix.try_convert_to::<RString>().unwrap();
+        let prefix = prefix.to_str();
+        let s = if string.starts_with(prefix) {
+            if string.get(prefix.len() .. prefix.len() + 1) == Some(".") {
+                &string[prefix.len() + 1 ..]
+            } else {
+                &string[prefix.len()..]
+            }
+        } else {
+            string
+        };
+        RString::new_utf8(s).into()
+    }
 }

@@ -23,10 +23,7 @@ module Avromatic
       # The schema id is a 4-byte big-endian integer.
       schema_id = decoder.read(4).unpack('N').first
 
-      writers_schema = @schemas_by_id.fetch(schema_id) do
-        schema_json = @registry.fetch(schema_id)
-        @schemas_by_id[schema_id] = Avro::Schema.parse(schema_json)
-      end
+      writers_schema = schema_by_id(schema_id)
 
       # The following line differs from the parent class to use a custom DatumReader
       reader = Avromatic::IO::DatumReader.new(writers_schema, readers_schema)
@@ -56,6 +53,13 @@ module Avromatic
       writer.write(message, encoder)
 
       stream.string
+    end
+
+    def schema_by_id(schema_id)
+      @schemas_by_id.fetch(schema_id) do
+        schema_json = @registry.fetch(schema_id)
+        @schemas_by_id[schema_id] = Avro::Schema.parse(schema_json)
+      end
     end
   end
 end

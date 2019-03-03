@@ -19,6 +19,10 @@ pub fn class_ancestor_send(class: &Class, method: &str) -> AnyObject {
     return NilClass::new().into();
 }
 
+pub fn debug_ruby(object: &impl Object) -> String {
+    format!("{}", object.send("inspect", None).try_convert_to::<RString>().unwrap().to_string())
+}
+
 ruby_class!(RDate, "Date");
 
 impl RDate {

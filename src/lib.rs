@@ -11,6 +11,7 @@ mod descriptors;
 mod heap_guard;
 mod model;
 mod model_pool;
+mod schema;
 mod serializer;
 mod util;
 mod values;
@@ -20,5 +21,4 @@ mod values;
 pub extern "C" fn Init_avromatic() {
     descriptors::initialize();
     model::initialize();
-    model_pool::initialize();
 }
