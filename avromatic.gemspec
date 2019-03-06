@@ -19,6 +19,7 @@ Gem::Specification.new do |spec|
   spec.bindir        = 'exe'
   spec.executables   = spec.files.grep(%r{^exe/}) { |f| File.basename(f) }
   spec.require_paths = ['lib']
+  spec.extensions    = 'src/Rakefile'
 
   spec.required_ruby_version = '>= 2.3'
 
@@ -30,6 +31,7 @@ Gem::Specification.new do |spec|
   spec.add_runtime_dependency 'ice_nine'
   spec.add_runtime_dependency 'rutie'
   spec.add_runtime_dependency 'salsify_avro'
+  spec.add_runtime_dependency 'thermite'
 
   spec.add_development_dependency 'avro-builder', '>= 0.12.0'
   spec.add_development_dependency 'bundler', '>= 1.11'

@@ -26,6 +26,10 @@ impl AvromaticConfiguration {
         Ok(instance.value().into())
     }
 
+    pub fn set_root_model(&mut self) {
+        self.instance_variable_set("@_root_model", Boolean::new(false));
+    }
+
     pub fn rb_key_schema(&self) -> Option<RAvroSchema> {
         self.instance_variable_get("@key_avro_schema")
             .try_convert_to()
@@ -57,5 +61,13 @@ impl AvromaticConfiguration {
         let key_var = self.instance_variable_get("@key_avro_schema");
         let value_var = self.instance_variable_get("@avro_schema");
         key_var.is_nil() && !value_var.is_nil()
+    }
+
+    pub fn should_register(&self) -> bool {
+        println!("nested: {}", self.is_nested_model());
+        self.instance_variable_get("@_root_model")
+            .try_convert_to::<Boolean>()
+            .map(|b| !b.to_bool() || self.is_nested_model())
+            .unwrap_or_else(|_| self.is_nested_model())
     }
 }

@@ -572,14 +572,14 @@ methods!(
         model_class.include("AvromaticModelAttributes");
         AvromaticModel::define_class_methods(&mut model_class, &config);
 
-        if config.is_nested_model() {
+        println!("should: {}", config.should_register());
+        if config.should_register() {
             let schema_name = inner.value_schema().fullname().unwrap();
             let model_name = _itself.instance_variable_get("@name").try_convert_to::<RString>().unwrap().to_string();
             if let Some(ref class) = ModelRegistry::global().lookup(&schema_name) {
                 let schema = config.value_schema().unwrap();
                 AvromaticModel::validate_fingerprints(&schema, &model_name, class);
             } else {
-                println!("Registering nested");
                 ModelRegistry::global().register(&model_class);
             }
         }
@@ -588,7 +588,8 @@ methods!(
     }
 
     fn rb_build(config: AvromaticConfiguration) -> AnyObject {
-        let config = argument_check!(config);
+        let mut config = argument_check!(config);
+        config.set_root_model();
         raise_if_error(AvromaticModel::from_config(config).into())
     }
 );
@@ -652,13 +653,12 @@ impl AvromaticModel {
             .unwrap()
             .to_string();
         if let Some(class) = ModelRegistry::global().lookup(&schema_name) {
-            println!("found: {}", model_name);
             Self::validate_fingerprints(&schema, &model_name, &class);
             return class;
         }
 
-        println!("Allocating model: {:?}", model_name);
-        let mut class = Class::new(&model_name, None);
+        println!("Registering: {} ({})", schema_name, model_name);
+        let mut class = Class::from_existing("Class").new_instance(None).try_convert_to::<Class>().unwrap();
         let rb_schema = ModelSchema { schema: schema.clone() };
         let avro_schema: AnyObject = Class::from_existing("AvroSchema")
             .wrap_data(rb_schema, &*MODEL_SCHEMA_WRAPPER);
