@@ -32,11 +32,15 @@ fn raise_if_error<T: Object>(result: Result<T, Error>) -> AnyObject {
     match result {
         Ok(t) => t.to_any_object(),
         Err(err) => {
-            let message = format!("{}", err);
-            VM::raise(Class::from_existing("StandardError"), &message);
+            standard_error(&err);
             NilClass::new().to_any_object()
         }
     }
+}
+
+fn standard_error(err: &Error) {
+    let message = format!("{}", err);
+    VM::raise(Class::from_existing("StandardError"), &message);
 }
 
 fn stringify(object: &AnyObject) -> String {
@@ -51,6 +55,7 @@ extern fn rb_initialize(
     argv: *const AnyObject,
     mut itself: AvromaticModelAttributes,
 ) -> AnyObject {
+    itself.call_super(None);
     let arg = RValue::from(0);
     unsafe {
         let p_argv: *const RValue = std::mem::transmute(argv);
@@ -62,9 +67,12 @@ extern fn rb_initialize(
         );
     };
     let arg_obj: AnyObject = arg.into();
-    let data: HashMap<String, AnyObject> = if arg.is_nil() {
+    let data: HashMap<String, AnyObject> = if arg_obj.is_nil() {
         HashMap::new()
     } else {
+        // TODO: avoid building this hashmap by using the descriptor
+        // TODO: need to support non-hash arguments
+        println!("Arguments: {}", crate::util::debug_ruby(&arg_obj));
         let hash = argument_check!(arg_obj.try_convert_to::<Hash>());
         let mut values = HashMap::new();
         hash.each(|key, value| {
@@ -130,7 +138,8 @@ extern fn rb_method_missing(argc: Argc, argv: *const AnyObject, itself: Avromati
 
     // setter is private for an initialized, non-mutable model
     let constructed = itself.instance_variable_get("@_constructed") == Boolean::new(true).into();
-    if !itself.config().is_mutable() && constructed {
+    if false {
+    // if !itself.config().is_mutable() && constructed {
         let message = format!(
             "private method `{}' called for {}",
             s,
@@ -145,7 +154,7 @@ extern fn rb_method_missing(argc: Argc, argv: *const AnyObject, itself: Avromati
     // Setter
     let (s, _) = s.split_at(s.len() - 1);
     let mut guard = HeapGuard::new();
-    if let Err(err) = itself.set_attribute(s, arguments.at(1), &mut guard) {
+    if let Err(err) = itself.set_attribute(s, arguments.at(0), &mut guard) {
         let message = format!("{}", err);
         VM::raise(Class::from_existing("ArgumentError"), &message);
     }
@@ -282,7 +291,7 @@ methods!(
     }
 
     fn rb_nested_models() -> AnyObject {
-        ModelRegistry::global().to_any_object()
+        itself.self_config().nested_models().to_any_object()
     }
 
     fn rb_key_avro_schema() -> AnyObject {
@@ -366,7 +375,7 @@ methods!(
 
 impl AvromaticModelAttributes {
     fn class_name(&self) -> RString {
-        self.class().send("name", None).try_convert_to::<RString>().unwrap()
+        self.class().send("name", None).try_convert_to::<RString>().unwrap_or_else(|_| RString::new_utf8("Class"))
     }
 
     fn with_storage<F, R>(&self, f: F) -> R
@@ -561,28 +570,30 @@ methods!(
     fn rb_included_hook(model_class: Class) -> AnyObject {
         let mut model_class = argument_check!(model_class);
 
-        let descriptor = _itself.instance_variable_get("@_schema");
-        model_class.instance_variable_set("@_schema", descriptor.to_any_object());
-        model_class.singleton_class().attr_reader("_schema");
-        let inner = descriptor.get_data(&*MODEL_DESCRIPTOR_WRAPPER);
-
         let mut config = _itself.instance_variable_get("@config");
         let config = config.try_convert_to::<AvromaticConfiguration>().unwrap();
+
+
+        let key_schema = rb_try!(config.key_schema());
+        let value_schema = rb_try!(config.value_schema());
 
         model_class.include("AvromaticModelAttributes");
         AvromaticModel::define_class_methods(&mut model_class, &config);
 
-        println!("should: {}", config.should_register());
         if config.should_register() {
-            let schema_name = inner.value_schema().fullname().unwrap();
+            let schema_name = (&value_schema).fullname().unwrap();
             let model_name = _itself.instance_variable_get("@name").try_convert_to::<RString>().unwrap().to_string();
-            if let Some(ref class) = ModelRegistry::global().lookup(&schema_name) {
+            if let Some(ref class) = config.nested_models().lookup(&schema_name) {
                 let schema = config.value_schema().unwrap();
                 AvromaticModel::validate_fingerprints(&schema, &model_name, class);
             } else {
-                ModelRegistry::global().register(&model_class);
+                config.nested_models().register(&model_class);
             }
         }
+
+        let descriptor = rb_try!(ModelDescriptor::new(key_schema, value_schema, &ModelRegistry::global()));
+        model_class.instance_variable_set("@_schema", descriptor.to_any_object());
+        model_class.singleton_class().attr_reader("_schema");
 
         NilClass::new().into()
     }
@@ -610,15 +621,14 @@ impl AvromaticModel {
     }
 
     pub fn from_config(config: AvromaticConfiguration) -> Result<Module, Error> {
-        let maybe_key_schema = config.key_schema()?;
         let value_schema = config.value_schema()?;
 
-        let mut module = Self::from_schema(maybe_key_schema, value_schema)?;
+        let mut module = Self::from_schema(value_schema)?;
         module.instance_variable_set("@config", config);
         Ok(module)
     }
 
-    fn from_schema(key_schema: Option<FullSchema>, value_schema: FullSchema) -> Result<Module, Error> {
+    fn from_schema(value_schema: FullSchema) -> Result<Module, Error> {
         let mut module = Class::from_existing("Module")
             .send("new", None)
             .try_convert_to::<Module>()
@@ -635,17 +645,17 @@ impl AvromaticModel {
         let schema_name = (&value_schema).fullname().unwrap();
         let model_name = RString::new_utf8(&schema_name).send("classify", None);
 
-        ModelDescriptor::new(key_schema, value_schema).map(|descriptor| {
-            module.instance_variable_set("@_schema", descriptor);
-            module.instance_variable_set("@name", model_name);
-            module.define(|itself| {
-                itself.def_self("included", rb_included_hook);
-            });
-            module
-        })
+        module.instance_variable_set("@name", model_name);
+        module.define(|itself| {
+            itself.def_self("included", rb_included_hook);
+        });
+        Ok(module)
     }
 
-    pub fn build_model(schema: FullSchema) -> Class {
+    pub fn build_model(
+        schema: FullSchema,
+        nested_models: &ModelRegistry,
+    ) -> Class {
         let schema_name = (&schema).fullname().unwrap();
         let model_name = RString::new_utf8(&schema_name)
             .send("classify", None)
@@ -657,16 +667,15 @@ impl AvromaticModel {
             return class;
         }
 
-        println!("Registering: {} ({})", schema_name, model_name);
         let mut class = Class::from_existing("Class").new_instance(None).try_convert_to::<Class>().unwrap();
         let rb_schema = ModelSchema { schema: schema.clone() };
         let avro_schema: AnyObject = Class::from_existing("AvroSchema")
             .wrap_data(rb_schema, &*MODEL_SCHEMA_WRAPPER);
         class.instance_variable_set("@__schema", avro_schema);
-        let config = AvromaticConfiguration::new(&schema).unwrap();
+        let config = AvromaticConfiguration::new(&schema, nested_models).unwrap();
         Self::define_class_methods(&mut class, &config);
-        ModelRegistry::global().register(&class);
-        let mut module = Self::from_schema(None, schema).unwrap();
+        config.nested_models().register(&class);
+        let mut module = Self::from_schema(schema).unwrap();
         module.instance_variable_set("@config", config);
         class.send("include", Some(&[module.to_any_object()]));
         class

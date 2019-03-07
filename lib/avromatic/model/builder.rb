@@ -38,9 +38,6 @@ module Avromatic
       # For options see Avromatic::Model.build
       def initialize(**options)
         if options[:native] == false
-          options = options.reverse_merge(
-            nested_models: ModelRegistry.new
-          )
           @config = Avromatic::Model::Configuration.new(**options)
           @mod = Module.new
           define_included_method

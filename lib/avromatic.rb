@@ -89,6 +89,7 @@ module Avromatic
 
   def self.eager_load_models!
     (@eager_load_model_names || []).each do |model_name|
+      puts "EAGER LOAD #{model_name}"
       nested_models.ensure_registered_model(model_name.constantize)
     end
   end

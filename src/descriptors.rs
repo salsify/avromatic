@@ -7,6 +7,7 @@ use avro_rs::{
 use crate::custom_types::{CustomTypeConfiguration, CustomTypeRegistry};
 use crate::heap_guard::HeapGuard;
 use crate::model::{AvromaticModel, AvromaticModelAttributes, ModelStorage, MODEL_STORAGE_WRAPPER};
+use crate::model_pool::ModelRegistry;
 use crate::serializer;
 use crate::util::{instance_of, RDate, RDateTime, RTime};
 use crate::values::AvromaticValue;
@@ -35,8 +36,8 @@ struct ModelRecord {
 }
 
 impl ModelRecord {
-    fn new(schema: FullSchema) -> Result<Self, Error> {
-        let descriptor = RecordDescriptor::build(&schema)?;
+    fn new(schema: FullSchema, nested_models: &ModelRegistry) -> Result<Self, Error> {
+        let descriptor = RecordDescriptor::build(&schema, nested_models)?;
         Ok(Self { schema, descriptor })
     }
 
@@ -66,9 +67,13 @@ wrappable_struct!(
 );
 
 impl ModelDescriptorInner {
-    pub fn new(key_schema: Option<FullSchema>, value_schema: FullSchema) -> Result<Self, Error> {
-        let key = key_schema.map_or(Ok(None), |k| ModelRecord::new(k).map(Some))?;
-        let value = ModelRecord::new(value_schema)?;
+    pub fn new(
+        key_schema: Option<FullSchema>,
+        value_schema: FullSchema,
+        nested_models: &ModelRegistry,
+    ) -> Result<Self, Error> {
+        let key = key_schema.map_or(Ok(None), |k| ModelRecord::new(k, nested_models).map(Some))?;
+        let value = ModelRecord::new(value_schema, nested_models)?;
         if let Some(ref key) = key {
             let values = &value.descriptor.attributes;
             key.descriptor.attributes.iter().for_each(|(k, key_type)| {
@@ -218,8 +223,12 @@ impl ModelDescriptorInner {
 class!(ModelDescriptor);
 
 impl ModelDescriptor {
-    pub fn new(key_schema: Option<FullSchema>, value_schema: FullSchema) -> Result<Self, Error> {
-        let inner = ModelDescriptorInner::new(key_schema, value_schema)?;
+    pub fn new(
+        key_schema: Option<FullSchema>,
+        value_schema: FullSchema,
+        nested_models: &ModelRegistry,
+    ) -> Result<Self, Error> {
+        let inner = ModelDescriptorInner::new(key_schema, value_schema, nested_models)?;
         let this = Class::from_existing("ModelDescriptor")
             .wrap_data(inner, &*MODEL_DESCRIPTOR_WRAPPER);
         Ok(this)
@@ -232,13 +241,14 @@ struct RecordDescriptor {
 }
 
 impl RecordDescriptor {
-    pub fn build(schema: &FullSchema) -> Result<Self, Error> {
+    pub fn build(schema: &FullSchema, nested_models: &ModelRegistry) -> Result<Self, Error> {
         let record = schema.record_schema()
             .ok_or_else(|| format_err!("Invalid Schema"))?;
         let attributes = record.fields().iter().map(|field| {
             let attribute = AttributeDescriptor::build(
                 field.schema(),
                 field.default().map(|v| v.clone().avro()),
+                nested_models,
             )?;
             Ok((field.name().to_string(), attribute))
         }).collect::<Result<HashMap<String, AttributeDescriptor>, Error>>()?;
@@ -305,8 +315,9 @@ impl AttributeDescriptor {
     pub fn build<'a>(
         field_schema: SchemaRef<'a>,
         default: Option<AvroValue>,
+        nested_models: &ModelRegistry,
     ) -> Result<Self, Error> {
-        let type_descriptor = TypeDescriptor::build(field_schema)?;
+        let type_descriptor = TypeDescriptor::build(field_schema, nested_models)?;
         let default = default.map(|v| {
             type_descriptor.avro_to_attribute(&v, &mut HeapGuard::new())
         });
@@ -390,7 +401,7 @@ enum TypeDescriptor  {
 }
 
 impl TypeDescriptor {
-    pub fn build(schema: SchemaRef) -> Result<Self, Error> {
+    pub fn build(schema: SchemaRef, nested_models: &ModelRegistry) -> Result<Self, Error> {
         let out = match schema.kind() {
             SchemaKind::Null => TypeDescriptor::Null,
             SchemaKind::Boolean => TypeDescriptor::Boolean,
@@ -413,13 +424,13 @@ impl TypeDescriptor {
             SchemaKind::Array => {
                 let schema = schema.array_schema()
                     .ok_or_else(|| format_err!("Invalid Schema"))?;
-                let inner = TypeDescriptor::build(schema)?;
+                let inner = TypeDescriptor::build(schema, nested_models)?;
                 TypeDescriptor::Array(Box::new(inner))
             },
             SchemaKind::Map => {
                 let schema = schema.map_schema()
                     .ok_or_else(|| format_err!("Invalid Schema"))?;
-                let inner = TypeDescriptor::build(schema)?;
+                let inner = TypeDescriptor::build(schema, nested_models)?;
                 TypeDescriptor::Map(Box::new(inner))
             },
             SchemaKind::Union => {
@@ -434,12 +445,15 @@ impl TypeDescriptor {
                 let variants = union_schema
                     .variants()
                     .into_iter()
-                    .map(|variant| TypeDescriptor::build(variant))
+                    .map(|variant| TypeDescriptor::build(variant, nested_models))
                     .collect::<Result<Vec<TypeDescriptor>, Error>>()?;
                 TypeDescriptor::Union(union_schema.union_ref_map(), variants)
             },
             SchemaKind::Record => {
-                let inner = AvromaticModel::build_model(schema.as_full_schema());
+                let inner = AvromaticModel::build_model(
+                    schema.as_full_schema(),
+                    nested_models
+                );
                 TypeDescriptor::Record(inner)
             },
             SchemaKind::Enum => {

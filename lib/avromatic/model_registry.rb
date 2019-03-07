@@ -14,6 +14,7 @@ module Avromatic
     end
 
     def clear
+      puts "--- CLEAR"
       @hash.clear
     end
 

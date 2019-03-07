@@ -10,7 +10,8 @@ avro-rs = { git = "https://github.com/kphelps/avro-rs", branch = "master" }
 byteorder = "*"
 failure = "*"
 lazy_static = "*"
-rutie = { git = "https://github.com/danielpclark/rutie", branch = "master" }
+rutie = { path = "../../dev/rutie" }
+# rutie = { git = "https://github.com/danielpclark/rutie", branch = "master" }
 serde_json = "*"
 sha2 = "*"
 

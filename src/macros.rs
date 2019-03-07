@@ -12,6 +12,19 @@ macro_rules! argument_check {
     }
 }
 
+macro_rules! rb_try {
+    ($inner:expr) => {
+        match $inner {
+            Ok(value) => value,
+            Err(e) => {
+                let message = format!("{}", e);
+                rutie::VM::raise(rutie::Class::from_existing("StandardError"), &message);
+                return rutie::NilClass::new().into();
+            }
+        }
+    }
+}
+
 macro_rules! ruby_class {
     ($rust_name:ident, $ruby_name:expr) => {
         ruby_class!($rust_name, $ruby_name, Class::from_existing($ruby_name));

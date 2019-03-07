@@ -1,4 +1,5 @@
 use avro_rs::{FullSchema, Schema, schema::SchemaIter};
+use crate::model_pool::ModelRegistry;
 use crate::schema::RAvroSchema;
 use failure::{Error, format_err};
 use rutie::*;
@@ -12,7 +13,10 @@ ruby_class!(
 );
 
 impl AvromaticConfiguration {
-    pub fn new(schema: &FullSchema) -> Result<Self, Error> {
+    pub fn new(
+        schema: &FullSchema,
+        nested_models: &ModelRegistry,
+    ) -> Result<Self, Error> {
         let schema_name = schema.fullname().ok_or_else(|| format_err!("invalid schema"))?;
         let mut args = Hash::new();
         args.store(Symbol::new("schema_name"), RString::new_utf8(&schema_name));
@@ -22,12 +26,19 @@ impl AvromaticConfiguration {
             .send("parse", Some(&[RString::new_utf8(&schema_string).into()]));
 
         args.store(Symbol::new("schema"), rb_schema);
+        args.store(Symbol::new("nested_models"), nested_models.to_any_object());
         let instance = Self::class().new_instance(Some(&[args.to_any_object()]));
         Ok(instance.value().into())
     }
 
+    pub fn nested_models(&self) -> ModelRegistry {
+        self.send("nested_models", None)
+            .try_convert_to()
+            .unwrap_or_else(|_| ModelRegistry::global())
+    }
+
     pub fn set_root_model(&mut self) {
-        self.instance_variable_set("@_root_model", Boolean::new(false));
+        self.instance_variable_set("@_root_model", Boolean::new(true));
     }
 
     pub fn rb_key_schema(&self) -> Option<RAvroSchema> {
@@ -64,7 +75,6 @@ impl AvromaticConfiguration {
     }
 
     pub fn should_register(&self) -> bool {
-        println!("nested: {}", self.is_nested_model());
         self.instance_variable_get("@_root_model")
             .try_convert_to::<Boolean>()
             .map(|b| !b.to_bool() || self.is_nested_model())
