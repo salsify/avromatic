@@ -5,8 +5,8 @@ authors = ["Kyle Phelps <kphelps@salsify.com>"]
 edition = "2018"
 
 [dependencies]
-avro-rs = { git = "https://github.com/kphelps/avro-rs", branch = "master" }
-# avro-rs = { path = "../../dev/avro-rs" }
+# avro-rs = { git = "https://github.com/kphelps/avro-rs", branch = "master" }
+avro-rs = { path = "../../dev/avro-rs" }
 byteorder = "*"
 failure = "*"
 lazy_static = "*"

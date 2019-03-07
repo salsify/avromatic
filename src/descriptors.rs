@@ -5,6 +5,7 @@ use avro_rs::{
     types::Value as AvroValue,
 };
 use crate::custom_types::{CustomTypeConfiguration, CustomTypeRegistry};
+use crate::de::*;
 use crate::heap_guard::HeapGuard;
 use crate::model::{AvromaticModel, AvromaticModelAttributes, ModelStorage, MODEL_STORAGE_WRAPPER};
 use crate::model_pool::ModelRegistry;
@@ -15,6 +16,8 @@ use failure::{Error, Fail, format_err};
 use rutie::*;
 use sha2::Sha256;
 use std::collections::HashMap;
+use std::io::Read;
+use std::mem::transmute;
 use std::rc::Rc;
 
 #[derive(Debug, Fail)]
@@ -383,7 +386,9 @@ enum TypeDescriptor  {
     Enum(Vec<String>),
     Fixed(usize),
     Float,
-    Integer,
+    Double,
+    Int,
+    Long,
     Null,
     String,
     Bytes,
@@ -405,10 +410,10 @@ impl TypeDescriptor {
         let out = match schema.kind() {
             SchemaKind::Null => TypeDescriptor::Null,
             SchemaKind::Boolean => TypeDescriptor::Boolean,
-            SchemaKind::Int => TypeDescriptor::Integer,
-            SchemaKind::Long => TypeDescriptor::Integer,
+            SchemaKind::Int => TypeDescriptor::Int,
+            SchemaKind::Long => TypeDescriptor::Long,
             SchemaKind::Float => TypeDescriptor::Float,
-            SchemaKind::Double => TypeDescriptor::Float,
+            SchemaKind::Double => TypeDescriptor::Double,
             SchemaKind::Bytes => TypeDescriptor::Bytes,
             SchemaKind::String => TypeDescriptor::String,
             SchemaKind::Date => TypeDescriptor::Date,
@@ -482,11 +487,13 @@ impl TypeDescriptor {
             TypeDescriptor::String => coerce_string(value, guard),
             TypeDescriptor::Bytes => coerce_string(value, guard),
             TypeDescriptor::Enum(symbols) => coerce_enum(value, symbols, guard),
-            TypeDescriptor::Integer => coerce_integer(value, guard),
+            TypeDescriptor::Int => coerce_integer(value, guard),
+            TypeDescriptor::Long => coerce_long(value, guard),
             TypeDescriptor::Date => coerce_date(value, guard),
             TypeDescriptor::TimestampMillis => coerce_timestamp_millis(value, guard),
             TypeDescriptor::TimestampMicros => coerce_timestamp_micros(value, guard),
             TypeDescriptor::Float => coerce_float(value, guard),
+            TypeDescriptor::Double => coerce_double(value, guard),
             TypeDescriptor::Fixed(length) => coerce_fixed(value, *length, guard),
             TypeDescriptor::Array(inner) => coerce_array(value, inner, guard),
             TypeDescriptor::Union(_, variants) => coerce_union(value, variants, guard),
@@ -502,7 +509,7 @@ impl TypeDescriptor {
             (AvromaticValue::True, _) => Boolean::new(true).to_any_object(),
             (AvromaticValue::False, _) => Boolean::new(false).to_any_object(),
             (AvromaticValue::String(string), _) => string.to_any_object(),
-            (AvromaticValue::Long(n), TypeDescriptor::Date) => RDate::from_i64(n),
+            (AvromaticValue::Long(n), TypeDescriptor::Date) => RDate::from_integer(n),
             (AvromaticValue::Long(n), TypeDescriptor::TimestampMillis) => RTime::from_millis(n),
             (AvromaticValue::Long(n), TypeDescriptor::TimestampMicros) => RTime::from_micros(n),
             (AvromaticValue::Long(n), _) => n.to_any_object(),
@@ -575,11 +582,11 @@ impl TypeDescriptor {
                 guard.guard(rstring.to_any_object());
                 AvromaticValue::String(rstring)
             },
-            (TypeDescriptor::Integer, AvroValue::Int(n)) |
+            (TypeDescriptor::Int, AvroValue::Int(n)) |
             (TypeDescriptor::Date, AvroValue::Date(n)) => {
                 AvromaticValue::Long((*n as i64).into())
             },
-            (TypeDescriptor::Integer, AvroValue::Long(n)) |
+            (TypeDescriptor::Long, AvroValue::Long(n)) |
             (TypeDescriptor::TimestampMicros, AvroValue::TimestampMicros(n)) |
             (TypeDescriptor::TimestampMillis, AvroValue::TimestampMillis(n)) => {
                 AvromaticValue::Long((*n).into())
@@ -589,7 +596,7 @@ impl TypeDescriptor {
                 guard.guard(f.to_any_object());
                 AvromaticValue::Float(f)
             },
-            (TypeDescriptor::Float, AvroValue::Double(n)) => {
+            (TypeDescriptor::Double, AvroValue::Double(n)) => {
                 let f = Float::new(*n);
                 guard.guard(f.to_any_object());
                 AvromaticValue::Float(f)
@@ -652,10 +659,10 @@ impl TypeDescriptor {
             (TypeDescriptor::Bytes, AvromaticValue::String(rstring)) => serialize_bytes(rstring),
             (TypeDescriptor::Enum(symbols), AvromaticValue::String(rstring)) =>
                 serialize_enum(rstring, symbols)?,
-            (TypeDescriptor::Integer, AvromaticValue::Long(integer))
+            (TypeDescriptor::Int, AvromaticValue::Long(integer))
                 if schema.kind() == SchemaKind::Int =>
                 serialize_integer(integer),
-            (TypeDescriptor::Integer, AvromaticValue::Long(integer))
+            (TypeDescriptor::Long, AvromaticValue::Long(integer))
                 if schema.kind() == SchemaKind::Long =>
                 serialize_long(integer),
             (TypeDescriptor::Date, AvromaticValue::Long(integer)) => serialize_date(integer),
@@ -666,7 +673,7 @@ impl TypeDescriptor {
             (TypeDescriptor::Float, AvromaticValue::Float(float))
                 if schema.kind() == SchemaKind::Float =>
                 serialize_float(float),
-            (TypeDescriptor::Float, AvromaticValue::Float(float))
+            (TypeDescriptor::Double, AvromaticValue::Float(float))
                 if schema.kind() == SchemaKind::Double =>
                 serialize_double(float),
             (TypeDescriptor::Fixed(length), AvromaticValue::String(value)) =>
@@ -686,6 +693,138 @@ impl TypeDescriptor {
             _ => return Err(format_err!("bad to avro: {:?} {:?}", value, schema.schema())),
         };
         Ok(out)
+    }
+
+    pub fn decode<R: Read>(&self, reader: &mut R)
+                           -> Result<AnyObject, Error>
+    {
+        match self {
+            TypeDescriptor::Null => Ok(NilClass::new().into()),
+            TypeDescriptor::Boolean => {
+                let mut buf = [0u8; 1];
+                reader.read_exact(&mut buf[..])?;
+
+                match buf[0] {
+                    0u8 => Ok(Boolean::new(false).into()),
+                    1u8 => Ok(Boolean::new(true).into()),
+                    _ => Err(DecodeError::new("not a bool").into()),
+                }
+            },
+            TypeDescriptor::Int => decode_int(reader),
+            TypeDescriptor::Date => zag_i32(reader).map(|i| RDate::from_i64(i as i64)),
+            TypeDescriptor::Long => decode_long(reader),
+            TypeDescriptor::TimestampMillis => zag_i64(reader).map(|i| RTime::from_i64_millis(i)),
+            TypeDescriptor::TimestampMicros => zag_i64(reader).map(|i| RTime::from_i64_micros(i)),
+            TypeDescriptor::Float => {
+                let mut buf = [0u8; 4];
+                reader.read_exact(&mut buf[..])?;
+                Ok(Float::new(unsafe { transmute::<[u8; 4], f32>(buf) } as f64).into())
+            },
+            TypeDescriptor::Double => {
+                let mut buf = [0u8; 8];
+                reader.read_exact(&mut buf[..])?;
+                Ok(Float::new(unsafe { transmute::<[u8; 8], f64>(buf) }).into())
+            },
+            TypeDescriptor::Bytes => {
+                let len = decode_len(reader)?;
+                let mut buf = Vec::with_capacity(len);
+                unsafe {
+                    buf.set_len(len);
+                }
+                reader.read_exact(&mut buf)?;
+                let encoding = Encoding::find("ASCII-8BIT").unwrap();
+                let mut rstring = RString::from_bytes(&buf, &encoding);
+                rstring.freeze();
+                Ok(rstring.into())
+            },
+            TypeDescriptor::String => {
+                let len = decode_len(reader)?;
+                let mut buf = Vec::with_capacity(len);
+                unsafe {
+                    buf.set_len(len);
+                }
+                reader.read_exact(&mut buf)?;
+
+                std::str::from_utf8(&buf)
+                    .map(|s| RString::new_utf8(s).into())
+                    .map_err(|_| DecodeError::new("not a valid utf-8 string").into())
+            },
+            TypeDescriptor::Fixed(size) => {
+                let mut buf = vec![0u8; *size as usize];
+                reader.read_exact(&mut buf)?;
+                let encoding = Encoding::find("ASCII-8BIT").unwrap();
+                let mut rstring = RString::from_bytes(&buf, &encoding);
+                rstring.freeze();
+                Ok(rstring.into())
+            },
+            TypeDescriptor::Array(ref inner) => {
+                let mut items = Array::new();
+
+                loop {
+                    let len = decode_len(reader)?;
+                    // arrays are 0-terminated, 0i64 is also encoded as 0 in Avro
+                    // reading a length of 0 means the end of the array
+                    if len == 0 {
+                        break
+                    }
+
+                    for _ in 0..len {
+                        items.push(inner.decode(reader)?);
+                    }
+                }
+
+                Ok(items.into())
+            },
+            TypeDescriptor::Map(ref inner) => {
+                let mut items = Hash::new();
+
+                loop {
+                    let len = decode_len(reader)?;
+                    // maps are 0-terminated, 0i64 is also encoded as 0 in Avro
+                    // reading a length of 0 means the end of the map
+                    if len == 0 {
+                        break
+                    }
+
+                    for _ in 0..len {
+                        let mut key = TypeDescriptor::String.decode(reader)
+                            .map_err(|_| DecodeError::new("map key is not a string"))?;
+                        key.freeze();
+                        let value = inner.decode(reader)?;
+                        items.store(key, value);
+                    }
+                }
+
+                Ok(items.into())
+            },
+            TypeDescriptor::Union(_, variants) => {
+                let index = zag_i64(reader)?;
+                match variants.get(index as usize) {
+                    Some(variant) => {
+                        // TODO tag the value somehow
+                        variant.decode(reader)
+                    }
+                    None => Err(DecodeError::new("Union index out of bounds").into()),
+                }
+            },
+            TypeDescriptor::Record(ref record) => {
+                // TODO delegate to record class
+                unimplemented!()
+            },
+            TypeDescriptor::Enum(symbols) => {
+                let index = zag_i32(reader)?;
+                if index >= 0 && (index as usize) <= symbols.len() {
+                    let symbol = &symbols[index as usize];
+                    Ok(RString::new_utf8(&symbol).into())
+                } else {
+                    Err(DecodeError::new("enum symbol index out of bounds").into())
+                }
+            },
+            TypeDescriptor::Custom(inner, default) => {
+                let raw = default.decode(reader)?;
+                Ok(inner.deserialize(raw))
+            }
+        }
     }
 }
 
@@ -806,12 +945,30 @@ fn coerce_integer(value: &AnyObject, guard: &mut HeapGuard) -> Result<AvromaticV
         .or_else(|_| Err(bad_coercion(value, "integer")))
 }
 
+fn coerce_long(value: &AnyObject, guard: &mut HeapGuard) -> Result<AvromaticValue, Error> {
+    value.try_convert_to::<Integer>()
+        .map(|int| {
+            guard.guard(int.to_any_object());
+            int
+        })
+        .map(AvromaticValue::Long)
+        .or_else(|_| Err(bad_coercion(value, "integer")))
+}
+
+fn coerce_double(value: &AnyObject, guard: &mut HeapGuard) -> Result<AvromaticValue, Error> {
+    value.try_convert_to::<Float>()
+        .or_else(|_| value.try_convert_to::<Integer>().map(|i| Float::new(i.to_i64() as f64)))
+        .map(|float| {
+            guard.guard(float.to_any_object());
+            float
+        })
+        .map(AvromaticValue::Float)
+        .map_err(|_| bad_coercion(value, "float"))
+}
+
 fn coerce_float(value: &AnyObject, guard: &mut HeapGuard) -> Result<AvromaticValue, Error> {
     value.try_convert_to::<Float>()
-        .or_else(|_|
-            value.try_convert_to::<Integer>()
-                .map(|i| Float::new(i.to_i64() as f64))
-        )
+        .or_else(|_| value.try_convert_to::<Integer>().map(|i| Float::new(i.to_i64() as f64)))
         .map(|float| {
             guard.guard(float.to_any_object());
             float

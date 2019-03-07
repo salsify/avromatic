@@ -7,6 +7,7 @@ mod macros;
 
 mod configuration;
 mod custom_types;
+mod de;
 mod descriptors;
 mod heap_guard;
 mod model;

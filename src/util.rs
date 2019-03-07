@@ -26,7 +26,11 @@ pub fn debug_ruby(object: &impl Object) -> String {
 ruby_class!(RDate, "Date");
 
 impl RDate {
-    pub fn from_i64(n: &Integer) -> AnyObject {
+    pub fn from_i64(n: i64) -> AnyObject {
+        Self::from_integer(&Integer::new(n))
+    }
+
+    pub fn from_integer(n: &Integer) -> AnyObject {
         let epoch = Module::from_existing("Avro")
             .get_nested_module("LogicalTypes")
             .get_nested_module("IntDate")
@@ -78,19 +82,28 @@ impl RTime {
         (seconds * 1000000 + micros).into()
     }
 
+    pub fn from_i64_millis(n: i64) -> AnyObject {
+        let seconds = Integer::new(n / 1000).to_any_object();
+        let micros = Integer::new(n % 1000 * 1000).to_any_object();
+        Class::from_existing("Time")
+            .send("at", Some(&[seconds, micros]))
+            .send("utc", None)
+    }
+
     pub fn from_millis(n: &Integer) -> AnyObject {
-        let seconds = Integer::new(n.to_i64() / 1000).to_any_object();
-        let micros = Integer::new(n.to_i64() % 1000 * 1000).to_any_object();
+        Self::from_i64_millis(n.to_i64())
+    }
+
+    pub fn from_i64_micros(n: i64) -> AnyObject {
+        let seconds = Integer::new(n / 1000000).to_any_object();
+        let micros = Integer::new(n % 1000000).to_any_object();
         Class::from_existing("Time")
             .send("at", Some(&[seconds, micros]))
             .send("utc", None)
     }
 
     pub fn from_micros(n: &Integer) -> AnyObject {
-        let seconds = Integer::new(n.to_i64() / 1000000).to_any_object();
-        let micros = Integer::new(n.to_i64() % 1000000).to_any_object();
-        Class::from_existing("Time")
-            .send("at", Some(&[seconds, micros]))
-            .send("utc", None)
+        Self::from_i64_micros(n.to_i64())
     }
+
 }
