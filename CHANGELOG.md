@@ -1,5 +1,8 @@
 # avromatic changelog
 
+## v2.2.0
+- Add support for Rails 6.0.
+
 ## v2.1.0
 - Add `key_schema_name` and `value_schema_name` attributes to `UnexpectedKeyError`.
 
