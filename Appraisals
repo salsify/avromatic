@@ -24,7 +24,7 @@ appraise 'rails6_0' do
   gem 'activemodel', '~> 6.0.0'
 end
 
-appraise 'avro-patches-5_0' do
+appraise 'avro-patches-rails5_0' do
   gem 'avro-patches'
   gem 'activesupport', '~> 5.0.6'
   gem 'activemodel', '~> 5.0.6'

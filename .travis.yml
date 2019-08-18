@@ -1,17 +1,23 @@
 language: ruby
 rvm:
-  - 2.5.1
-  - 2.4.4
-  - 2.3.5
+  - 2.6.3
+  - 2.5.5
+  - 2.4.6
 before_script:
-  - bundle exec appraisal install --jobs=3
-script:
   - bundle exec rubocop
-  - bundle exec appraisal rails5_0 rspec
-  - bundle exec appraisal rails5_1 rspec
-  - bundle exec appraisal rails5_2 rspec
-  - bundle exec appraisal avro-patches-5_0 rspec
-  - bundle exec appraisal avro-patches-0_3_4-rails5_1 rspec
-  - bundle exec appraisal avro-patches-0_3_4-rails5_2 rspec
-  - bundle exec appraisal avro-patches-rails5_1 rspec
-  - bundle exec appraisal avro-patches-rails5_2 rspec
+gemfile:
+  - gemfiles/rails5_0.gemfile
+  - gemfiles/rails5_1.gemfile
+  - gemfiles/rails5_2.gemfile
+  - gemfiles/rails6_0.gemfile
+  - gemfiles/avro_patches_rails5_0.gemfile
+  - gemfiles/avro_patches_rails5_1.gemfile
+  - gemfiles/avro_patches_rails5_2.gemfile
+  - gemfiles/avro_patches_rails6_0.gemfile
+script: bundle exec rspec
+matrix:
+  exclude:
+  - rvm: 2.4.6
+    gemfile: gemfiles/rails6_0.gemfile
+  - rvm: 2.4.6
+    gemfile: gemfiles/avro_patches_rails6_0.gemfile
