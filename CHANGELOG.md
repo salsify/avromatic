@@ -1,5 +1,8 @@
 # avromatic changelog
 
+## v2.2.1
+- Avoid allocating default empty hash in `Avromatic::IO::DatumReader.read_data`
+
 ## v2.2.0
 - Add support for Rails 6.0.
 - Drop support for Ruby < 2.4.
