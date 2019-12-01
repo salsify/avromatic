@@ -375,7 +375,7 @@ describe Avromatic::Model::Builder do
           time = "bad time string"
           expect { test_class.new(ts_msec: time) }.to raise_error(
             Avromatic::Model::CoercionError,
-            "Value for LogicalType#ts_msec could not be coerced to a timestamp-millis. Provided argument: \"bad time string\""
+            'Value for LogicalType#ts_msec could not be coerced to a timestamp-millis. Provided argument: "bad time string"'
           )
         end
 
