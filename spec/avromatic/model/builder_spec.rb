@@ -336,7 +336,7 @@ describe Avromatic::Model::Builder do
         end
 
         it "coerces an DateTime string to a time with millisecond precision" do
-          time = "2018-10-24 02:12:04.123456 +0400"
+          time = '2018-10-24 02:12:04.123456 +0400'
           instance = test_class.new(ts_msec: time)
           expect(instance.ts_msec).to eq(::Time.at(1540332724, 123_000))
         end
@@ -366,13 +366,13 @@ describe Avromatic::Model::Builder do
         end
 
         it "coerces an DateTime string to a time with microsecond precision" do
-          time = "2018-10-24 02:12:04.123456 +0400"
+          time = '2018-10-24 02:12:04.123456 +0400'
           instance = test_class.new(ts_msec: time)
           expect(instance.ts_msec).to eq(::Time.at(1540332724, 123000))
         end
 
         it "raises an error with bad time string" do
-          time = "bad time string"
+          time = 'bad time string'
           expect { test_class.new(ts_msec: time) }.to raise_error(
             Avromatic::Model::CoercionError,
             'Value for LogicalType#ts_msec could not be coerced to a timestamp-millis. Provided argument: "bad time string"'

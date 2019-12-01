@@ -22,7 +22,7 @@ module Avromatic
             input
           elsif input.is_a?(::Time) || input.is_a?(::DateTime)
             coerce_time(input)
-          elsif input.is_a?(String) && date_time = DateTime.parse(input)
+          elsif input.is_a?(String) && (date_time = Time.parse(input))
             coerce_time(date_time)
           else
             raise ArgumentError.new("Could not coerce '#{input.inspect}' to #{name}")
