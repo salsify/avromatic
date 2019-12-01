@@ -7,7 +7,7 @@ module Avromatic
     module Types
       class AbstractTimestampType < AbstractType
         VALUE_CLASSES = [::Time].freeze
-        INPUT_CLASSES = [::Time, ::DateTime, ::ActiveSupport::TimeWithZone].freeze
+        INPUT_CLASSES = [::Time, ::DateTime, ::ActiveSupport::TimeWithZone, String].freeze
 
         def value_classes
           VALUE_CLASSES
@@ -22,6 +22,8 @@ module Avromatic
             input
           elsif input.is_a?(::Time) || input.is_a?(::DateTime)
             coerce_time(input)
+          elsif input.is_a?(String) && date_time = DateTime.parse(input)
+            coerce_time(date_time)
           else
             raise ArgumentError.new("Could not coerce '#{input.inspect}' to #{name}")
           end
