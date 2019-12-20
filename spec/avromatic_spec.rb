@@ -89,12 +89,6 @@ describe Avromatic do
           described_class.prepare!(skip_clear: true)
           expect(Avromatic.schema_store).not_to have_received(:clear)
         end
-
-        it "doesn't registers nested models" do
-          described_class.eager_load_models = %w(NestedRecord)
-          described_class.prepare!(skip_clear: true)
-          expect(described_class.nested_models.registered?('test.__nested_record_sub_record')).to be(false)
-        end
       end
 
       it "registers models" do
