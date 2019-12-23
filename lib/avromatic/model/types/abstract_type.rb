@@ -31,6 +31,10 @@ module Avromatic
         def serialize(_value, **)
           raise "#{__method__} must be overridden by #{self.class.name}"
         end
+
+        def referenced_models
+          raise "#{__method__} must be overridden by #{self.class.name}"
+        end
       end
     end
   end

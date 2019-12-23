@@ -51,6 +51,10 @@ module Avromatic
             strict ? value.avro_value_datum(validate: false) : value.value_attributes_for_avro(validate: false)
           end
         end
+
+        def referenced_models
+          [record_class]
+        end
       end
     end
   end

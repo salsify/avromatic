@@ -68,6 +68,10 @@ module Avromatic
             end
           end
         end
+
+        def referenced_models
+          [key_type, value_type].tap(&:uniq!).flat_map(&:referenced_models).tap(&:uniq!)
+        end
       end
     end
   end

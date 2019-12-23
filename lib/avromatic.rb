@@ -8,6 +8,7 @@ require 'avromatic/model'
 require 'avromatic/model_registry'
 require 'avromatic/messaging'
 require 'active_support/core_ext/string/inflections'
+require 'active_support/core_ext/array/wrap'
 require 'avromatic/patches'
 
 module Avromatic
@@ -81,45 +82,13 @@ module Avromatic
   end
 
   def self.eager_load_models=(models)
-    @eager_load_model_names = Array(models).map { |model| model.is_a?(Class) ? model.name : model }
+    @eager_load_model_names = Array.wrap(models).map { |model| model.is_a?(Class) ? model.name : model }
   end
 
   def self.eager_load_models!
-    (@eager_load_model_names || []).each do |model_name|
-      model = model_name.constantize
-      next if nested_models.registered?(model)
-
-      nested_models.register(model)
-
-      roots = model.attribute_definitions.values.map(&:type)
-      loop do
-        model = roots.shift
-        eager_load_nested_models!(model, roots)
-
-        break if roots.empty?
-      end
-
-    end
+    @eager_load_model_names&.map(&:constantize)&.each(&:register!)
   end
   private_class_method :eager_load_models!
-
-  def self.eager_load_nested_models!(type, roots)
-    case type
-    when Avromatic::Model::Types::ArrayType, Avromatic::Model::Types::MapType
-      eager_load_nested_models!(type.value_type)
-    when Avromatic::Model::Types::CustomType
-      eager_load_nested_models!(type.default_type)
-    when Avromatic::Model::Types::UnionType
-      type.member_types.each { |member_type| eager_load_nested_models!(member_type) }
-    when Avromatic::Model::Types::RecordType
-      model = type.record_class
-      unless nested_models.registered?(model)
-        nested_models.register(model)
-        roots.concat(model.attribute_definitions.values.map(&:type))
-      end
-    end
-  end
-  private_class_method :eager_load_nested_models!
 end
 
 require 'avromatic/railtie' if defined?(Rails)

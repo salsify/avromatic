@@ -67,6 +67,10 @@ module Avromatic
           hash
         end
 
+        def referenced_models
+          member_types.flat_map(&:referenced_models).tap(&:uniq!)
+        end
+
         private
 
         def find_index(value)
