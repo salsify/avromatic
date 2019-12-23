@@ -5,7 +5,7 @@ require 'avromatic/model/types/abstract_type'
 module Avromatic
   module Model
     module Types
-      class StringType
+      class StringType < AbstractType
         VALUE_CLASSES = [::String].freeze
         INPUT_CLASSES = [::String, ::Symbol].freeze
 
