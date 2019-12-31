@@ -1,5 +1,8 @@
 # avromatic changelog
 
+## v2.2.2
+- Fake schema registry support for stubbing URLs with usernames and passwords.
+
 ## v2.2.1
 - Avoid allocating default empty hash in `Avromatic::IO::DatumReader.read_data`
 
