@@ -67,8 +67,8 @@ module Avromatic
           hash
         end
 
-        def referenced_models
-          member_types.flat_map(&:referenced_models).tap(&:uniq!)
+        def referenced_model_classes
+          member_types.flat_map(&:referenced_model_classes).tap(&:uniq!)
         end
 
         private

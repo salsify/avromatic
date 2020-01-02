@@ -51,8 +51,8 @@ module Avromatic
           value
         end
 
-        def referenced_models
-          []
+        def referenced_model_classes
+          EMPTY_ARRAY
         end
       end
     end

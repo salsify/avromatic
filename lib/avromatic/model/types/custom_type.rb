@@ -59,8 +59,8 @@ module Avromatic
           @serializer.call(value)
         end
 
-        def referenced_models
-          default_type.referenced_models
+        def referenced_model_classes
+          default_type.referenced_model_classes
         end
       end
     end

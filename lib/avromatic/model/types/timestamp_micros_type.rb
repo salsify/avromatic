@@ -26,8 +26,8 @@ module Avromatic
           ::Time.at(input.to_i, input.usec)
         end
 
-        def referenced_models
-          []
+        def referenced_model_classes
+          EMPTY_ARRAY
         end
       end
     end

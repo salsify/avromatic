@@ -48,8 +48,8 @@ module Avromatic
           end
         end
 
-        def referenced_models
-          value_type.referenced_models
+        def referenced_model_classes
+          value_type.referenced_model_classes
         end
       end
     end

@@ -20,12 +20,12 @@ module Avromatic
             next if nested_models.registered?(model)
 
             nested_models.register(model)
-            roots.concat(model.referenced_models)
+            roots.concat(model.referenced_model_classes)
           end
         end
 
-        def referenced_models
-          attribute_definitions.values.flat_map { |definition| definition.type.referenced_models }
+        def referenced_model_classes
+          attribute_definitions.values.flat_map { |definition| definition.type.referenced_model_classes }
         end
       end
     end

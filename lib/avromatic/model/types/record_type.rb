@@ -52,7 +52,7 @@ module Avromatic
           end
         end
 
-        def referenced_models
+        def referenced_model_classes
           [record_class]
         end
       end
