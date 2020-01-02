@@ -1,5 +1,8 @@
 # avromatic changelog
 
+## v2.2.2
+- Fix missing models in the model registry when in development by loading the nested models of eager loaded models.
+
 ## v2.2.1
 - Avoid allocating default empty hash in `Avromatic::IO::DatumReader.read_data`
 

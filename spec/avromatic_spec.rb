@@ -51,6 +51,7 @@ describe Avromatic do
   context "eager loading models" do
     before do
       stub_const('NestedRecord', Avromatic::Model.model(schema_name: 'test.nested_record'))
+      stub_const('NestedNestedRecord', Avromatic::Model.model(schema_name: 'test.nested_nested_record'))
       described_class.nested_models.clear
     end
 
@@ -80,13 +81,13 @@ describe Avromatic do
       end
 
       context "when skip_clear is true" do
-        before { described_class.prepare!(skip_clear: true) }
-
         it "does not clear the registry" do
+          described_class.prepare!(skip_clear: true)
           expect(described_class.nested_models.registered?('test.value')).to be(true)
         end
 
         it "does not clear the schema store" do
+          described_class.prepare!(skip_clear: true)
           expect(Avromatic.schema_store).not_to have_received(:clear)
         end
       end
@@ -95,6 +96,13 @@ describe Avromatic do
         described_class.eager_load_models = %w(NestedRecord)
         described_class.prepare!
         expect(described_class.nested_models.registered?('test.value')).to be(false)
+      end
+
+      it "registers nested models" do
+        described_class.eager_load_models = %w(NestedNestedRecord)
+        described_class.prepare!
+        expect(described_class.nested_models.registered?('test.__nested_nested_record_sub_record')).to be(true)
+        expect(described_class.nested_models.registered?('test.__nested_nested_record_sub_subsub_record')).to be(true)
       end
     end
   end

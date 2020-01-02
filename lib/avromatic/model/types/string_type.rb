@@ -5,7 +5,7 @@ require 'avromatic/model/types/abstract_type'
 module Avromatic
   module Model
     module Types
-      class StringType
+      class StringType < AbstractType
         VALUE_CLASSES = [::String].freeze
         INPUT_CLASSES = [::String, ::Symbol].freeze
 
@@ -41,6 +41,10 @@ module Avromatic
 
         def serialize(value, **)
           value
+        end
+
+        def referenced_model_classes
+          EMPTY_ARRAY
         end
       end
     end

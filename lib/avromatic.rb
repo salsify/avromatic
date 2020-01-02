@@ -85,9 +85,7 @@ module Avromatic
   end
 
   def self.eager_load_models!
-    (@eager_load_model_names || []).each do |model_name|
-      nested_models.ensure_registered_model(model_name.constantize)
-    end
+    @eager_load_model_names&.each { |model_name| model_name.constantize.register! }
   end
   private_class_method :eager_load_models!
 end

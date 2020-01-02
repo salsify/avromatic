@@ -58,6 +58,10 @@ module Avromatic
         def serialize(value, **)
           @serializer.call(value)
         end
+
+        def referenced_model_classes
+          default_type.referenced_model_classes
+        end
       end
     end
   end

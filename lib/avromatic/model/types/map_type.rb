@@ -68,6 +68,11 @@ module Avromatic
             end
           end
         end
+
+        def referenced_model_classes
+          # According to Avro's spec, keys can only be strings, so we can safely disregard #key_type here.
+          value_type.referenced_model_classes
+        end
       end
     end
   end
