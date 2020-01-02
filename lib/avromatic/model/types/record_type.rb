@@ -53,7 +53,7 @@ module Avromatic
         end
 
         def referenced_model_classes
-          [record_class]
+          [record_class].freeze
         end
       end
     end

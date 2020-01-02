@@ -25,7 +25,7 @@ module Avromatic
         end
 
         def referenced_model_classes
-          attribute_definitions.values.flat_map { |definition| definition.type.referenced_model_classes }
+          attribute_definitions.values.flat_map { |definition| definition.type.referenced_model_classes }.freeze
         end
       end
     end
