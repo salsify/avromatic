@@ -8,7 +8,6 @@ require 'avromatic/model'
 require 'avromatic/model_registry'
 require 'avromatic/messaging'
 require 'active_support/core_ext/string/inflections'
-require 'active_support/core_ext/array/wrap'
 require 'avromatic/patches'
 
 module Avromatic
@@ -82,7 +81,7 @@ module Avromatic
   end
 
   def self.eager_load_models=(models)
-    @eager_load_model_names = Array.wrap(models).map { |model| model.is_a?(Class) ? model.name : model }
+    @eager_load_model_names = Array(models).map { |model| model.is_a?(Class) ? model.name : model }
   end
 
   def self.eager_load_models!
