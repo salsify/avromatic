@@ -1,6 +1,7 @@
 # avromatic changelog
 
 ## v2.2.2
+- Fix missing models in the model registry when in development by loading the nested models of eager loaded models.
 - Fake schema registry support for stubbing URLs with usernames and passwords.
 
 ## v2.2.1

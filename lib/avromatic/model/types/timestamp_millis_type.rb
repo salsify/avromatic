@@ -26,6 +26,9 @@ module Avromatic
           ::Time.at(input.to_i, input.usec / 1000 * 1000)
         end
 
+        def referenced_model_classes
+          EMPTY_ARRAY
+        end
       end
     end
   end

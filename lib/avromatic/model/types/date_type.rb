@@ -35,6 +35,10 @@ module Avromatic
         def serialize(value, **)
           value
         end
+
+        def referenced_model_classes
+          EMPTY_ARRAY
+        end
       end
     end
   end

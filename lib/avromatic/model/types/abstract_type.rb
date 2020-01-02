@@ -4,6 +4,9 @@ module Avromatic
   module Model
     module Types
       class AbstractType
+        EMPTY_ARRAY = [].freeze
+        private_constant :EMPTY_ARRAY
+
         def value_classes
           raise "#{__method__} must be overridden by #{self.class.name}"
         end
@@ -29,6 +32,10 @@ module Avromatic
         end
 
         def serialize(_value, **)
+          raise "#{__method__} must be overridden by #{self.class.name}"
+        end
+
+        def referenced_model_classes
           raise "#{__method__} must be overridden by #{self.class.name}"
         end
       end

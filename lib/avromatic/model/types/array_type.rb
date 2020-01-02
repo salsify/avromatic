@@ -47,6 +47,10 @@ module Avromatic
             value.map { |element| value_type.serialize(element, strict: strict) }
           end
         end
+
+        def referenced_model_classes
+          value_type.referenced_model_classes
+        end
       end
     end
   end

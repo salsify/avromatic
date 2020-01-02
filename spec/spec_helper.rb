@@ -27,6 +27,8 @@ RSpec.configure do |config|
 
     Time.zone = 'GMT'
   end
+
+  config.filter_run_when_matching :focus
 end
 
 # This needs to be required after the before block that sets
