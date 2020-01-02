@@ -70,7 +70,8 @@ module Avromatic
         end
 
         def referenced_model_classes
-          [key_type, value_type].tap(&:uniq!).flat_map(&:referenced_model_classes).tap(&:uniq!).freeze
+          # According to Avro's spec, keys can only be strings, so we can safely disregard #key_type here.
+          value_type.referenced_model_classes
         end
       end
     end
