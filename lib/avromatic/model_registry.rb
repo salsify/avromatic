@@ -29,7 +29,8 @@ module Avromatic
       @hash[name] = model
     end
 
-    def registered?(fullname)
+    def registered?(fullname_or_model)
+      fullname = fullname_or_model.is_a?(String) ? fullname_or_model : model_fullname(fullname_or_model)
       @hash.key?(fullname)
     end
 
