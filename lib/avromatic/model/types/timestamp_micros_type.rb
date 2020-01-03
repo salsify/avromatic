@@ -13,6 +13,10 @@ module Avromatic
           'timestamp-micros'
         end
 
+        def referenced_model_classes
+          EMPTY_ARRAY
+        end
+
         private
 
         def truncated?(value)
@@ -24,10 +28,6 @@ module Avromatic
           # The Avro representation of a timestamp is Epoch seconds, independent
           # of time zone.
           ::Time.at(input.to_i, input.usec)
-        end
-
-        def referenced_model_classes
-          EMPTY_ARRAY
         end
       end
     end
