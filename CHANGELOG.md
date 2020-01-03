@@ -1,5 +1,8 @@
 # avromatic changelog
 
+## v2.2.3
+- Fix bug where method `#referenced_model_classes` was declared as private instead of public.
+
 ## v2.2.2
 - Fix missing models in the model registry when in development by loading the nested models of eager loaded models.
 - Fake schema registry support for stubbing URLs with usernames and passwords.
