@@ -1,5 +1,8 @@
 # avromatic changelog
 
+## v2.2.4
+- Compatibility with Avro v1.10.x.
+
 ## v2.2.3
 - Fix bug where method `#referenced_model_classes` was declared as private instead of public.
 
