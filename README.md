@@ -142,7 +142,7 @@ instance.eql?(MyModel.new(id: 123, name: 'Tesla Model 3', enabled: true)) # => t
 instance.hash # => -1279155042741869898
 
 # Retrieve a hash of the model's attributes via to_h, to_hash or attributes
-instance .to_h # => {:id=>123, :name=>"Tesla Model 3", :enabled=>true}
+instance.to_h # => {:id=>123, :name=>"Tesla Model 3", :enabled=>true}
 ```
 
 Or an `Avro::Schema` object can be specified directly:
