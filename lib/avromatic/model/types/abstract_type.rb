@@ -31,7 +31,9 @@ module Avromatic
           raise "#{__method__} must be overridden by #{self.class.name}"
         end
 
-        def serialize(_value, **)
+        # Note we use positional args rather than keyword args to reduce
+        # memory allocations
+        def serialize(_value, _strict)
           raise "#{__method__} must be overridden by #{self.class.name}"
         end
 

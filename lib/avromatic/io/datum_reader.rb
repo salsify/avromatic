@@ -25,7 +25,7 @@ module Avromatic
           optional = readers_schema.schemas.first.type_sym == :null
           union_info = if readers_schema.schemas.size == 2 && optional
                          # Avromatic does not treat the union of null and 1 other type as a union
-                         {}
+                         nil
                        elsif optional
                          # Avromatic does not treat the null of an optional field as part of the union
                          { UNION_MEMBER_INDEX => rs_index - 1 }

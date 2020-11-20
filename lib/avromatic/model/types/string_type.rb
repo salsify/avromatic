@@ -39,7 +39,7 @@ module Avromatic
           value.nil? || value.is_a?(::String)
         end
 
-        def serialize(value, **)
+        def serialize(value, _strict)
           value
         end
 

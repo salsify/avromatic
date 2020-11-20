@@ -30,7 +30,7 @@ module Avromatic
 
         alias_method :coerced?, :coercible?
 
-        def serialize(value, **)
+        def serialize(value, _strict)
           value
         end
 
