@@ -1,4 +1,4 @@
-use avro_rs::{FullSchema, Schema, schema::SchemaIter};
+use avro_rs::{FullSchema, schema::SchemaIter};
 use crate::model_pool::ModelRegistry;
 use crate::schema::RAvroSchema;
 use failure::{Error, format_err};
@@ -23,16 +23,18 @@ impl AvromaticConfiguration {
         let schema_string = serde_json::to_string_pretty(&schema.schema)?;
         let rb_schema = Module::from_existing("Avro")
             .get_nested_class("Schema")
-            .send("parse", Some(&[RString::new_utf8(&schema_string).into()]));
+            .protect_public_send("parse", &[RString::new_utf8(&schema_string).into()])
+            .expect("unexpected exception");
 
         args.store(Symbol::new("schema"), rb_schema);
         args.store(Symbol::new("nested_models"), nested_models.to_any_object());
-        let instance = Self::class().new_instance(Some(&[args.to_any_object()]));
+        let instance = Self::class().new_instance(&[args.to_any_object()]);
         Ok(instance.value().into())
     }
 
     pub fn nested_models(&self) -> ModelRegistry {
-        self.send("nested_models", None)
+        self.protect_public_send("nested_models", &[])
+            .expect("unexpected exception")
             .try_convert_to()
             .unwrap_or_else(|_| ModelRegistry::global())
     }

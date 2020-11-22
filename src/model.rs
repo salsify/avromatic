@@ -1,8 +1,8 @@
-use avro_rs::{FullSchema, schema::{ SchemaIter, SchemaKind }};
+use avro_rs::{FullSchema, schema::{SchemaIter, SchemaKind}};
 use byteorder::{BigEndian, ReadBytesExt, WriteBytesExt};
 use crate::configuration::AvromaticConfiguration;
 use crate::heap_guard::HeapGuard;
-use crate::descriptors::{ModelDescriptor, ModelDescriptorInner, MODEL_DESCRIPTOR_WRAPPER};
+use crate::descriptors::{ModelDescriptor, MODEL_DESCRIPTOR_WRAPPER};
 use crate::model_pool::ModelRegistry;
 use crate::schema::{RAvroSchema, ModelSchema, MODEL_SCHEMA_WRAPPER};
 use crate::values::AvromaticValue;
@@ -55,7 +55,8 @@ extern fn rb_initialize(
     argv: *const AnyObject,
     mut itself: AvromaticModelAttributes,
 ) -> AnyObject {
-    itself.call_super(None);
+    // TODO: Ask Kyle about this.
+    // itself.call_super(None);
     let arg = RValue::from(0);
     unsafe {
         let p_argv: *const RValue = std::mem::transmute(argv);
@@ -63,7 +64,7 @@ extern fn rb_initialize(
             argc,
             p_argv,
             rutie::util::str_to_cstring("01").as_ptr(),
-            &arg
+            &arg,
         );
     };
     let arg_obj: AnyObject = arg.into();
@@ -86,7 +87,8 @@ extern fn rb_initialize(
     };
     let object = crate::util::ancestor_send(&itself, "_schema");
     let descriptor = object.get_data(&*MODEL_DESCRIPTOR_WRAPPER);
-    let mut storage = ModelStorage::default();
+    let storage = ModelStorage::default();
+    // let mut storage = ModelStorage::default();
     let wrapped_storage: AnyObject = itself.class().wrap_data(storage, &*MODEL_STORAGE_WRAPPER);
     itself.instance_variable_set("@_attributes", wrapped_storage);
     let mut guard = HeapGuard::new();
@@ -116,7 +118,7 @@ extern fn rb_method_missing(argc: Argc, argv: *const AnyObject, itself: Avromati
             p_argv,
             rutie::util::str_to_cstring("1*").as_ptr(),
             &name_arg,
-            &args
+            &args,
         )
     };
 
@@ -137,15 +139,15 @@ extern fn rb_method_missing(argc: Argc, argv: *const AnyObject, itself: Avromati
     }
 
     // setter is private for an initialized, non-mutable model
-    let constructed = itself.instance_variable_get("@_constructed") == Boolean::new(true).into();
+    // let constructed = itself.instance_variable_get("@_constructed") == Boolean::new(true).into();
     if false {
-    // if !itself.config().is_mutable() && constructed {
+        // if !itself.config().is_mutable() && constructed {
         let message = format!(
             "private method `{}' called for {}",
             s,
             itself.class_name().to_str(),
-                // class().send("to_s", None).try_convert_to::<RString>().map(|s| s.to_string())
-                // .unwrap_or_else(|_| "Object".to_string())
+            // class().send("to_s", None).try_convert_to::<RString>().map(|s| s.to_string())
+            // .unwrap_or_else(|_| "Object".to_string())
         );
         VM::raise(Class::from_existing("NoMethodError"), &message);
         return NilClass::new().into();
@@ -269,7 +271,7 @@ methods!(
     }
 
     fn rb_attribute_definitions() -> Hash {
-        let schema = itself.send("_schema", None);
+        let schema = itself.protect_public_send("_schema", &[]).unwrap();
         let descriptor = schema.get_data(&*MODEL_DESCRIPTOR_WRAPPER);
         let mut hash = Hash::new();
         descriptor.each_field(|k, _| {
@@ -334,14 +336,14 @@ methods!(
     }
 
     fn rb_hash() -> AnyObject {
-        itself.attribute_hash().send("hash", None)
+        itself.attribute_hash().protect_public_send("hash", &[]).unwrap()
     }
 
     fn rb_to_s() -> RString {
         let s = format!(
             "#<{}:{}>",
             itself.class_name().to_str(),
-            itself.send("object_id", None).try_convert_to::<Integer>().unwrap().to_i64(),
+            itself.protect_public_send("object_id", &[]).unwrap().try_convert_to::<Integer>().unwrap().to_i64(),
         );
         RString::new_utf8(&s)
     }
@@ -362,8 +364,8 @@ methods!(
         itself.attribute_hash().each(|k, v| {
             let s = format!(
                 "{}: {}",
-                k.send("to_s", None).try_convert_to::<RString>().unwrap().to_str(),
-                v.send("inspect", None).try_convert_to::<RString>().unwrap().to_str(),
+                k.protect_public_send("to_s", &[]).unwrap().try_convert_to::<RString>().unwrap().to_str(),
+                v.protect_public_send("inspect", &[]).unwrap().try_convert_to::<RString>().unwrap().to_str(),
             );
             parts.push(s);
         });
@@ -375,7 +377,9 @@ methods!(
 
 impl AvromaticModelAttributes {
     fn class_name(&self) -> RString {
-        self.class().send("name", None).try_convert_to::<RString>().unwrap_or_else(|_| RString::new_utf8("Class"))
+        self.class().protect_public_send("name", &[])
+            .expect("unexpected exception")
+            .try_convert_to::<RString>().unwrap_or_else(|_| RString::new_utf8("Class"))
     }
 
     fn with_storage<F, R>(&self, f: F) -> R
@@ -387,30 +391,30 @@ impl AvromaticModelAttributes {
     }
 
     fn decode_message(&self, key: &[u8], value: &[u8]) -> Result<AnyObject, Error> {
-        let schema = self.send("_schema", None);
+        let schema = self.protect_public_send("_schema", &[]).expect("unexpected exception");
         let descriptor = schema.get_data(&*MODEL_DESCRIPTOR_WRAPPER);
         let mut guard = HeapGuard::new();
         descriptor.deserialize_message(
             &Class::from(self.value()),
             &key[5..],
             &value[5..],
-            &mut guard
+            &mut guard,
         )
     }
 
     fn decode_value(&self, bytes: &[u8]) -> Result<AnyObject, Error> {
-        let schema = self.send("_schema", None);
+        let schema = self.protect_public_send("_schema", &[]).expect("unexpected exception");
         let descriptor = schema.get_data(&*MODEL_DESCRIPTOR_WRAPPER);
         let mut guard = HeapGuard::new();
         let mut cursor = std::io::Cursor::new(bytes);
-        let magic = cursor.read_u8()?;
+        let _magic = cursor.read_u8()?;
         let schema_id = cursor.read_i32::<BigEndian>()?;
         let mut writer_schema = self.get_schema_by_id(schema_id)?;
         descriptor.deserialize_value(
             &Class::from(self.value()),
             &bytes[5..],
             &writer_schema.rust_schema()?,
-            &mut guard
+            &mut guard,
         )
     }
 
@@ -509,7 +513,7 @@ impl AvromaticModelAttributes {
 
     fn get_attribute(&self, key: &str) -> AnyObject {
         self.with_storage(|storage| {
-            if let Some(value) = storage.attributes.get(key){
+            if let Some(value) = storage.attributes.get(key) {
                 let schema = crate::util::ancestor_send(self, "_schema");
                 let descriptor = schema.get_data(&*MODEL_DESCRIPTOR_WRAPPER);
                 descriptor.to_ruby(&key, &value)
@@ -542,11 +546,12 @@ impl AvromaticModelAttributes {
     }
 
     fn register_schema(&self, schema: RAvroSchema) -> Result<i64, Error> {
-        let fullname = schema.send("fullname", None);
+        let fullname = schema.protect_public_send("fullname", &[])
+            .expect("unexpected exception");
         let int = Module::from_existing("Avromatic")
-            .send("messaging", None)
-            .send("registry", None)
-            .send("register", Some(&[fullname, schema.to_any_object()]))
+            .protect_public_send("messaging", &[]).expect("unexpected exception")
+            .protect_public_send("registry", &[]).expect("unexpected exception")
+            .protect_public_send("register", &[fullname, schema.to_any_object()]).expect("unexpected exception")
             .try_convert_to::<Integer>()
             .unwrap();
         Ok(int.to_i64())
@@ -554,8 +559,10 @@ impl AvromaticModelAttributes {
 
     fn get_schema_by_id(&self, id: i32) -> Result<RAvroSchema, Error> {
         Module::from_existing("Avromatic")
-            .send("messaging", None)
-            .send("schema_by_id", Some(&[Integer::new(id as i64).into()]))
+            .protect_public_send("messaging", &[])
+            .expect("unexpected exception")
+            .protect_public_send("schema_by_id", &[Integer::new(id as i64).into()])
+            .expect("unexpected exception")
             .try_convert_to::<RAvroSchema>()
             .map_err(|_| format_err!("Schema '{}' not found", id))
     }
@@ -630,7 +637,8 @@ impl AvromaticModel {
 
     fn from_schema(value_schema: FullSchema) -> Result<Module, Error> {
         let mut module = Class::from_existing("Module")
-            .send("new", None)
+            .protect_public_send("new", &[])
+            .expect("unexpected exception")
             .try_convert_to::<Module>()
             .unwrap();
         let kind = SchemaKind::from(&value_schema.schema);
@@ -643,7 +651,9 @@ impl AvromaticModel {
             return Err(err);
         }
         let schema_name = (&value_schema).fullname().unwrap();
-        let model_name = RString::new_utf8(&schema_name).send("classify", None);
+        let model_name = RString::new_utf8(&schema_name)
+            .protect_public_send("classify", &[])
+            .expect("unexpected exception");
 
         module.instance_variable_set("@name", model_name);
         module.define(|itself| {
@@ -658,7 +668,8 @@ impl AvromaticModel {
     ) -> Class {
         let schema_name = (&schema).fullname().unwrap();
         let model_name = RString::new_utf8(&schema_name)
-            .send("classify", None)
+            .protect_public_send("classify", &[])
+            .expect("unexpected exception")
             .try_convert_to::<RString>()
             .unwrap()
             .to_string();
@@ -667,7 +678,7 @@ impl AvromaticModel {
             return class;
         }
 
-        let mut class = Class::from_existing("Class").new_instance(None).try_convert_to::<Class>().unwrap();
+        let mut class = Class::from_existing("Class").new_instance(&[]).try_convert_to::<Class>().unwrap();
         let rb_schema = ModelSchema { schema: schema.clone() };
         let avro_schema: AnyObject = Class::from_existing("AvroSchema")
             .wrap_data(rb_schema, &*MODEL_SCHEMA_WRAPPER);
@@ -677,7 +688,11 @@ impl AvromaticModel {
         config.nested_models().register(&class);
         let mut module = Self::from_schema(schema).unwrap();
         module.instance_variable_set("@config", config);
-        class.send("include", Some(&[module.to_any_object()]));
+        // TODO fails test suite with:
+        // thread '<unnamed>' panicked at 'called `Result::unwrap()` on an `Err` value: #<StandardError: Failed to convert avro 'Long(0)' to Int>', src/model.rs:691:73
+        //
+        // Unclear how to bubble Ruby-facing error up through this interface, or why this is in the stack trace.
+        class.protect_public_send("include", &[module.to_any_object()]).unwrap();
         class
     }
 

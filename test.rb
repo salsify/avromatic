@@ -6,8 +6,8 @@ require 'benchmark/ips'
 require 'benchmark/memory'
 require 'pry'
 
-SalsifyAvro.add_path('/Users/kphelps/sandbox/salsify_avro/avro/schema')
-SalsifyAvro.add_path('/Users/kphelps/sandbox/dandelion/schemas_gem/avro/schema')
+SalsifyAvro.add_path('/Users/kylesmith/salsify_avro/avro/schema')
+SalsifyAvro.add_path('/Users/kylesmith/dandelion/schemas_gem/avro/schema')
 Avromatic.configure do |config|
   config.register_type('com.salsify.salsify_uuid', SalsifyUuid) do |type|
     type.from_avro = ->(value) { SalsifyUuid.parse(value) }

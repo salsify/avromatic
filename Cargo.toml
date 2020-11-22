@@ -5,13 +5,15 @@ authors = ["Kyle Phelps <kphelps@salsify.com>"]
 edition = "2018"
 
 [dependencies]
-# avro-rs = { git = "https://github.com/kphelps/avro-rs", branch = "master" }
-avro-rs = { path = "../../dev/avro-rs" }
+ avro-rs = { git = "https://github.com/kphelps/avro-rs", branch = "master" }
+# avro-rs = { path = "../../dev/avro-rs" }
+#avro-rs = "0.11.0"
 byteorder = "*"
 failure = "*"
 lazy_static = "*"
-rutie = { path = "../../dev/rutie" }
+# rutie = { path = "../../dev/rutie" }
 # rutie = { git = "https://github.com/danielpclark/rutie", branch = "master" }
+rutie = "0.7.0"
 serde_json = "*"
 sha2 = "*"
 

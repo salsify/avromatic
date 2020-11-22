@@ -1,7 +1,4 @@
 use rutie::*;
-use rutie::types::{Argc, Value as RValue};
-use std::collections::HashMap;
-use std::rc::Rc;
 
 ruby_class!(
     CustomTypeConfiguration,
@@ -37,7 +34,7 @@ impl CustomTypeConfiguration {
         }
 
         let proc = argument_check!(proc.try_convert_to::<Proc>());
-        proc.call(Some(&[value]))
+        proc.call(&[value])
     }
 }
 

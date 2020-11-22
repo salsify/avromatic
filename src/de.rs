@@ -1,8 +1,6 @@
-use avro_rs::schema::{FullSchema, Schema, SchemaTypes, UnionRef};
 pub use avro_rs::util::{safe_len, zag_i32, zag_i64, DecodeError};
 use failure::Error;
 use rutie::*;
-use std::collections::HashMap;
 use std::io::Read;
 
 #[inline]

@@ -1,5 +1,4 @@
 use rutie::*;
-use std::collections::HashMap;
 
 ruby_class!(
     ModelRegistry,
@@ -20,19 +19,21 @@ impl ModelRegistry {
             return None;
         }
 
-        let obj = self.send("[]", Some(&[self.registry_key(name)]));
+        let obj = self.protect_public_send("[]", &[self.registry_key(name)])
+            .expect("unexpected exception");
         return obj.try_convert_to::<Class>().ok()
     }
 
     pub fn is_registered(&self, name: &str) -> bool {
-        self.send("registered?", Some(&[self.registry_key(name)]))
+        self.protect_public_send("registered?", &[self.registry_key(name)])
+            .expect("unexpected exception")
             .try_convert_to::<Boolean>()
             .map(|b| b.to_bool())
             .unwrap_or(false)
     }
 
     pub fn register(&self, class: &Class) {
-        self.send("register", Some(&[class.to_any_object()]));
+        self.protect_public_send("register", &[class.to_any_object()]).unwrap();
     }
 
     fn registry_key(&self, string: &str) -> AnyObject {

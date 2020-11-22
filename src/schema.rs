@@ -19,7 +19,7 @@ impl RAvroSchema {
     pub fn rust_schema(&mut self) -> Result<FullSchema, Error> {
         let var = self.instance_variable_get("@_rust_schema");
         if var.is_nil() {
-            let s = RString::from(self.send("to_s", None).value());
+            let s = RString::from(self.protect_public_send("to_s", &[]).unwrap().value());
             let rust_schema = Schema::parse_str(s.to_str())?;
             let model_schema = ModelSchema { schema: rust_schema.clone() };
             let avro_schema: AnyObject = Class::from_existing("AvroSchema")
