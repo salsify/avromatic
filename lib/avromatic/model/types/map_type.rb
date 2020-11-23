@@ -59,12 +59,12 @@ module Avromatic
           end
         end
 
-        def serialize(value, strict:)
+        def serialize(value, strict)
           if value.nil?
             value
           else
             value.each_with_object({}) do |(element_key, element_value), result|
-              result[key_type.serialize(element_key, strict: strict)] = value_type.serialize(element_value, strict: strict)
+              result[key_type.serialize(element_key, strict)] = value_type.serialize(element_value, strict)
             end
           end
         end

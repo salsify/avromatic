@@ -55,8 +55,11 @@ module Avromatic
 
         def avro_hash(fields, strict: false, validate:)
           avro_validate! if validate
-          attributes.slice(*fields).each_with_object(Hash.new) do |(key, value), result|
-            result[key.to_s] = attribute_definitions[key].serialize(value, strict: strict)
+          fields.each_with_object(Hash.new) do |field, result|
+            next unless _attributes.include?(field)
+
+            value = _attributes[field]
+            result[field.to_s] = attribute_definitions[field].serialize(value, strict)
           end
         end
 

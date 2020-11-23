@@ -55,7 +55,7 @@ module Avromatic
           false
         end
 
-        def serialize(value, **)
+        def serialize(value, _strict)
           @serializer.call(value)
         end
 

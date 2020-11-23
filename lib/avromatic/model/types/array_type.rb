@@ -40,11 +40,11 @@ module Avromatic
           value.nil? || (value.is_a?(::Array) && value.all? { |element| value_type.coerced?(element) })
         end
 
-        def serialize(value, strict:)
+        def serialize(value, strict)
           if value.nil?
             value
           else
-            value.map { |element| value_type.serialize(element, strict: strict) }
+            value.map { |element| value_type.serialize(element, strict) }
           end
         end
 

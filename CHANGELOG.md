@@ -1,5 +1,8 @@
 # avromatic changelog
 
+## v2.2.5
+- Optimize memory usage when serializing, deserializing and instantiating models.
+
 ## v2.2.4
 - Compatibility with Avro v1.10.x.
 

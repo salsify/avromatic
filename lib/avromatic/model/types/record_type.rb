@@ -39,7 +39,7 @@ module Avromatic
           value.nil? || value.is_a?(record_class)
         end
 
-        def serialize(value, strict:)
+        def serialize(value, strict)
           if value.nil?
             value
           elsif !strict && Avromatic.use_custom_datum_writer && Avromatic.use_encoding_providers? && !record_class.config.mutable
