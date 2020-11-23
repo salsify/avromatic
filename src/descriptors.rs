@@ -583,6 +583,10 @@ impl TypeDescriptor {
             (TypeDescriptor::Date, AvroValue::Date(n)) => {
                 AvromaticValue::Long((*n as i64).into())
             }
+            (TypeDescriptor::Int, AvroValue::Long(n)) => {
+                // TODO: Will this truncate or roll over? Maybe tests are in order.
+                AvromaticValue::Long((*n as i32).into())
+            }
             (TypeDescriptor::Long, AvroValue::Long(n)) |
             (TypeDescriptor::TimestampMicros, AvroValue::TimestampMicros(n)) |
             (TypeDescriptor::TimestampMillis, AvroValue::TimestampMillis(n)) => {

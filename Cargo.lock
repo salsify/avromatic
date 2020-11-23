@@ -292,9 +292,8 @@ checksum = "adacaae16d02b6ec37fdc7acfcddf365978de76d1983d3ee22afc260e1ca9619"
 
 [[package]]
 name = "rutie"
-version = "0.7.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "99a4174504679e66c524ffd839767eeca900d8c2e332ecf8bc6b9f15a5b8e5b1"
+version = "0.8.1"
+source = "git+https://github.com/askreet/rutie?branch=call_super#0517ab1f084a053a534f02ec0c755f01c14e8358"
 dependencies = [
  "lazy_static",
  "libc",

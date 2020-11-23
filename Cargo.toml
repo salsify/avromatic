@@ -11,9 +11,9 @@ edition = "2018"
 byteorder = "*"
 failure = "*"
 lazy_static = "*"
-# rutie = { path = "../../dev/rutie" }
-# rutie = { git = "https://github.com/danielpclark/rutie", branch = "master" }
-rutie = "0.7.0"
+# TODO: Switch once PR lands: https://github.com/danielpclark/rutie/pull/135
+# rutie = "0.7.0"
+rutie = { git = "https://github.com/askreet/rutie", branch = "call_super" }
 serde_json = "*"
 sha2 = "*"
 

@@ -11,6 +11,7 @@ use rutie::*;
 use rutie::types::{Argc, Value as RValue};
 use sha2::Sha256;
 use std::collections::HashMap;
+use crate::util::ancestor_send;
 
 #[derive(Default)]
 pub struct ModelStorage {
@@ -55,8 +56,8 @@ extern fn rb_initialize(
     argv: *const AnyObject,
     mut itself: AvromaticModelAttributes,
 ) -> AnyObject {
-    // TODO: Ask Kyle about this.
-    // itself.call_super(None);
+    unsafe { VM::call_super(&[]); }
+
     let arg = RValue::from(0);
     unsafe {
         let p_argv: *const RValue = std::mem::transmute(argv);
