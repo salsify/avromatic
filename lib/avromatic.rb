@@ -89,11 +89,12 @@ module Avromatic
 
   def self.eager_load_models!
     # From feature/native:
-    # (@eager_load_model_names || []).each do |model_name|
-    #   puts "EAGER LOAD #{model_name}"
-    #   nested_models.ensure_registered_model(model_name.constantize)
-    # end
-    @eager_load_model_names&.each { |model_name| model_name.constantize.register! }
+    (@eager_load_model_names || []).each do |model_name|
+      puts "EAGER LOAD #{model_name}"
+      nested_models.ensure_registered_model(model_name.constantize)
+    end
+    # TODO: Merged in from 2.2, something needs to be updated here.
+    # @eager_load_model_names&.each { |model_name| model_name.constantize.register! }
   end
   private_class_method :eager_load_models!
 end
