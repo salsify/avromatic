@@ -59,14 +59,19 @@ module Avromatic
           end
         end
 
-        def serialize(value, strict:)
+        def serialize(value, strict)
           if value.nil?
             value
           else
             value.each_with_object({}) do |(element_key, element_value), result|
-              result[key_type.serialize(element_key, strict: strict)] = value_type.serialize(element_value, strict: strict)
+              result[key_type.serialize(element_key, strict)] = value_type.serialize(element_value, strict)
             end
           end
+        end
+
+        def referenced_model_classes
+          # According to Avro's spec, keys can only be strings, so we can safely disregard #key_type here.
+          value_type.referenced_model_classes
         end
       end
     end

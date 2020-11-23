@@ -39,8 +39,12 @@ module Avromatic
           input.nil? || input.is_a?(::Float)
         end
 
-        def serialize(value, **)
+        def serialize(value, _strict)
           value
+        end
+
+        def referenced_model_classes
+          EMPTY_ARRAY
         end
       end
     end

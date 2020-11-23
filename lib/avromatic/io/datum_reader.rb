@@ -10,7 +10,7 @@ module Avromatic
 
       UNION_MEMBER_INDEX = Avromatic::IO::UNION_MEMBER_INDEX
 
-      def read_data(writers_schema, readers_schema, decoder, initial_record = {})
+      def read_data(writers_schema, readers_schema, decoder, initial_record = nil)
         # schema matching
         unless self.class.match_schemas(writers_schema, readers_schema)
           raise Avro::IO::SchemaMatchException.new(writers_schema, readers_schema)
@@ -25,7 +25,7 @@ module Avromatic
           optional = readers_schema.schemas.first.type_sym == :null
           union_info = if readers_schema.schemas.size == 2 && optional
                          # Avromatic does not treat the union of null and 1 other type as a union
-                         {}
+                         nil
                        elsif optional
                          # Avromatic does not treat the null of an optional field as part of the union
                          { UNION_MEMBER_INDEX => rs_index - 1 }
@@ -52,7 +52,7 @@ module Avromatic
                 when :array;   read_array(writers_schema, readers_schema, decoder)
                 when :map;     read_map(writers_schema, readers_schema, decoder)
                 when :union;   read_union(writers_schema, readers_schema, decoder)
-                when :record, :error, :request; read_record(writers_schema, readers_schema, decoder, initial_record)
+                when :record, :error, :request; read_record(writers_schema, readers_schema, decoder, initial_record || {})
                 else
                   raise Avro::AvroError.new("Cannot read unknown schema type: #{writers_schema.type}")
                 end

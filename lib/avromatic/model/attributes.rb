@@ -74,23 +74,23 @@ module Avromatic
       def initialize(data = {})
         super()
 
-        valid_keys = []
+        num_valid_keys = 0
         attribute_definitions.each do |attribute_name, attribute_definition|
           if data.include?(attribute_name)
-            valid_keys << attribute_name
+            num_valid_keys += 1
             value = data.fetch(attribute_name)
             send(attribute_definition.setter_name, value)
           elsif data.include?(attribute_definition.name_string)
-            valid_keys << attribute_name
+            num_valid_keys += 1
             value = data[attribute_definition.name_string]
             send(attribute_definition.setter_name, value)
-          elsif !attributes.include?(attribute_name)
+          elsif !_attributes.include?(attribute_name)
             send(attribute_definition.setter_name, attribute_definition.default)
           end
         end
 
-        unless Avromatic.allow_unknown_attributes || valid_keys.size == data.size
-          unknown_attributes = (data.keys.map(&:to_s) - valid_keys.map(&:to_s)).sort
+        unless Avromatic.allow_unknown_attributes || num_valid_keys == data.size
+          unknown_attributes = (data.keys.map(&:to_s) - _attributes.keys.map(&:to_s)).sort
           allowed_attributes = attribute_definitions.keys.map(&:to_s).sort
           message = "Unexpected arguments for #{self.class.name}#initialize: #{unknown_attributes.join(', ')}. " \
             "Only the following arguments are allowed: #{allowed_attributes.join(', ')}. Provided arguments: #{data.inspect}"

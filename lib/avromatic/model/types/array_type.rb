@@ -40,12 +40,16 @@ module Avromatic
           value.nil? || (value.is_a?(::Array) && value.all? { |element| value_type.coerced?(element) })
         end
 
-        def serialize(value, strict:)
+        def serialize(value, strict)
           if value.nil?
             value
           else
-            value.map { |element| value_type.serialize(element, strict: strict) }
+            value.map { |element| value_type.serialize(element, strict) }
           end
+        end
+
+        def referenced_model_classes
+          value_type.referenced_model_classes
         end
       end
     end

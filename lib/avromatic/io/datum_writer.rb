@@ -5,6 +5,10 @@ module Avromatic
     # Subclass DatumWriter to use additional information about union member
     # index.
     class DatumWriter < Avro::IO::DatumWriter
+      class << self
+        attr_accessor :optimize
+      end
+
       def write_union(writers_schema, datum, encoder)
         optional = writers_schema.schemas.first.type_sym == :null
         if datum.is_a?(Hash) && datum.key?(Avromatic::IO::UNION_MEMBER_INDEX)
@@ -14,6 +18,8 @@ module Avromatic
         elsif optional && writers_schema.schemas.size == 2
           # Optimize for the common case of a union that's just an optional field
           index_of_schema = datum.nil? ? 0 : 1
+        elsif self.class.optimize && optional && datum.nil?
+          index_of_schema = 0
         else
           index_of_schema = writers_schema.schemas.find_index do |schema|
             Avro::Schema.validate(schema, datum)

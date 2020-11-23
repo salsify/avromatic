@@ -51,7 +51,7 @@ module Avromatic
           end
         end
 
-        def serialize(value, strict:)
+        def serialize(value, strict)
           # Avromatic does not treat the null of an optional field as part of the union
           return nil if value.nil?
 
@@ -60,11 +60,15 @@ module Avromatic
             raise ArgumentError.new("Expected #{value.inspect} to be one of #{value_classes.map(&:name)}")
           end
 
-          hash = member_types[member_index].serialize(value, strict: strict)
+          hash = member_types[member_index].serialize(value, strict)
           if !strict && Avromatic.use_custom_datum_writer && value.is_a?(Avromatic::Model::Attributes)
             hash[Avromatic::IO::UNION_MEMBER_INDEX] = member_index
           end
           hash
+        end
+
+        def referenced_model_classes
+          member_types.flat_map(&:referenced_model_classes).tap(&:uniq!).freeze
         end
 
         private

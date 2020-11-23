@@ -1,0 +1,333 @@
+{
+  "type": "record",
+  "name": "nested_nested_record",
+  "namespace": "test",
+  "fields": [
+    {
+      "name": "n",
+      "type": "null"
+    },
+    {
+      "name": "b",
+      "type": "boolean"
+    },
+    {
+      "name": "i",
+      "type": "int"
+    },
+    {
+      "name": "l",
+      "type": "long"
+    },
+    {
+      "name": "f",
+      "type": "float"
+    },
+    {
+      "name": "d",
+      "type": "double"
+    },
+    {
+      "name": "bs",
+      "type": "bytes"
+    },
+    {
+      "name": "str",
+      "type": "string"
+    },
+    {
+      "name": "date",
+      "type": {
+        "type": "int",
+        "logicalType": "date"
+      }
+    },
+    {
+      "name": "ts_msec",
+      "type": {
+        "type": "long",
+        "logicalType": "timestamp-millis"
+      }
+    },
+    {
+      "name": "ts_usec",
+      "type": {
+        "type": "long",
+        "logicalType": "timestamp-micros"
+      }
+    },
+    {
+      "name": "unknown",
+      "type": {
+        "type": "int",
+        "logicalType": "foobar"
+      }
+    },
+    {
+      "name": "e",
+      "type": {
+        "name": "__nested_nested_record_e_enum",
+        "type": "enum",
+        "namespace": "test",
+        "symbols": [
+          "A",
+          "B"
+        ]
+      }
+    },
+    {
+      "name": "a",
+      "type": {
+        "type": "array",
+        "items": "int"
+      }
+    },
+    {
+      "name": "m",
+      "type": {
+        "type": "map",
+        "values": "int"
+      }
+    },
+    {
+      "name": "u",
+      "type": [
+        "string",
+        "int"
+      ]
+    },
+    {
+      "name": "fx",
+      "type": {
+        "name": "__nested_nested_record_fx_fixed",
+        "type": "fixed",
+        "namespace": "test",
+        "size": 2
+      }
+    },
+    {
+      "name": "sub",
+      "type": {
+        "type": "record",
+        "name": "__nested_nested_record_sub_record",
+        "namespace": "test",
+        "fields": [
+          {
+            "name": "n",
+            "type": "null"
+          },
+          {
+            "name": "b",
+            "type": "boolean"
+          },
+          {
+            "name": "i",
+            "type": "int"
+          },
+          {
+            "name": "l",
+            "type": "long"
+          },
+          {
+            "name": "f",
+            "type": "float"
+          },
+          {
+            "name": "d",
+            "type": "double"
+          },
+          {
+            "name": "bs",
+            "type": "bytes"
+          },
+          {
+            "name": "str",
+            "type": "string"
+          },
+          {
+            "name": "date",
+            "type": {
+              "type": "int",
+              "logicalType": "date"
+            }
+          },
+          {
+            "name": "ts_msec",
+            "type": {
+              "type": "long",
+              "logicalType": "timestamp-millis"
+            }
+          },
+          {
+            "name": "ts_usec",
+            "type": {
+              "type": "long",
+              "logicalType": "timestamp-micros"
+            }
+          },
+          {
+            "name": "unknown",
+            "type": {
+              "type": "int",
+              "logicalType": "foobar"
+            }
+          },
+          {
+            "name": "e",
+            "type": {
+              "name": "__nested_nested_record_sub_e_enum",
+              "type": "enum",
+              "namespace": "test",
+              "symbols": [
+                "A",
+                "B"
+              ]
+            }
+          },
+          {
+            "name": "a",
+            "type": {
+              "type": "array",
+              "items": "int"
+            }
+          },
+          {
+            "name": "m",
+            "type": {
+              "type": "map",
+              "values": "int"
+            }
+          },
+          {
+            "name": "u",
+            "type": [
+              "string",
+              "int"
+            ]
+          },
+          {
+            "name": "fx",
+            "type": {
+              "name": "__nested_nested_record_sub_fx_fixed",
+              "type": "fixed",
+              "namespace": "test",
+              "size": 2
+            }
+          },
+          {
+            "name": "subsub",
+            "type": {
+              "type": "record",
+              "name": "__nested_nested_record_sub_subsub_record",
+              "namespace": "test",
+              "fields": [
+                {
+                  "name": "n",
+                  "type": "null"
+                },
+                {
+                  "name": "b",
+                  "type": "boolean"
+                },
+                {
+                  "name": "i",
+                  "type": "int"
+                },
+                {
+                  "name": "l",
+                  "type": "long"
+                },
+                {
+                  "name": "f",
+                  "type": "float"
+                },
+                {
+                  "name": "d",
+                  "type": "double"
+                },
+                {
+                  "name": "bs",
+                  "type": "bytes"
+                },
+                {
+                  "name": "str",
+                  "type": "string"
+                },
+                {
+                  "name": "date",
+                  "type": {
+                    "type": "int",
+                    "logicalType": "date"
+                  }
+                },
+                {
+                  "name": "ts_msec",
+                  "type": {
+                    "type": "long",
+                    "logicalType": "timestamp-millis"
+                  }
+                },
+                {
+                  "name": "ts_usec",
+                  "type": {
+                    "type": "long",
+                    "logicalType": "timestamp-micros"
+                  }
+                },
+                {
+                  "name": "unknown",
+                  "type": {
+                    "type": "int",
+                    "logicalType": "foobar"
+                  }
+                },
+                {
+                  "name": "e",
+                  "type": {
+                    "name": "__nested_nested_record_sub_subsub_e_enum",
+                    "type": "enum",
+                    "namespace": "test",
+                    "symbols": [
+                      "A",
+                      "B"
+                    ]
+                  }
+                },
+                {
+                  "name": "a",
+                  "type": {
+                    "type": "array",
+                    "items": "int"
+                  }
+                },
+                {
+                  "name": "m",
+                  "type": {
+                    "type": "map",
+                    "values": "int"
+                  }
+                },
+                {
+                  "name": "u",
+                  "type": [
+                    "string",
+                    "int"
+                  ]
+                },
+                {
+                  "name": "fx",
+                  "type": {
+                    "name": "__nested_nested_record_sub_subsub_fx_fixed",
+                    "type": "fixed",
+                    "namespace": "test",
+                    "size": 2
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

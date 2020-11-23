@@ -1,5 +1,25 @@
 # avromatic changelog
 
+## v2.2.5
+- Optimize memory usage when serializing, deserializing and instantiating models.
+
+## v2.2.4
+- Compatibility with Avro v1.10.x.
+
+## v2.2.3
+- Fix bug where method `#referenced_model_classes` was declared as private instead of public.
+
+## v2.2.2
+- Fix missing models in the model registry when in development by loading the nested models of eager loaded models.
+- Fake schema registry support for stubbing URLs with usernames and passwords.
+
+## v2.2.1
+- Avoid allocating default empty hash in `Avromatic::IO::DatumReader.read_data`
+
+## v2.2.0
+- Add support for Rails 6.0.
+- Drop support for Ruby < 2.4.
+
 ## v2.1.0
 - Add `key_schema_name` and `value_schema_name` attributes to `UnexpectedKeyError`.
 

@@ -13,6 +13,10 @@ module Avromatic
           'timestamp-micros'
         end
 
+        def referenced_model_classes
+          EMPTY_ARRAY
+        end
+
         private
 
         def truncated?(value)
@@ -25,7 +29,6 @@ module Avromatic
           # of time zone.
           ::Time.at(input.to_i, input.usec)
         end
-
       end
     end
   end

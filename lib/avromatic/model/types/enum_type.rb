@@ -47,8 +47,12 @@ module Avromatic
             (input.is_a?(::Symbol) && allowed_values.include?(input.to_s))
         end
 
-        def serialize(value, **)
+        def serialize(value, _strict)
           value
+        end
+
+        def referenced_model_classes
+          EMPTY_ARRAY
         end
       end
     end

@@ -38,7 +38,7 @@ module Avromatic
           value.is_a?(::Time) && value.class != ActiveSupport::TimeWithZone && truncated?(value)
         end
 
-        def serialize(value, **)
+        def serialize(value, _strict)
           value
         end
 

@@ -30,8 +30,12 @@ module Avromatic
 
         alias_method :coerced?, :coercible?
 
-        def serialize(value, **)
+        def serialize(value, _strict)
           value
+        end
+
+        def referenced_model_classes
+          EMPTY_ARRAY
         end
       end
     end
