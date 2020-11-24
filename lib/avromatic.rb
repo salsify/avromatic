@@ -9,6 +9,7 @@ require 'avromatic/model_registry'
 require 'avromatic/messaging'
 require 'active_support/core_ext/string/inflections'
 require 'avromatic/patches'
+require 'avromatic/native/stubs'
 require 'rutie'
 
 module Avromatic

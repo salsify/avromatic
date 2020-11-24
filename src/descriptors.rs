@@ -375,6 +375,10 @@ impl AttributeDescriptor {
     {
         self.type_descriptor.serialize(value, schema)
     }
+
+    pub fn typesym(&self) -> Symbol {
+        self.type_descriptor.to_symbol()
+    }
 }
 
 #[derive(Debug, PartialEq)]
@@ -825,6 +829,30 @@ impl TypeDescriptor {
                 let raw = default.decode(reader)?;
                 Ok(inner.deserialize(raw))
             }
+        }
+    }
+
+    pub fn to_symbol(&self) -> Symbol {
+        // TODO: Figure out the exhaustive list of typesyms.
+        match self {
+            TypeDescriptor::Boolean => Symbol::new("boolean"),
+            TypeDescriptor::Enum(_) => Symbol::new("enum"),
+            TypeDescriptor::Fixed(_) => Symbol::new("fixed"),
+            TypeDescriptor::Float => Symbol::new("float"),
+            TypeDescriptor::Double => Symbol::new("double"),
+            TypeDescriptor::Int => Symbol::new("int"),
+            TypeDescriptor::Long => Symbol::new("long"),
+            TypeDescriptor::Null => Symbol::new("null"),
+            TypeDescriptor::String => Symbol::new("string"),
+            TypeDescriptor::Bytes => Symbol::new("bytes"),
+            TypeDescriptor::Date => Symbol::new("date"),
+            TypeDescriptor::TimestampMicros => Symbol::new("timestampmicros"),
+            TypeDescriptor::TimestampMillis => Symbol::new("timestampmillis"),
+            TypeDescriptor::Array(_) => Symbol::new("array"),
+            TypeDescriptor::Map(_) => Symbol::new("map"),
+            TypeDescriptor::Record(_) => Symbol::new("record"),
+            TypeDescriptor::Union(_, _) => Symbol::new("union"),
+            TypeDescriptor::Custom(_, _) => Symbol::new("custom"),
         }
     }
 }

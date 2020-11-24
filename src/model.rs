@@ -2,7 +2,7 @@ use avro_rs::{FullSchema, schema::{SchemaIter, SchemaKind}};
 use byteorder::{BigEndian, ReadBytesExt, WriteBytesExt};
 use crate::configuration::AvromaticConfiguration;
 use crate::heap_guard::HeapGuard;
-use crate::descriptors::{ModelDescriptor, MODEL_DESCRIPTOR_WRAPPER};
+use crate::descriptors::{AttributeDescriptor, ModelDescriptor, MODEL_DESCRIPTOR_WRAPPER, ModelDescriptorWrapper, ModelDescriptorInner};
 use crate::model_pool::ModelRegistry;
 use crate::schema::{RAvroSchema, ModelSchema, MODEL_SCHEMA_WRAPPER};
 use crate::values::AvromaticValue;
@@ -273,12 +273,14 @@ methods!(
 
     fn rb_attribute_definitions() -> Hash {
         let schema = itself.protect_public_send("_schema", &[]).unwrap();
-        let descriptor = schema.get_data(&*MODEL_DESCRIPTOR_WRAPPER);
+        let descriptor: &ModelDescriptorInner = schema.get_data(&*MODEL_DESCRIPTOR_WRAPPER);
         let mut hash = Hash::new();
-        descriptor.each_field(|k, _| {
+
+        descriptor.each_field(|k, v| {
             let key = Symbol::new(k);
-            hash.store(key, NilClass::new());
+            hash.store(key, stub_attribute_definition_for(k, v));
         });
+
         hash
     }
 
@@ -375,6 +377,34 @@ methods!(
         RString::new_utf8(&s)
     }
 );
+
+fn stub_attribute_definition_for(attr_name: &str, descriptor: &AttributeDescriptor) -> AnyObject {
+    let stubs =
+        Module::from_existing("Avromatic")
+            .get_nested_module("Native")
+            .get_nested_module("Stubs");
+
+    let field = stubs.get_nested_class("Field")
+        .protect_public_send(
+            "new",
+            &[
+                RString::new_usascii_unchecked(attr_name).into(),
+                stubs.get_nested_class("Type")
+                    .protect_public_send(
+                        "new",
+                        &[
+                            descriptor.typesym().into()
+                        ])
+                    .unwrap()
+            ])
+        .unwrap();
+    let required= Boolean::new(true);
+
+    stubs
+        .get_nested_class("AttributeDefinition")
+        .protect_public_send("new", &[Symbol::new(attr_name).into(), field, required.into()])
+        .unwrap()
+}
 
 impl AvromaticModelAttributes {
     fn class_name(&self) -> RString {
