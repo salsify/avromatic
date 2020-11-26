@@ -2,7 +2,7 @@ use avro_rs::{FullSchema, schema::{SchemaIter, SchemaKind}};
 use byteorder::{BigEndian, ReadBytesExt, WriteBytesExt};
 use crate::configuration::AvromaticConfiguration;
 use crate::heap_guard::HeapGuard;
-use crate::descriptors::{AttributeDescriptor, ModelDescriptor, MODEL_DESCRIPTOR_WRAPPER, ModelDescriptorWrapper, ModelDescriptorInner};
+use crate::descriptors::{AttributeDescriptor, ModelDescriptor, MODEL_DESCRIPTOR_WRAPPER, ModelDescriptorInner};
 use crate::model_pool::ModelRegistry;
 use crate::schema::{RAvroSchema, ModelSchema, MODEL_SCHEMA_WRAPPER};
 use crate::values::AvromaticValue;
@@ -74,7 +74,7 @@ extern fn rb_initialize(
     } else {
         // TODO: avoid building this hashmap by using the descriptor
         // TODO: need to support non-hash arguments
-        println!("Arguments: {}", crate::util::debug_ruby(&arg_obj));
+        // println!("Arguments: {}", crate::util::debug_ruby(&arg_obj));
         let hash = argument_check!(arg_obj.try_convert_to::<Hash>());
         let mut values = HashMap::new();
         hash.each(|key, value| {
@@ -398,7 +398,7 @@ fn stub_attribute_definition_for(attr_name: &str, descriptor: &AttributeDescript
                     .unwrap()
             ])
         .unwrap();
-    let required= Boolean::new(true);
+    let required= Boolean::new(!descriptor.is_optional());
 
     stubs
         .get_nested_class("AttributeDefinition")
@@ -579,13 +579,22 @@ impl AvromaticModelAttributes {
     fn register_schema(&self, schema: RAvroSchema) -> Result<i64, Error> {
         let fullname = schema.protect_public_send("fullname", &[])
             .expect("unexpected exception");
-        let int = Module::from_existing("Avromatic")
-            .protect_public_send("messaging", &[]).expect("unexpected exception")
-            .protect_public_send("registry", &[]).expect("unexpected exception")
-            .protect_public_send("register", &[fullname, schema.to_any_object()]).expect("unexpected exception")
+        let int = Self::register_schema_rb(fullname, schema.to_any_object())
             .try_convert_to::<Integer>()
             .unwrap();
         Ok(int.to_i64())
+    }
+
+    /// Register schema within Ruby's Avromatic#messaging#registry.register method.
+    ///
+    /// Any exceptions will be raised in the Ruby VM, such as when the registry isn't configured.
+    fn register_schema_rb(fullname: AnyObject, schema: AnyObject) -> AnyObject {
+        let module = Module::from_existing("Avromatic");
+
+        let messaging = rb_try_ex!(module.protect_public_send("messaging", &[]));
+        let registry = rb_try_ex!(messaging.protect_public_send("registry", &[]));
+
+        rb_try_ex!(registry.protect_public_send("register", &[fullname, schema.to_any_object()]))
     }
 
     fn get_schema_by_id(&self, id: i32) -> Result<RAvroSchema, Error> {
@@ -638,6 +647,7 @@ methods!(
 
     fn rb_build(config: AvromaticConfiguration) -> AnyObject {
         let mut config = argument_check!(config);
+
         config.set_root_model();
         raise_if_error(AvromaticModel::from_config(config).into())
     }
@@ -693,6 +703,7 @@ impl AvromaticModel {
         Ok(module)
     }
 
+    // TODO: This appears to be only used for subtypes?
     pub fn build_model(
         schema: FullSchema,
         nested_models: &ModelRegistry,
@@ -719,11 +730,14 @@ impl AvromaticModel {
         config.nested_models().register(&class);
         let mut module = Self::from_schema(schema).unwrap();
         module.instance_variable_set("@config", config);
-        // TODO fails test suite with:
-        // thread '<unnamed>' panicked at 'called `Result::unwrap()` on an `Err` value: #<StandardError: Failed to convert avro 'Long(0)' to Int>', src/model.rs:691:73
-        //
-        // Unclear how to bubble Ruby-facing error up through this interface, or why this is in the stack trace.
+
         class.protect_public_send("include", &[module.to_any_object()]).unwrap();
+
+        let validations_module = rutie::util::inmost_rb_object("Avromatic::Model::Validation");
+        // TODO: In base models, we do this in Ruby. However, for subtypes we do this here. Factor
+        //       this out into some shared code.
+        class.protect_public_send("include", &[validations_module.into()]).unwrap();
+
         class
     }
 

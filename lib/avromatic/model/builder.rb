@@ -52,12 +52,8 @@ module Avromatic
           define_included_method
         else
           @config = Avromatic::Model::Configuration.new(**options)
-          define_native_module
+          @mod = AvromaticModel.build(config)
         end
-      end
-
-      def build
-        AvromaticModel.build(schema: config.avro_schema.to_json)
       end
 
       def inclusions
@@ -73,10 +69,6 @@ module Avromatic
       end
 
       private
-
-      def define_native_module
-        @mod = AvromaticModel.build(config)
-      end
 
       def define_included_method
         local_mod = mod

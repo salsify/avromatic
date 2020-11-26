@@ -25,6 +25,21 @@ macro_rules! rb_try {
     }
 }
 
+/// Raise an AnyException from a Result<AnyObject, AnyException> if one is present and return
+/// nil as AnyObject from current function.
+macro_rules! rb_try_ex {
+    ($inner:expr) => {
+        match $inner {
+            Ok(value) => value,
+            Err(e) => {
+                rutie::VM::raise_ex(e);
+                return rutie::NilClass::new().into();
+            }
+        }
+    }
+}
+
+
 macro_rules! ruby_class {
     ($rust_name:ident, $ruby_name:expr) => {
         ruby_class!($rust_name, $ruby_name, Class::from_existing($ruby_name));

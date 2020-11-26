@@ -1,9 +1,4 @@
-use avro_rs::{
-    FullSchema,
-    types::ToAvro,
-    schema::{SchemaKind, SchemaIter, SchemaRef, UnionRef},
-    types::Value as AvroValue,
-};
+use avro_rs::{FullSchema, types::ToAvro, schema::{SchemaKind, SchemaIter, SchemaRef, UnionRef}, types::Value as AvroValue};
 use crate::custom_types::{CustomTypeConfiguration, CustomTypeRegistry};
 use crate::de::*;
 use crate::heap_guard::HeapGuard;
@@ -16,6 +11,7 @@ use rutie::*;
 use std::collections::HashMap;
 use std::io::Read;
 use std::mem::transmute;
+use crate::descriptors::TypeDescriptor::Union;
 
 #[derive(Debug, Fail)]
 pub enum AvromaticError {
@@ -379,6 +375,7 @@ impl AttributeDescriptor {
     pub fn typesym(&self) -> Symbol {
         self.type_descriptor.to_symbol()
     }
+    pub fn is_optional(&self) -> bool { self.type_descriptor.is_optional() }
 }
 
 #[derive(Debug, PartialEq)]
@@ -853,6 +850,18 @@ impl TypeDescriptor {
             TypeDescriptor::Record(_) => Symbol::new("record"),
             TypeDescriptor::Union(_, _) => Symbol::new("union"),
             TypeDescriptor::Custom(_, _) => Symbol::new("custom"),
+        }
+    }
+
+    fn is_optional(&self) -> bool {
+        if let Union(_, variants) = self {
+            if let Some(&TypeDescriptor::Null) = variants.first() {
+                true
+            } else {
+                false
+            }
+        } else {
+            false
         }
     }
 }
