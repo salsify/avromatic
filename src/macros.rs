@@ -1,11 +1,10 @@
-
 macro_rules! argument_check {
     ($inner:expr) => {
         match $inner {
             Ok(value) => value,
             Err(e) => {
-                let message = format!("Bad argument: {}", e);
-                rutie::VM::raise(rutie::Class::from_existing("ArgumentError"), &message);
+                raise!("ArgumentError", "Bad argument: {}", e);
+
                 return rutie::NilClass::new().into();
             }
         }
@@ -17,8 +16,8 @@ macro_rules! rb_try {
         match $inner {
             Ok(value) => value,
             Err(e) => {
-                let message = format!("{}", e);
-                rutie::VM::raise(rutie::Class::from_existing("StandardError"), &message);
+                raise!("StandardError", e);
+
                 return rutie::NilClass::new().into();
             }
         }
@@ -128,5 +127,40 @@ macro_rules! ruby_class {
                 concat!("Error converting to ", $ruby_name)
             }
         }
+    };
+}
+
+macro_rules! varargs {
+    ($fmt:literal, $argc:expr, $argv:expr, $( $ident: ident ),*) => {
+        $(
+            let $ident = RValue::from(0);
+        )*
+
+        unsafe {
+            let p_argv: *const RValue = std::mem::transmute($argv);
+
+            rutie::rubysys::class::rb_scan_args(
+                $argc,
+                p_argv,
+                rutie::util::str_to_cstring($fmt).as_ptr(),
+                $(
+                    &$ident,
+                )*
+            );
+        };
+    };
+}
+
+macro_rules! raise {
+    ($class: literal, $displayable: expr) => {
+        raise!($class, "{}", $displayable);
+    };
+
+    ($class: literal, $fmt: literal, $( $placeholder: expr ),*) => {
+        let class = Class::from(rutie::util::inmost_rb_object($class));
+
+        let message = format!($fmt, $( $placeholder, )*);
+
+        rutie::VM::raise(class, &message);
     };
 }

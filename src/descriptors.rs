@@ -75,13 +75,13 @@ impl ModelDescriptorInner {
             key.descriptor.attributes.iter().for_each(|(k, key_type)| {
                 if let Some(value_type) = values.get(k) {
                     if value_type != key_type {
-                        let message = format!(
+                        raise!(
+                            "RuntimeError",
                             "Field '{}' has a different type in each schema: {:?} {:?}",
                             k,
                             key_type,
-                            value_type,
+                            value_type
                         );
-                        VM::raise(Class::from_existing("RuntimeError"), &message);
                     }
                 }
             });

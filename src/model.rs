@@ -2,7 +2,7 @@ use avro_rs::{FullSchema, schema::{SchemaIter, SchemaKind}};
 use byteorder::{BigEndian, ReadBytesExt, WriteBytesExt};
 use crate::configuration::AvromaticConfiguration;
 use crate::heap_guard::HeapGuard;
-use crate::descriptors::{AttributeDescriptor, ModelDescriptor, MODEL_DESCRIPTOR_WRAPPER, ModelDescriptorInner};
+use crate::descriptors::{AttributeDescriptor, ModelDescriptor, MODEL_DESCRIPTOR_WRAPPER, ModelDescriptorInner, ModelDescriptorWrapper};
 use crate::model_pool::ModelRegistry;
 use crate::schema::{RAvroSchema, ModelSchema, MODEL_SCHEMA_WRAPPER};
 use crate::values::AvromaticValue;
@@ -33,15 +33,10 @@ fn raise_if_error<T: Object>(result: Result<T, Error>) -> AnyObject {
     match result {
         Ok(t) => t.to_any_object(),
         Err(err) => {
-            standard_error(&err);
+            raise!("StandardError", err);
             NilClass::new().to_any_object()
         }
     }
-}
-
-fn standard_error(err: &Error) {
-    let message = format!("{}", err);
-    VM::raise(Class::from_existing("StandardError"), &message);
 }
 
 fn stringify(object: &AnyObject) -> String {
@@ -58,17 +53,10 @@ extern fn rb_initialize(
 ) -> AnyObject {
     unsafe { VM::call_super(&[]); }
 
-    let arg = RValue::from(0);
-    unsafe {
-        let p_argv: *const RValue = std::mem::transmute(argv);
-        rutie::rubysys::class::rb_scan_args(
-            argc,
-            p_argv,
-            rutie::util::str_to_cstring("01").as_ptr(),
-            &arg,
-        );
-    };
-    let arg_obj: AnyObject = arg.into();
+    varargs!("01", argc, argv, optional_argument);
+
+    let arg_obj = AnyObject::from(optional_argument);
+
     let data: HashMap<String, AnyObject> = if arg_obj.is_nil() {
         HashMap::new()
     } else {
@@ -87,7 +75,7 @@ extern fn rb_initialize(
         values
     };
     let object = crate::util::ancestor_send(&itself, "_schema");
-    let descriptor = object.get_data(&*MODEL_DESCRIPTOR_WRAPPER);
+    let descriptor: &ModelDescriptorInner = object.get_data(&*MODEL_DESCRIPTOR_WRAPPER);
     let storage = ModelStorage::default();
     // let mut storage = ModelStorage::default();
     let wrapped_storage: AnyObject = itself.class().wrap_data(storage, &*MODEL_STORAGE_WRAPPER);
@@ -95,57 +83,54 @@ extern fn rb_initialize(
     let mut guard = HeapGuard::new();
     descriptor.each_field(|key, attribute| {
         let v = data.get(key).map(Object::to_any_object).unwrap_or(attribute.default());
+
+        // TODO
+        // If there a a custom setter, call that. Assuming that calls super, we'll handle storage of the Avro
+        // value in our method_missing handler. Otherwise, set the value directly on our internal storage, which
+        // is much faster.
+        // NOTE: This won't work because we always have a method missing for mutable objects. We could use
+        // #methods here, but that is also a bit of a mess.
+        // NOTE: If we define setters/getters instead as the current module does, how bad would the overhead be
+        // on calling those during rb_initialize (and can this honor private setters correctly?).
+        // let has_custom_setter = unsafe {
+        //     itself.send("respond_to?", &[ Symbol::new(format!("{}=", key).as_str()).to_any_object() ])
+        //         .try_convert_to::<Boolean>()
+        //         .unwrap()
+        // };
+
         if let Err(err) = itself.set_attribute(key, v, &mut guard) {
-            let class = Module::from_existing("Avromatic")
-                .get_nested_module("Model")
-                .get_nested_class("CoercionError");
-            let message = format!("error initializing {}: {}", key, err);
-            VM::raise(class, &message);
+            raise!("Avromatic::Model::CoercionError", "error initializing {}: {}", key, err);
         }
     });
     itself.instance_variable_set("@_constructed", Boolean::new(true));
     NilClass::new().into()
 }
 
+// TODO: Motivation behind using method_missing rather than defininig the methods on the module
+//       as the current Ruby implementation does?
 extern fn rb_method_missing(argc: Argc, argv: *const AnyObject, itself: AvromaticModelAttributes) -> AnyObject {
-    let name_arg = RValue::from(0);
-    let args = RValue::from(0);
+    varargs!("1*", argc, argv, name_value, arguments_value);
 
-    unsafe {
-        let p_argv: *const RValue = std::mem::transmute(argv);
-
-        rutie::rubysys::class::rb_scan_args(
-            argc,
-            p_argv,
-            rutie::util::str_to_cstring("1*").as_ptr(),
-            &name_arg,
-            &args,
-        )
-    };
-
-    let name_obj = AnyObject::from(name_arg);
-    let arguments = Array::from(args);
-    let name = argument_check!(name_obj.try_convert_to::<Symbol>());
-    let s = name.to_str();
+    let method_name = argument_check!(AnyObject::from(name_value).try_convert_to::<Symbol>());
+    let method_name = method_name.to_str();
+    let arguments = Array::from(arguments_value);
 
     // predicate
-    if s.ends_with("?") {
-        let (s, _) = s.split_at(s.len() - 1);
+    if method_name.ends_with("?") {
+        let (s, _) = method_name.split_at(method_name.len() - 1);
         return itself.is_attribute_true(s);
     }
 
     // getter
-    if !s.ends_with("=") {
-        return itself.get_attribute(s);
+    if !method_name.ends_with("=") {
+        return itself.get_attribute(method_name);
     }
 
     // setter is private for an initialized, non-mutable model
-    // let constructed = itself.instance_variable_get("@_constructed") == Boolean::new(true).into();
-    if false {
-        // if !itself.config().is_mutable() && constructed {
+    if !itself.config().is_mutable() {
         let message = format!(
             "private method `{}' called for {}",
-            s,
+            method_name,
             itself.class_name().to_str(),
             // class().send("to_s", None).try_convert_to::<RString>().map(|s| s.to_string())
             // .unwrap_or_else(|_| "Object".to_string())
@@ -155,11 +140,10 @@ extern fn rb_method_missing(argc: Argc, argv: *const AnyObject, itself: Avromati
     }
 
     // Setter
-    let (s, _) = s.split_at(s.len() - 1);
+    let (s, _) = method_name.split_at(method_name.len() - 1);
     let mut guard = HeapGuard::new();
     if let Err(err) = itself.set_attribute(s, arguments.at(0), &mut guard) {
-        let message = format!("{}", err);
-        VM::raise(Class::from_existing("ArgumentError"), &message);
+        raise!("ArgumentError", err);
     }
     NilClass::new().into()
 }
@@ -170,23 +154,11 @@ extern fn rb_avro_message_decode(
     argv: *const AnyObject,
     itself: AvromaticModelAttributes,
 ) -> AnyObject {
-    let first_arg = RValue::from(0);
-    let second_arg = RValue::from(0);
-
-    unsafe {
-        let p_argv: *const RValue = std::mem::transmute(argv);
-
-        rutie::rubysys::class::rb_scan_args(
-            argc,
-            p_argv,
-            rutie::util::str_to_cstring("11").as_ptr(),
-            &first_arg,
-            &second_arg,
-        )
-    };
+    varargs!("11", argc, argv, first_arg, second_arg);
 
     let first_obj = AnyObject::from(first_arg);
     let second_obj = AnyObject::from(second_arg);
+
     let result = if second_obj.is_nil() {
         let bytes = argument_check!(first_obj.try_convert_to::<RString>());
         let bytes = bytes.to_bytes_unchecked();
@@ -526,14 +498,10 @@ impl AvromaticModelAttributes {
         value: AnyObject,
         guard: &mut HeapGuard,
     ) -> Result<(), Error> {
-        let avromatic_value_result = crate::util::ancestor_send(self, "_schema")
+        let value = crate::util::ancestor_send(self, "_schema")
             .get_data(&*MODEL_DESCRIPTOR_WRAPPER)
-            .coerce(&key, value, guard);
-        if let Err(err) = avromatic_value_result {
-            return Err(err);
-        }
+            .coerce(&key, value, guard)?;
 
-        let value = avromatic_value_result.unwrap();
         self.with_storage(|storage| {
             storage
                 .attributes
@@ -752,12 +720,12 @@ impl AvromaticModel {
         let existing_fingerprint = existing_schema.schema.schema.fingerprint::<Sha256>().bytes;
         let fingerprint = schema.schema.fingerprint::<Sha256>().bytes;
         if fingerprint != existing_fingerprint {
-            let message = format!(
+            raise!(
+                "StandardError",
                 "The {} model is already registered with an incompatible version of the {} schema",
                 model_name,
-                schema_name,
+                schema_name
             );
-            VM::raise(Class::from_existing("StandardError"), &message);
         }
     }
 }
