@@ -29,37 +29,37 @@ module Avromatic
 
         def value_attributes_for_avro(validate: true)
           if self.class.config.mutable
-            avro_hash(value_avro_field_names, validate: validate)
+            avro_hash(value_avro_field_references, validate: validate)
           else
-            @value_attributes_for_avro ||= avro_hash(value_avro_field_names, validate: validate)
+            @value_attributes_for_avro ||= avro_hash(value_avro_field_references, validate: validate)
           end
         end
 
         def key_attributes_for_avro(validate: true)
-          avro_hash(key_avro_field_names, validate: validate)
+          avro_hash(key_avro_field_references, validate: validate)
         end
 
         def avro_value_datum(validate: true)
           if self.class.config.mutable
-            avro_hash(value_avro_field_names, strict: true, validate: validate)
+            avro_hash(value_avro_field_references, strict: true, validate: validate)
           else
-            @avro_datum ||= avro_hash(value_avro_field_names, strict: true, validate: validate)
+            @avro_datum ||= avro_hash(value_avro_field_references, strict: true, validate: validate)
           end
         end
 
         def avro_key_datum(validate: true)
-          avro_hash(key_avro_field_names, strict: true, validate: validate)
+          avro_hash(key_avro_field_references, strict: true, validate: validate)
         end
 
         private
 
-        def avro_hash(fields, strict: false, validate:)
+        def avro_hash(field_references, strict: false, validate:)
           avro_validate! if validate
-          fields.each_with_object(Hash.new) do |field, result|
-            next unless _attributes.include?(field)
+          field_references.each_with_object(Hash.new) do |field_reference, result|
+            next unless _attributes.include?(field_reference.name_sym)
 
-            value = _attributes[field]
-            result[field.to_s] = attribute_definitions[field].serialize(value, strict)
+            value = _attributes[field_reference.name_sym]
+            result[field_reference.name] = attribute_definitions[field_reference.name_sym].serialize(value, strict)
           end
         end
 
