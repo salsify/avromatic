@@ -8,6 +8,17 @@ module Avromatic
     module Configurable
       extend ActiveSupport::Concern
 
+      # Wraps a reference to a field so we can access both the string and symbolized versions of the name
+      # without repeated memory allocations.
+      class FieldReference
+        attr_reader :name, :name_sym
+
+        def initialize(name)
+          @name = -name
+          @name_sym = name.to_sym
+        end
+      end
+
       module ClassMethods
         attr_accessor :config
         delegate :avro_schema, :value_avro_schema, :key_avro_schema, to: :config
@@ -18,6 +29,18 @@ module Avromatic
 
         def key_avro_field_names
           @key_avro_field_names ||= key_avro_schema.fields.map(&:name).map(&:to_sym).freeze
+        end
+
+        def value_avro_field_references
+          @value_avro_field_references ||= value_avro_schema.fields.map do |field|
+            Avromatic::Model::Configurable::FieldReference.new(field.name)
+          end.freeze
+        end
+
+        def key_avro_field_references
+          @key_avro_field_references ||= key_avro_schema.fields.map do |field|
+            Avromatic::Model::Configurable::FieldReference.new(field.name)
+          end.freeze
         end
 
         def value_avro_fields_by_name
@@ -43,6 +66,7 @@ module Avromatic
 
       delegate :avro_schema, :value_avro_schema, :key_avro_schema,
                :value_avro_field_names, :key_avro_field_names,
+               :value_avro_field_references, :key_avro_field_references,
                to: :class
     end
   end

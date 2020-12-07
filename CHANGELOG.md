@@ -1,5 +1,8 @@
 # avromatic changelog
 
+## v2.2.6
+- Optimize memory usage when serializing models.
+
 ## v2.2.5
 - Optimize memory usage when serializing, deserializing and instantiating models.
 
