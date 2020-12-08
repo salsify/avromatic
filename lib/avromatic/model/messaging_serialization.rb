@@ -48,7 +48,8 @@ module Avromatic
           value_attributes = avro_messaging
             .decode(message_value, schema_name: avro_schema.fullname)
 
-          value_attributes.merge!(key_attributes || {})
+          value_attributes.merge!(key_attributes) if key_attributes
+          value_attributes
         end
       end
 

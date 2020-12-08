@@ -8,7 +8,6 @@ require 'avromatic/model'
 require 'avromatic/model_registry'
 require 'avromatic/messaging'
 require 'active_support/core_ext/string/inflections'
-require 'avromatic/patches'
 
 module Avromatic
   class << self
@@ -31,10 +30,6 @@ module Avromatic
   def self.configure
     yield self
     eager_load_models!
-  end
-
-  def self.use_encoding_providers?
-    use_custom_datum_writer && defined?(Avromatic::Patches::SchemaValidatorPatch)
   end
 
   def self.build_schema_registry

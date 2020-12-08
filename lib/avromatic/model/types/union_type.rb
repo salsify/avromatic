@@ -7,7 +7,6 @@ module Avromatic
   module Model
     module Types
       class UnionType < AbstractType
-        MEMBER_INDEX = ::Avromatic::IO::DatumReader::UNION_MEMBER_INDEX
         attr_reader :member_types, :value_classes, :input_classes
 
         def initialize(member_types:)
@@ -24,8 +23,8 @@ module Avromatic
           return input if coerced?(input)
 
           result = nil
-          if input.is_a?(Hash) && input.key?(MEMBER_INDEX)
-            result = member_types[input.delete(MEMBER_INDEX)].coerce(input)
+          if input.is_a?(Avromatic::IO::UnionDatum)
+            result = member_types[input.member_index].coerce(input.datum)
           else
             member_types.find do |member_type|
               result = safe_coerce(member_type, input)
@@ -40,12 +39,16 @@ module Avromatic
         end
 
         def coerced?(value)
+          return false if value.is_a?(Avromatic::IO::UnionDatum)
+
           value.nil? || member_types.any? do |member_type|
             member_type.coerced?(value)
           end
         end
 
         def coercible?(input)
+          return true if value.is_a?(Avromatic::IO::UnionDatum)
+
           coerced?(input) || member_types.any? do |member_type|
             member_type.coercible?(input)
           end
@@ -60,11 +63,11 @@ module Avromatic
             raise ArgumentError.new("Expected #{value.inspect} to be one of #{value_classes.map(&:name)}")
           end
 
-          hash = member_types[member_index].serialize(value, strict)
-          if !strict && Avromatic.use_custom_datum_writer && value.is_a?(Avromatic::Model::Attributes)
-            hash[Avromatic::IO::UNION_MEMBER_INDEX] = member_index
+          serialized_value = member_types[member_index].serialize(value, strict)
+          if !strict && Avromatic.use_custom_datum_writer
+            serialized_value = Avromatic::IO::UnionDatum.new(member_index, serialized_value)
           end
-          hash
+          serialized_value
         end
 
         def referenced_model_classes

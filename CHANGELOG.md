@@ -1,5 +1,8 @@
 # avromatic changelog
 
+## v2.2.7
+- Optimize nested model serialization.
+
 ## v2.2.6
 - Optimize memory usage when serializing models.
 

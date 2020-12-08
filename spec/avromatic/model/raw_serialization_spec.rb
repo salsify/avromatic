@@ -10,8 +10,6 @@ describe Avromatic::Model::RawSerialization do
   let(:avro_raw_value) { instance.avro_raw_value }
   let(:avro_raw_key) { instance.avro_raw_key }
   let(:use_custom_datum_writer) { true }
-  let(:member_index) { Avromatic::IO::UNION_MEMBER_INDEX }
-  let(:encoding_provider) { Avromatic::IO::ENCODING_PROVIDER }
 
   before do
     # Ensure that there is no dependency on messaging
@@ -35,10 +33,10 @@ describe Avromatic::Model::RawSerialization do
 
       it "reuses cacheable attributes" do
         expected = values.deep_stringify_keys
-        expected['sub'] = { encoding_provider => sub }
+        expected['sub'] = sub.value_attributes_for_avro
         actual = instance.value_attributes_for_avro
         expect(actual).to eq(expected)
-        expect(actual['sub'][encoding_provider]).to equal(sub)
+        expect(actual['sub']).to equal(sub.value_attributes_for_avro)
       end
     end
 
@@ -49,12 +47,12 @@ describe Avromatic::Model::RawSerialization do
       let(:values) { { sub1: wrapped1, sub2: wrapped1, sub3: wrapped2 } }
 
       it "reuses cacheable attributes" do
-        expected = values.deep_stringify_keys.each_with_object({}) { |(k, v), hash| hash[k] = { encoding_provider => v } }
+        expected = values.deep_stringify_keys.each_with_object({}) { |(k, v), hash| hash[k] = v.value_attributes_for_avro }
         actual = instance.value_attributes_for_avro
         expect(actual).to eq(expected)
-        expect(actual['sub1'][encoding_provider]).to equal(wrapped1)
-        expect(actual['sub2'][encoding_provider]).to equal(wrapped1)
-        expect(actual['sub3'][encoding_provider]).to equal(wrapped2)
+        expect(actual['sub1']).to equal(wrapped1.value_attributes_for_avro)
+        expect(actual['sub2']).to equal(wrapped1.value_attributes_for_avro)
+        expect(actual['sub3']).to equal(wrapped2.value_attributes_for_avro)
       end
     end
 
@@ -83,12 +81,12 @@ describe Avromatic::Model::RawSerialization do
         expected = values.deep_stringify_keys
         expected['sub1'] = wrapped1.value_attributes_for_avro
         expected['sub2'] = wrapped2.value_attributes_for_avro
-        expected['sub3'] = { encoding_provider => wrapped3 }
+        expected['sub3'] = wrapped3.value_attributes_for_avro
         actual = instance.value_attributes_for_avro
         expect(actual).to eq(expected)
-        expect(actual['sub1'][encoding_provider]).not_to equal(wrapped1)
-        expect(actual['sub2'][encoding_provider]).not_to equal(wrapped2)
-        expect(actual['sub3'][encoding_provider]).to equal(wrapped3)
+        expect(actual['sub1']).not_to equal(wrapped1)
+        expect(actual['sub2']).not_to equal(wrapped2)
+        expect(actual['sub3']).to equal(wrapped3.value_attributes_for_avro)
       end
     end
 
@@ -138,10 +136,9 @@ describe Avromatic::Model::RawSerialization do
 
       it "includes union member index in the hash of attributes" do
         expected = values.deep_stringify_keys
-        expected['message'] = { encoding_provider => bar_message, member_index => 1 }
+        expected['message'] = Avromatic::IO::UnionDatum.new(1, bar_message.value_attributes_for_avro)
         actual = instance.value_attributes_for_avro
         expect(actual).to eq(expected)
-        expect(actual['message'][encoding_provider]).to equal(bar_message)
       end
 
       context "when use_custom_datum_writer is false" do
@@ -522,15 +519,25 @@ describe Avromatic::Model::RawSerialization do
       end
       let(:decoded) { test_class.avro_raw_decode(value: avro_raw_value) }
 
-      it "includes union member index" do
-        expect(instance.value_attributes_for_avro['unions'].map { |v| v[member_index] }).to eq([0, 1, 0])
+      it "serializes UnionDatums" do
+        expected_datums = [
+          Avromatic::IO::UnionDatum.new(0, { s: 'A' }.stringify_keys),
+          Avromatic::IO::UnionDatum.new(1, { i: 1 }.stringify_keys),
+          Avromatic::IO::UnionDatum.new(0, { s: 'C' }.stringify_keys)
+        ]
+        expect(instance.value_attributes_for_avro['unions']).to eq(expected_datums)
       end
 
       context "when use_custom_datum_writer is false" do
         let(:use_custom_datum_writer) { false }
 
-        it "does not include union member index" do
-          expect(instance.value_attributes_for_avro['unions'].map { |v| v[member_index] }).to eq([nil] * 3)
+        it "doesn't serialize UnionDatums" do
+          expected_datums = [
+            { s: 'A' }.stringify_keys,
+            { i: 1 }.stringify_keys,
+            { s: 'C' }.stringify_keys
+          ]
+          expect(instance.value_attributes_for_avro['unions']).to eq(expected_datums)
         end
       end
 
@@ -566,15 +573,23 @@ describe Avromatic::Model::RawSerialization do
       end
       let(:decoded) { test_class.avro_raw_decode(value: avro_raw_value) }
 
-      it "includes union member index" do
-        expect(instance.value_attributes_for_avro['union_map'].values.map { |v| v[member_index] }).to eq([0, 1])
+      it "serializes UnionDatums" do
+        expected_datums = [
+          Avromatic::IO::UnionDatum.new(0, { s: 'A' }.stringify_keys),
+          Avromatic::IO::UnionDatum.new(1, { i: 22 }.stringify_keys)
+        ]
+        expect(instance.value_attributes_for_avro['union_map'].values).to eq(expected_datums)
       end
 
       context "when use_custom_datum_writer is false" do
         let(:use_custom_datum_writer) { false }
 
-        it "does not include union member index" do
-          expect(instance.value_attributes_for_avro['union_map'].values.map { |v| v[member_index] }).to eq([nil] * 2)
+        it "doesn't serialize UnionDatums" do
+          expected_datums = [
+            { s: 'A' }.stringify_keys,
+            { i: 22 }.stringify_keys
+          ]
+          expect(instance.value_attributes_for_avro['union_map'].values).to eq(expected_datums)
         end
       end
 
