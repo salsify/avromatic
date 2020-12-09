@@ -8,8 +8,8 @@ jobs:
       - checkout
       - restore_cache:
           keys:
-            - v1-gems-ruby-2.5.8-{{ checksum "avromatic.gemspec" }}-{{ checksum "Gemfile" }}
-            - v1-gems-ruby-2.5.8-
+            - v2-gems-ruby-2.5.8-{{ checksum "avromatic.gemspec" }}-{{ checksum "Gemfile" }}
+            - v2-gems-ruby-2.5.8-
       - run:
           name: Install Gems
           command: |
@@ -18,7 +18,7 @@ jobs:
               bundle clean
             fi
       - save_cache:
-          key: v1-gems-ruby-2.5.8-{{ checksum "avromatic.gemspec" }}-{{ checksum "Gemfile" }}
+          key: v2-gems-ruby-2.5.8-{{ checksum "avromatic.gemspec" }}-{{ checksum "Gemfile" }}
           paths:
             - "vendor/bundle"
             - "gemfiles/vendor/bundle"
@@ -41,8 +41,8 @@ jobs:
       - checkout
       - restore_cache:
           keys:
-            - v1-gems-ruby-<< parameters.ruby-version >>-{{ checksum "avromatic.gemspec" }}-{{ checksum "<< parameters.gemfile >>" }}
-            - v1-gems-ruby-<< parameters.ruby-version >>-
+            - v2-gems-ruby-<< parameters.ruby-version >>-{{ checksum "avromatic.gemspec" }}-{{ checksum "<< parameters.gemfile >>" }}
+            - v2-gems-ruby-<< parameters.ruby-version >>-
       - run:
           name: Install Gems
           command: |
@@ -51,7 +51,7 @@ jobs:
               bundle clean
             fi
       - save_cache:
-          key: v1-gems-ruby-<< parameters.ruby-version >>-{{ checksum "avromatic.gemspec" }}-{{ checksum "<< parameters.gemfile >>" }}
+          key: v2-gems-ruby-<< parameters.ruby-version >>-{{ checksum "avromatic.gemspec" }}-{{ checksum "<< parameters.gemfile >>" }}
           paths:
             - "vendor/bundle"
             - "gemfiles/vendor/bundle"
