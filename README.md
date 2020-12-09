@@ -1,9 +1,9 @@
 # Avromatic
 
-[![Build Status](https://travis-ci.org/salsify/avromatic.svg?branch=master)][travis]
+[![Build Status](https://circleci.com/gh/salsify/avromatic.svg?style=svg)][circleci]
 [![Gem Version](https://badge.fury.io/rb/avromatic.svg)](https://badge.fury.io/rb/avromatic)
 
-[travis]: http://travis-ci.org/salsify/avromatic
+[circleci]: https://circleci.com/gh/salsify/avromatic
 
 `Avromatic` generates Ruby models from [Avro](http://avro.apache.org/) schemas
 and provides utilities to encode and decode them.
