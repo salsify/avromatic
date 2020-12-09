@@ -1,5 +1,29 @@
 version: 2.1
 jobs:
+  lint:
+    docker:
+      - image: salsify/ruby_ci:2.5.8
+    working_directory: ~/avromatic
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - v1-gems-ruby-2.5.8-{{ checksum "avromatic.gemspec" }}-{{ checksum "Gemfile" }}
+            - v1-gems-ruby-2.5.8-
+      - run:
+          name: Install Gems
+          command: |
+            if ! bundle check --path=vendor/bundle; then
+              bundle install --path=vendor/bundle --jobs=4 --retry=3
+              bundle clean
+            fi
+      - save_cache:
+          key: v1-gems-ruby-2.5.8-{{ checksum "avromatic.gemspec" }}-{{ checksum "Gemfile" }}
+          paths:
+            - "vendor/bundle"
+      - run:
+          name: Run Rubocop
+          command: bundle exec rubocop
   test:
     parameters:
       gemfile:
@@ -30,17 +54,15 @@ jobs:
           paths:
             - "vendor/bundle"
       - run:
-          name: Run Rubocop
-          command: bundle exec rubocop
-      - run:
           name: Run Tests
           command: |
             bundle exec rspec --format RspecJunitFormatter --out $CIRCLE_TEST_REPORTS/rspec/junit.xml --format progress spec
       - store_test_results:
           path: "test-results"
 workflows:
-  all-tests:
+  build:
     jobs:
+      - lint
       - test:
           matrix:
             parameters:
