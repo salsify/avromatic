@@ -42,10 +42,6 @@ module Avromatic
         def serialize(value, strict)
           if value.nil?
             value
-          elsif !strict && Avromatic.use_custom_datum_writer && Avromatic.use_encoding_providers? && !record_class.config.mutable
-            # n.b. Ideally we'd just return value here instead of wrapping it in a
-            # hash but then we'd have no place to stash the union member index...
-            { Avromatic::IO::ENCODING_PROVIDER => value }
           else
             # This is only used for recursive serialization so validation has already been done
             strict ? value.avro_value_datum(validate: false) : value.value_attributes_for_avro(validate: false)

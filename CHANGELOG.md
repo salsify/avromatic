@@ -1,5 +1,9 @@
 # avromatic changelog
 
+## v2.3.0
+- Add support for Rails 6.1.
+- Optimize nested model serialization.
+
 ## v2.2.6
 - Optimize memory usage when serializing models.
 

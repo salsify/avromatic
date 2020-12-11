@@ -81,8 +81,8 @@ module Avromatic
         def avro_raw_decode(key: nil, value:, key_schema: nil, value_schema: nil)
           key_attributes = key && decode_avro_datum(key, key_schema, :key)
           value_attributes = decode_avro_datum(value, value_schema, :value)
-
-          new(value_attributes.merge!(key_attributes || {}))
+          value_attributes.merge!(key_attributes) if key_attributes
+          new(value_attributes)
         end
 
         private

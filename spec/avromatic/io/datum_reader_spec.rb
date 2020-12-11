@@ -68,8 +68,11 @@ describe Avromatic::IO::DatumReader do
       }
     end
 
-    it "includes the member index in the decoded hash" do
-      expect(attributes.dig('message', described_class::UNION_MEMBER_INDEX)).to eq(1)
+    it "returns a UnionDatum" do
+      union_datum = attributes['message']
+      expect(union_datum).to be_a_kind_of(Avromatic::IO::UnionDatum)
+      expect(union_datum.member_index).to eq(1)
+      expect(union_datum.datum).to eq(values[:message].stringify_keys)
     end
 
     it "can decode a message" do
@@ -79,8 +82,11 @@ describe Avromatic::IO::DatumReader do
     context "a record with an optional union" do
       let(:schema_name) { 'test.optional_union' }
 
-      it "includes the member index in the decoded hash" do
-        expect(attributes.dig('message', described_class::UNION_MEMBER_INDEX)).to eq(1)
+      it "returns a UnionDatum" do
+        union_datum = attributes['message']
+        expect(union_datum).to be_a_kind_of(Avromatic::IO::UnionDatum)
+        expect(union_datum.member_index).to eq(1)
+        expect(union_datum.datum).to eq(values[:message].stringify_keys)
       end
 
       it "can decode a message" do
@@ -92,8 +98,12 @@ describe Avromatic::IO::DatumReader do
       let(:schema_name) { 'test.with_union' }
       let(:values) { { s: 'foo' } }
 
-      it "does not include a member index in the decoded hash" do
-        expect(attributes).not_to have_key(described_class::UNION_MEMBER_INDEX)
+      it "does not return a UnionDatum" do
+        expect(attributes['s']).not_to be_a_kind_of(Avromatic::IO::UnionDatum)
+      end
+
+      it "can decode the message" do
+        expect(attributes).to eq(values.stringify_keys)
       end
     end
 
@@ -121,8 +131,8 @@ describe Avromatic::IO::DatumReader do
         allow(Avromatic).to receive(:use_custom_datum_reader).and_return(false)
       end
 
-      it "does not include the member index in the decoded hash" do
-        expect(attributes['message']).not_to have_key(described_class::UNION_MEMBER_INDEX)
+      it "does not return a UnionDatum" do
+        expect(attributes['message']).not_to be_a_kind_of(Avromatic::IO::UnionDatum)
       end
     end
   end

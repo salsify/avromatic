@@ -29,7 +29,8 @@ module Avromatic
       end
 
       # The following line differs from the parent class to use a custom DatumReader
-      reader = Avromatic::IO::DatumReader.new(writers_schema, readers_schema)
+      reader_class = Avromatic.use_custom_datum_reader ? Avromatic::IO::DatumReader : Avro::IO::DatumReader
+      reader = reader_class.new(writers_schema, readers_schema)
       reader.read(decoder)
     end
 
@@ -50,7 +51,8 @@ module Avromatic
       encoder.write([schema_id].pack('N'))
 
       # The following line differs from the parent class to use a custom DatumWriter
-      writer = Avromatic::IO::DatumWriter.new(schema)
+      writer_class = Avromatic.use_custom_datum_writer ? Avromatic::IO::DatumWriter : Avro::IO::DatumWriter
+      writer = writer_class.new(schema)
 
       # The actual message comes last.
       writer.write(message, encoder)
