@@ -280,6 +280,8 @@ describe Avromatic::Model::Builder, 'validation' do
           end
         end
 
+        # TODO: For some reason, this panics only with the variants in the order above. If the variants are reversed,
+        #       it's fine.
         it "validates a record in a union" do
           skip('panics')
           expect(test_class.new(u: 'foo')).to be_valid

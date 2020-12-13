@@ -28,6 +28,55 @@ describe Avromatic::Model::Builder do
     it "has a name" do
       expect(klass.name).to eq('PrimitiveType')
     end
+
+    it "describes its own attribute definitions" do
+      # Minimum compatibility required for validation mixin:
+      summarize = ->(key, attr_def) do
+        [ key, {
+            name: attr_def.name,
+            field: {
+                name: attr_def.field.name,
+                type: {
+                    type_sym: attr_def.field.type.type_sym
+                }
+            },
+            required?: attr_def.required?
+        } ]
+      end
+
+      summary = klass.attribute_definitions.map(&summarize).to_h
+
+      expect(summary).to eq({s: {name: :s,
+                                 field: {name: "s", type: {type_sym: :string}},
+                                 required?: true},
+                             b: {name: :b,
+                                 field: {name: "b", type: {type_sym: :bytes}},
+                                 required?: true},
+                             tf: {name: :tf,
+                                  field: {name: "tf", type: {type_sym: :boolean}},
+                                  required?: true},
+                             i: {name: :i,
+                                 field: {name: "i", type: {type_sym: :int}},
+                                 required?: true},
+                             l: {name: :l,
+                                 field: {name: "l", type: {type_sym: :long}},
+                                 required?: true},
+                             f: {name: :f,
+                                 field: {name: "f", type: {type_sym: :float}},
+                                 required?: true},
+                             d: {name: :d,
+                                 field: {name: "d", type: {type_sym: :double}},
+                                 required?: true},
+                             n: {name: :n,
+                                 field: {name: "n", type: {type_sym: :null}},
+                                 required?: true},
+                             fx: {name: :fx,
+                                  field: {name: "fx", type: {type_sym: :fixed}},
+                                  required?: true},
+                             e: {name: :e,
+                                 field: {name: "e", type: {type_sym: :enum}},
+                                 required?: true}})
+    end
   end
 
   context "model generation" do

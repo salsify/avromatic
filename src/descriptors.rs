@@ -1,9 +1,4 @@
-use avro_rs::{
-    FullSchema,
-    types::ToAvro,
-    schema::{SchemaKind, SchemaIter, SchemaRef, UnionRef},
-    types::Value as AvroValue,
-};
+use avro_rs::{FullSchema, types::ToAvro, schema::{SchemaKind, SchemaIter, SchemaRef, UnionRef}, types::Value as AvroValue};
 use crate::custom_types::{CustomTypeConfiguration, CustomTypeRegistry};
 use crate::de::*;
 use crate::heap_guard::HeapGuard;
@@ -16,6 +11,7 @@ use rutie::*;
 use std::collections::HashMap;
 use std::io::Read;
 use std::mem::transmute;
+use crate::descriptors::TypeDescriptor::Union;
 
 #[derive(Debug, Fail)]
 pub enum AvromaticError {
@@ -79,13 +75,13 @@ impl ModelDescriptorInner {
             key.descriptor.attributes.iter().for_each(|(k, key_type)| {
                 if let Some(value_type) = values.get(k) {
                     if value_type != key_type {
-                        let message = format!(
+                        raise!(
+                            "RuntimeError",
                             "Field '{}' has a different type in each schema: {:?} {:?}",
                             k,
                             key_type,
-                            value_type,
+                            value_type
                         );
-                        VM::raise(Class::from_existing("RuntimeError"), &message);
                     }
                 }
             });
@@ -375,6 +371,11 @@ impl AttributeDescriptor {
     {
         self.type_descriptor.serialize(value, schema)
     }
+
+    pub fn typesym(&self) -> Symbol {
+        self.type_descriptor.to_symbol()
+    }
+    pub fn is_optional(&self) -> bool { self.type_descriptor.is_optional() }
 }
 
 #[derive(Debug, PartialEq)]
@@ -825,6 +826,42 @@ impl TypeDescriptor {
                 let raw = default.decode(reader)?;
                 Ok(inner.deserialize(raw))
             }
+        }
+    }
+
+    pub fn to_symbol(&self) -> Symbol {
+        // TODO: Figure out the exhaustive list of typesyms.
+        match self {
+            TypeDescriptor::Boolean => Symbol::new("boolean"),
+            TypeDescriptor::Enum(_) => Symbol::new("enum"),
+            TypeDescriptor::Fixed(_) => Symbol::new("fixed"),
+            TypeDescriptor::Float => Symbol::new("float"),
+            TypeDescriptor::Double => Symbol::new("double"),
+            TypeDescriptor::Int => Symbol::new("int"),
+            TypeDescriptor::Long => Symbol::new("long"),
+            TypeDescriptor::Null => Symbol::new("null"),
+            TypeDescriptor::String => Symbol::new("string"),
+            TypeDescriptor::Bytes => Symbol::new("bytes"),
+            TypeDescriptor::Date => Symbol::new("date"),
+            TypeDescriptor::TimestampMicros => Symbol::new("timestampmicros"),
+            TypeDescriptor::TimestampMillis => Symbol::new("timestampmillis"),
+            TypeDescriptor::Array(_) => Symbol::new("array"),
+            TypeDescriptor::Map(_) => Symbol::new("map"),
+            TypeDescriptor::Record(_) => Symbol::new("record"),
+            TypeDescriptor::Union(_, _) => Symbol::new("union"),
+            TypeDescriptor::Custom(_, _) => Symbol::new("custom"),
+        }
+    }
+
+    fn is_optional(&self) -> bool {
+        if let Union(_, variants) = self {
+            if let Some(&TypeDescriptor::Null) = variants.first() {
+                true
+            } else {
+                false
+            }
+        } else {
+            false
         }
     }
 }

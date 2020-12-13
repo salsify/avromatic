@@ -31,6 +31,15 @@ module Avromatic
             super || (@name ||= config.avro_schema.name.classify)
           end
 
+          unless options[:native] == false
+            # TODO: Expand or eliminate this by allowing all inclusions to work and/or replace
+            # with native code.
+            #
+            # TODO: With Ruby code we mixed these directly into the generated module, here we have
+            # to do it for each Model class. Is this OK?
+            include Avromatic::Model::Validation
+          end
+
           class_eval(&block) if block
         end
       end
@@ -43,12 +52,8 @@ module Avromatic
           define_included_method
         else
           @config = Avromatic::Model::Configuration.new(**options)
-          define_native_module
+          @mod = AvromaticModel.build(config)
         end
-      end
-
-      def build
-        AvromaticModel.build(schema: config.avro_schema.to_json)
       end
 
       def inclusions
@@ -64,10 +69,6 @@ module Avromatic
       end
 
       private
-
-      def define_native_module
-        @mod = AvromaticModel.build(config)
-      end
 
       def define_included_method
         local_mod = mod
