@@ -1,5 +1,9 @@
 # avromatic changelog
 
+## v2.3.1
+- Optimize immutable model validation.
+- Don't cache immutable model validation results if the model has mutable children.
+
 ## v2.3.0
 - Add support for Rails 6.1.
 - Optimize nested model serialization.

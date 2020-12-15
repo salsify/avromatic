@@ -50,6 +50,7 @@ module Avromatic
       end
 
       def missing_avro_attributes
+        return EMPTY_ARRAY if prevalidated?
         return @missing_attributes if instance_variable_defined?(:@missing_attributes)
 
         missing_attributes = []
@@ -64,8 +65,8 @@ module Avromatic
           end
         end
 
-        unless self.class.config.mutable
-          @missing_attributes = missing_attributes.deep_freeze
+        if recursively_immutable?
+          @missing_attributes = missing_attributes.freeze
         end
 
         missing_attributes
