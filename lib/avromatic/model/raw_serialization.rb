@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative 'attribute_path'
+
 module Avromatic
   module Model
 
@@ -14,52 +16,80 @@ module Avromatic
         delegate :datum_writer, :datum_reader, to: :class
         private :datum_writer, :datum_reader
 
-        def avro_raw_value(validate: true)
-          if self.class.recursively_immutable?
-            @avro_raw_value ||= avro_raw_encode(value_attributes_for_avro(validate: validate), :value)
-          else
+        UNSPECIFIED = Object.new
+
+        def avro_raw_value(validate: UNSPECIFIED)
+          if self.class.config.mutable
             avro_raw_encode(value_attributes_for_avro(validate: validate), :value)
+          else
+            @avro_raw_value ||= avro_raw_encode(value_attributes_for_avro(validate: validate), :value)
           end
         end
 
-        def avro_raw_key(validate: true)
+        def avro_raw_key(validate: UNSPECIFIED)
           raise 'Model has no key schema' unless key_avro_schema
           avro_raw_encode(key_attributes_for_avro(validate: validate), :key)
         end
 
-        def value_attributes_for_avro(validate: true)
-          if self.class.recursively_immutable?
-            @value_attributes_for_avro ||= avro_hash(value_avro_field_references, validate: validate)
-          else
+        def value_attributes_for_avro(validate: UNSPECIFIED)
+          if self.class.config.mutable
             avro_hash(value_avro_field_references, validate: validate)
+          else
+            @value_attributes_for_avro ||= avro_hash(value_avro_field_references, validate: validate)
           end
         end
 
-        def key_attributes_for_avro(validate: true)
+        def key_attributes_for_avro(validate: UNSPECIFIED)
           avro_hash(key_avro_field_references, validate: validate)
         end
 
-        def avro_value_datum(validate: true)
-          if self.class.recursively_immutable?
-            @avro_value_datum ||= avro_hash(value_avro_field_references, strict: true, validate: validate)
-          else
+        def avro_value_datum(validate: UNSPECIFIED)
+          if self.class.config.mutable
             avro_hash(value_avro_field_references, strict: true, validate: validate)
+          else
+            @avro_datum ||= avro_hash(value_avro_field_references, strict: true, validate: validate)
           end
         end
 
-        def avro_key_datum(validate: true)
+        def avro_key_datum(validate: UNSPECIFIED)
           avro_hash(key_avro_field_references, strict: true, validate: validate)
         end
 
         private
 
         def avro_hash(field_references, strict: false, validate:)
-          avro_validate! if validate
-          field_references.each_with_object(Hash.new) do |field_reference, result|
+          unless validate == UNSPECIFIED
+            # TODO: Deprecation warning if validate is passed
+            puts 'TODO: Deprecation warning'
+          end
+
+          missing_attributes = nil
+          avro_hash = field_references.each_with_object(Hash.new) do |field_reference, result|
+            attribute_definition = self.class.attribute_definitions[field_reference.name_sym]
+            value = _attributes[field_reference.name_sym]
+
+            if value.nil? && !attribute_definition.nullable?
+              missing_attributes ||= []
+              missing_attributes << Avromatic::Model::AttributePath.new(field_reference.name)
+            end
+
             next unless _attributes.include?(field_reference.name_sym)
 
-            value = _attributes[field_reference.name_sym]
-            result[field_reference.name] = attribute_definitions[field_reference.name_sym].serialize(value, strict)
+            begin
+              result[field_reference.name] = attribute_definition.serialize(value, strict)
+            rescue Avromatic::Model::ValidationError => e
+              missing_attributes ||= []
+              e.missing_attributes.each do |nested_attribute|
+                missing_attributes << nested_attribute.prepend_attribute_access(field_reference.name)
+              end
+            end
+          end
+
+          if missing_attributes.present?
+            raise Avromatic::Model::ValidationError.new("#{self.class.name}(#{_attributes.inspect}) cannot be " \
+              "serialized because the following attributes are nil: #{missing_attributes.map(&:to_s).join(', ')}", missing_attributes)
+          else
+            avro_hash
           end
         end
 

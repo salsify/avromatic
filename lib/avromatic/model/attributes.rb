@@ -28,8 +28,8 @@ module Avromatic
           @owner = owner
           @field = field
           @required = FieldHelper.required?(field)
+          @nullable = FieldHelper.nullable?(field)
           @type = type
-          @values_immutable = type.referenced_model_classes.all?(&:recursively_immutable?)
           @name = field.name.to_sym
           @name_string = field.name.to_s.dup.freeze
           @setter_name = "#{field.name}=".to_sym
@@ -42,12 +42,12 @@ module Avromatic
                      end
         end
 
-        def required?
-          @required
+        def nullable?
+          @nullable
         end
 
-        def values_immutable?
-          @values_immutable
+        def required?
+          @required
         end
 
         def coerce(input)
@@ -75,34 +75,23 @@ module Avromatic
       included do
         class_attribute :attribute_definitions, instance_writer: false
         self.attribute_definitions = {}
-
-        delegate :recursively_immutable?, to: :class
       end
 
       def initialize(data = {})
         super()
 
         num_valid_keys = 0
-        # Prevalidation checks to see if all required attributes are recursively present for immutable
-        # subtrees of models to avoid an additional validation traversal of the model tree during
-        # serialization. Model classes that default any attributes after this constructor is invoked
-        # will not be lazily initialized.
-        @prevalidated = immutable?
         attribute_definitions.each do |attribute_name, attribute_definition|
-          value = if data.include?(attribute_name)
-                    num_valid_keys += 1
-                    send(attribute_definition.setter_name, data.fetch(attribute_name))
-                  elsif data.include?(attribute_definition.name_string)
-                    num_valid_keys += 1
-                    send(attribute_definition.setter_name, data[attribute_definition.name_string])
-                  elsif !_attributes.include?(attribute_name)
-                    send(attribute_definition.setter_name, attribute_definition.default)
-                  else
-                    _attributes[attribute_name]
-                  end
-
-          if @prevalidated && attribute_definition.required? && !prevalidated_attribute_value?(value)
-            @prevalidated = false
+          if data.include?(attribute_name)
+            num_valid_keys += 1
+            value = data.fetch(attribute_name)
+            send(attribute_definition.setter_name, value)
+          elsif data.include?(attribute_definition.name_string)
+            num_valid_keys += 1
+            value = data[attribute_definition.name_string]
+            send(attribute_definition.setter_name, value)
+          elsif !_attributes.include?(attribute_name)
+            send(attribute_definition.setter_name, attribute_definition.default)
           end
         end
 
@@ -123,32 +112,7 @@ module Avromatic
       alias_method :to_hash, :to_h
       alias_method :attributes, :to_h
 
-      protected
-
-      # Returns true if the model was prevalidated in the constructor.
-      def prevalidated?
-        @prevalidated
-      end
-
       private
-
-      def prevalidated_attribute_value?(value)
-        if value.nil?
-          false
-        elsif value.is_a?(Avromatic::Model::Attributes)
-          value.prevalidated?
-        elsif value.is_a?(::Array)
-          value.all? do |nested_value|
-            prevalidated_attribute_value?(nested_value)
-          end
-        elsif value.is_a?(::Hash)
-          value.each_value.all? do |nested_value|
-            prevalidated_attribute_value?(nested_value)
-          end
-        else
-          true
-        end
-      end
 
       def _attributes
         @attributes ||= {}
@@ -170,12 +134,6 @@ module Avromatic
             end
           end
           define_avro_attributes(avro_schema, generated_methods_module)
-        end
-
-        def recursively_immutable?
-          return @recursively_immutable if defined?(@recursively_immutable)
-
-          @recursively_immutable = immutable? && attribute_definitions.each_value.all?(&:values_immutable?)
         end
 
         private
@@ -225,7 +183,7 @@ module Avromatic
               _attributes[symbolized_field_name] = attribute_definition.coerce(value)
             end
 
-            unless mutable? # rubocop:disable Style/Next
+            unless config.mutable # rubocop:disable Style/Next
               generated_methods_module.send(:private, "#{field.name}=")
               generated_methods_module.send(:define_method, :clone) { self }
               generated_methods_module.send(:define_method, :dup) { self }

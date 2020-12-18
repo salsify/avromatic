@@ -8,7 +8,6 @@ module Avromatic
 
       attr_reader :avro_schema, :key_avro_schema, :nested_models, :mutable,
                   :allow_optional_key_fields
-      alias_method :mutable?, :mutable
       delegate :schema_store, to: Avromatic
 
       # Either schema(_name) or value_schema(_name), but not both, must be
@@ -34,10 +33,6 @@ module Avromatic
       end
 
       alias_method :value_avro_schema, :avro_schema
-
-      def immutable?
-        !mutable?
-      end
 
       private
 

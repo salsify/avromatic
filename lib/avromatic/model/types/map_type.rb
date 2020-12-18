@@ -63,8 +63,23 @@ module Avromatic
           if value.nil?
             value
           else
-            value.each_with_object({}) do |(element_key, element_value), result|
-              result[key_type.serialize(element_key, strict)] = value_type.serialize(element_value, strict)
+            missing_attributes = nil
+            avro_hash = value.each_with_object({}) do |(element_key, element_value), result|
+              begin
+                result[key_type.serialize(element_key, strict)] = value_type.serialize(element_value, strict)
+              rescue Avromatic::Model::ValidationError => e
+                missing_attributes ||= []
+                e.missing_attributes.each do |nested_attribute|
+                  missing_attributes << nested_attribute.prepend_map_access(element_key)
+                end
+              end
+            end
+
+            if missing_attributes.present?
+              raise Avromatic::Model::ValidationError.new('Map cannot be serialized because the ' \
+                "following attributes are nil: #{missing_attributes.map(&:to_s).join(', ')}", missing_attributes)
+            else
+              avro_hash
             end
           end
         end

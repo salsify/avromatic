@@ -43,8 +43,7 @@ module Avromatic
           if value.nil?
             value
           else
-            # This is only used for recursive serialization so validation has already been done
-            strict ? value.avro_value_datum(validate: false) : value.value_attributes_for_avro(validate: false)
+            strict ? value.avro_value_datum : value.value_attributes_for_avro
           end
         end
 

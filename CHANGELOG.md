@@ -1,8 +1,7 @@
 # avromatic changelog
 
-## v2.3.1
-- Optimize immutable model validation.
-- Don't cache immutable model validation results or serialized Avro attributes if a model has mutable children.
+## v2.4.0
+- Optimize model validation which is now always done during serialization.
 
 ## v2.3.0
 - Add support for Rails 6.1.
