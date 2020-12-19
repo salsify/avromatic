@@ -42,8 +42,10 @@ module Avromatic
         def serialize(value, strict)
           if value.nil?
             value
+          elsif strict
+            value.avro_value_datum
           else
-            strict ? value.avro_value_datum : value.value_attributes_for_avro
+            value.value_attributes_for_avro
           end
         end
 

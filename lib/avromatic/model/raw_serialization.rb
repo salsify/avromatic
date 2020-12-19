@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative 'attribute_path'
+require 'active_support/deprecation'
 
 module Avromatic
   module Model
@@ -19,50 +20,69 @@ module Avromatic
         UNSPECIFIED = Object.new
 
         def avro_raw_value(validate: UNSPECIFIED)
+          unless validate == UNSPECIFIED
+            ActiveSupport::Deprecation.warn("The 'validate' argument to #{__method__} is deprecated.")
+          end
+
           if self.class.config.mutable
-            avro_raw_encode(value_attributes_for_avro(validate: validate), :value)
+            avro_raw_encode(value_attributes_for_avro, :value)
           else
-            @avro_raw_value ||= avro_raw_encode(value_attributes_for_avro(validate: validate), :value)
+            @avro_raw_value ||= avro_raw_encode(value_attributes_for_avro, :value)
           end
         end
 
         def avro_raw_key(validate: UNSPECIFIED)
+          unless validate == UNSPECIFIED
+            ActiveSupport::Deprecation.warn("The 'validate' argument to #{__method__} is deprecated.")
+          end
+
           raise 'Model has no key schema' unless key_avro_schema
-          avro_raw_encode(key_attributes_for_avro(validate: validate), :key)
+          avro_raw_encode(key_attributes_for_avro, :key)
         end
 
         def value_attributes_for_avro(validate: UNSPECIFIED)
+          unless validate == UNSPECIFIED
+            ActiveSupport::Deprecation.warn("The 'validate' argument to #{__method__} is deprecated.")
+          end
+
           if self.class.config.mutable
-            avro_hash(value_avro_field_references, validate: validate)
+            avro_hash(value_avro_field_references)
           else
-            @value_attributes_for_avro ||= avro_hash(value_avro_field_references, validate: validate)
+            @value_attributes_for_avro ||= avro_hash(value_avro_field_references)
           end
         end
 
         def key_attributes_for_avro(validate: UNSPECIFIED)
-          avro_hash(key_avro_field_references, validate: validate)
+          unless validate == UNSPECIFIED
+            ActiveSupport::Deprecation.warn("The 'validate' argument to #{__method__} is deprecated.")
+          end
+
+          avro_hash(key_avro_field_references)
         end
 
         def avro_value_datum(validate: UNSPECIFIED)
+          unless validate == UNSPECIFIED
+            ActiveSupport::Deprecation.warn("The 'validate' argument to #{__method__} is deprecated.")
+          end
+
           if self.class.config.mutable
-            avro_hash(value_avro_field_references, strict: true, validate: validate)
+            avro_hash(value_avro_field_references, strict: true)
           else
-            @avro_datum ||= avro_hash(value_avro_field_references, strict: true, validate: validate)
+            @avro_datum ||= avro_hash(value_avro_field_references, strict: true)
           end
         end
 
         def avro_key_datum(validate: UNSPECIFIED)
-          avro_hash(key_avro_field_references, strict: true, validate: validate)
+          unless validate == UNSPECIFIED
+            ActiveSupport::Deprecation.warn("The 'validate' argument to #{__method__} is deprecated.")
+          end
+
+          avro_hash(key_avro_field_references, strict: true)
         end
 
         private
 
-        def avro_hash(field_references, strict: false, validate:)
-          unless validate == UNSPECIFIED
-            # TODO: Deprecation warning if validate is passed
-            puts 'TODO: Deprecation warning'
-          end
-
+        def avro_hash(field_references, strict: false)
           missing_attributes = nil
           avro_hash = field_references.each_with_object(Hash.new) do |field_reference, result|
             attribute_definition = self.class.attribute_definitions[field_reference.name_sym]
@@ -86,8 +106,9 @@ module Avromatic
           end
 
           if missing_attributes.present?
-            raise Avromatic::Model::ValidationError.new("#{self.class.name}(#{_attributes.inspect}) cannot be " \
-              "serialized because the following attributes are nil: #{missing_attributes.map(&:to_s).join(', ')}", missing_attributes)
+            message = "#{self.class.name}(#{_attributes.inspect}) cannot be serialized because the following " \
+              "attributes are nil: #{missing_attributes.map(&:to_s).join(', ')}"
+            raise Avromatic::Model::ValidationError.new(message, missing_attributes)
           else
             avro_hash
           end

@@ -295,14 +295,14 @@ describe Avromatic::Model::Builder, 'validation' do
     end
   end
 
+  # Tests both ActiveModel validation and validation during serialization
   def assert_model_valid(instance)
-    # Shim to ensure both legacy validation and validation during serialization
     instance.value_attributes_for_avro
     expect(instance).to be_valid
   end
 
+  # Tests both ActiveModel validation and validation during serialization
   def assert_model_invalid(instance, *missing_attributes)
-    # Shim to ensure both legacy validation and validation during serialization
     expect do
       instance.value_attributes_for_avro
     end.to raise_error do |error|

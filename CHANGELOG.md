@@ -1,7 +1,9 @@
 # avromatic changelog
 
 ## v2.4.0
-- Optimize model validation which is now always done during serialization.
+- Ignore the `validate` argument and always validate during serialization. This
+  argument will be removed in Avromatic 3.0.
+- Optimize model validation during serialization.
 
 ## v2.3.0
 - Add support for Rails 6.1.

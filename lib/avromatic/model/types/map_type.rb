@@ -76,8 +76,9 @@ module Avromatic
             end
 
             if missing_attributes.present?
-              raise Avromatic::Model::ValidationError.new('Map cannot be serialized because the ' \
-                "following attributes are nil: #{missing_attributes.map(&:to_s).join(', ')}", missing_attributes)
+              message = 'Map cannot be serialized because the following attributes are nil: ' \
+                  "#{missing_attributes.map(&:to_s).join(', ')}"
+              raise Avromatic::Model::ValidationError.new(message, missing_attributes)
             else
               avro_hash
             end

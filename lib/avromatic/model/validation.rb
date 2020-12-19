@@ -42,7 +42,10 @@ module Avromatic
       end
 
       def missing_avro_attributes
+        return @missing_attributes if instance_variable_defined?(:@missing_attributes)
+
         missing_attributes = []
+
         self.class.attribute_definitions.each_value do |attribute_definition|
           value = send(attribute_definition.name)
           field = attribute_definition.field
@@ -52,6 +55,11 @@ module Avromatic
             missing_attributes.concat(Avromatic::Model::Validation.missing_nested_attributes(field.name, value))
           end
         end
+
+        unless self.class.config.mutable
+          @missing_attributes = missing_attributes.deep_freeze
+        end
+
         missing_attributes
       end
     end
