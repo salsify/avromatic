@@ -28,6 +28,7 @@ module Avromatic
           @owner = owner
           @field = field
           @type = type
+          @values_immutable = type.referenced_model_classes.all?(&:recursively_immutable?)
           @name = field.name.to_sym
           @name_string = field.name.to_s.dup.freeze
           @setter_name = "#{field.name}=".to_sym
@@ -42,6 +43,10 @@ module Avromatic
 
         def required?
           FieldHelper.required?(field)
+        end
+
+        def values_immutable?
+          @values_immutable
         end
 
         def coerce(input)
@@ -69,6 +74,8 @@ module Avromatic
       included do
         class_attribute :attribute_definitions, instance_writer: false
         self.attribute_definitions = {}
+
+        delegate :recursively_immutable?, to: :class
       end
 
       def initialize(data = {})
@@ -130,6 +137,12 @@ module Avromatic
           define_avro_attributes(avro_schema, generated_methods_module)
         end
 
+        def recursively_immutable?
+          return @recursively_immutable if defined?(@recursively_immutable)
+
+          @recursively_immutable = immutable? && attribute_definitions.each_value.all?(&:values_immutable?)
+        end
+
         private
 
         def check_for_field_conflicts!
@@ -177,7 +190,7 @@ module Avromatic
               _attributes[symbolized_field_name] = attribute_definitions[symbolized_field_name].coerce(value)
             end
 
-            unless config.mutable # rubocop:disable Style/Next
+            unless mutable? # rubocop:disable Style/Next
               generated_methods_module.send(:private, "#{field.name}=")
               generated_methods_module.send(:define_method, :clone) { self }
               generated_methods_module.send(:define_method, :dup) { self }

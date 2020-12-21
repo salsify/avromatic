@@ -1186,6 +1186,10 @@ describe Avromatic::Model::Builder do
       mutable_model = mutable_test_class.new(s: 'new_value')
       expect(mutable_model.subclass_setter_called).to eq(true)
     end
+
+    it "is not recursively immutable" do
+      expect(mutable_test_class).not_to be_recursively_immutable
+    end
   end
 
   context "value objects" do
@@ -1201,6 +1205,37 @@ describe Avromatic::Model::Builder do
         expect do
           model1.s = 'new value'
         end.to raise_error(NoMethodError, /private method `s=' called for/)
+      end
+
+      it "is recursively immutable" do
+        expect(test_class).to be_recursively_immutable
+      end
+
+      it "is recursively immutable when subclassing an immutable model" do
+        expect(subclass).to be_recursively_immutable
+      end
+
+      context "when it has mutable children" do
+        let(:schema) do
+          Avro::Builder.build_schema do
+            record :inner do
+              required :i, :int
+            end
+
+            record :outer do
+              required :inner, :inner
+            end
+          end
+        end
+
+        let(:test_class) do
+          described_class.model(schema: schema.fields_hash['inner'].type, mutable: true)
+          described_class.model(schema: schema, mutable: false)
+        end
+
+        it "is not recursively immutable" do
+          expect(test_class).not_to be_recursively_immutable
+        end
       end
     end
 

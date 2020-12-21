@@ -196,23 +196,47 @@ describe Avromatic::Model::RawSerialization do
     end
 
     context "with reference to a mutable attribute" do
-      let(:schema_name) { 'test.wrapper' }
-      let(:wrapped1_class) { test_class.nested_models['test.wrapped1'] }
-      let(:wrapped2_class) { test_class.nested_models['test.wrapped2'] }
-      let(:wrapped1) { wrapped1_class.new(i: 42) }
-      let(:wrapped2) { wrapped1_class.new(i: 78) }
-      let(:wrapped3) { wrapped2_class.new(i: 96) }
-      let(:values) { { sub1: wrapped1, sub2: wrapped2, sub3: wrapped3 } }
+      let(:schema) do
+        Avro::Builder.build_schema do
+          record :wrapped1 do
+            required :i, :int
+          end
 
-      before do
-        allow(wrapped1_class.config).to receive(:mutable).and_return(true)
+          record :wrapped2 do
+            required :i, :int
+          end
+
+          record :outer do
+            required :sub1a, :wrapped1
+            required :sub1b, :wrapped1
+            required :sub2, :wrapped2
+          end
+        end
       end
 
+      let!(:wrapped1_class) do
+        Avromatic::Model.model(schema: schema.fields_hash['sub1a'].type, mutable: true)
+      end
+
+      let!(:wrapped2_class) do
+        Avromatic::Model.model(schema: schema.fields_hash['sub2'].type, mutable: false)
+      end
+
+      let(:test_class) do
+        Avromatic::Model.model(schema: schema, mutable: false)
+      end
+
+      let(:wrapped1) { wrapped1_class.new(i: 42) }
+      let(:wrapped2) { wrapped2_class.new(i: 96) }
+      let(:instance) { test_class.new(sub1a: wrapped1, sub1b: wrapped1, sub2: wrapped2) }
+
       it "doesn't reuse attributes for mutable models" do
-        expected = { sub1: { i: 42 }, sub2: { i: 78 }, sub3: { i: 96 } }.deep_stringify_keys
+        expected = { sub1a: { i: 42 }, sub1b: { i: 42 }, sub2: { i: 96 } }.deep_stringify_keys
         actual = instance.avro_value_datum
         expect(actual).to eq(expected)
-        expect(actual['sub1']).not_to equal(actual['sub2'])
+        expect(actual['sub1a']).not_to equal(actual['sub1b'])
+        actual2 = instance.avro_value_datum
+        expect(actual2['sub1a']).not_to equal(actual['sub1a'])
       end
     end
 
