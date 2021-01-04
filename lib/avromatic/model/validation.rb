@@ -41,6 +41,14 @@ module Avromatic
         end
       end
 
+      def avro_validate!
+        results = missing_avro_attributes
+        if results.present?
+          raise Avromatic::Model::ValidationError.new("#{self.class.name}(#{attributes.inspect}) cannot be " \
+            "serialized because the following attributes are nil: #{results.join(', ')}")
+        end
+      end
+
       def missing_avro_attributes
         return @missing_attributes if instance_variable_defined?(:@missing_attributes)
 

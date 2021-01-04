@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-require_relative 'attribute_path'
 require 'active_support/deprecation'
 
 module Avromatic
@@ -83,34 +82,23 @@ module Avromatic
         private
 
         def avro_hash(field_references, strict: false)
-          missing_attributes = nil
-          avro_hash = field_references.each_with_object(Hash.new) do |field_reference, result|
+          field_references.each_with_object(Hash.new) do |field_reference, result|
             attribute_definition = self.class.attribute_definitions[field_reference.name_sym]
             value = _attributes[field_reference.name_sym]
 
             if value.nil? && !attribute_definition.nullable?
-              missing_attributes ||= []
-              missing_attributes << Avromatic::Model::AttributePath.new(field_reference.name)
-            end
-
-            next unless _attributes.include?(field_reference.name_sym)
-
-            begin
-              result[field_reference.name] = attribute_definition.serialize(value, strict)
-            rescue Avromatic::Model::ValidationError => e
-              missing_attributes ||= []
-              e.missing_attributes.each do |nested_attribute|
-                missing_attributes << nested_attribute.prepend_attribute_access(field_reference.name)
+              # Perform an explicit validation to generate a more complete error message
+              avro_validate!
+            elsif _attributes.include?(field_reference.name_sym)
+              begin
+                result[field_reference.name] = attribute_definition.serialize(value, strict)
+              rescue Avromatic::Model::ValidationError
+                # Perform an explicit validation to generate a more complete error message
+                avro_validate!
+                # We should never get here but just in case...
+                raise
               end
             end
-          end
-
-          if missing_attributes.present?
-            message = "#{self.class.name}(#{_attributes.inspect}) cannot be serialized because the following " \
-              "attributes are nil: #{missing_attributes.map(&:to_s).join(', ')}"
-            raise Avromatic::Model::ValidationError.new(message, missing_attributes)
-          else
-            avro_hash
           end
         end
 

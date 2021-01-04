@@ -44,25 +44,7 @@ module Avromatic
           if value.nil?
             value
           else
-            missing_attributes = nil
-            avro_hash = value.each_with_index.with_object([]) do |(element, index), result|
-              begin
-                result << value_type.serialize(element, strict)
-              rescue Avromatic::Model::ValidationError => e
-                missing_attributes ||= []
-                e.missing_attributes.each do |nested_attribute|
-                  missing_attributes << nested_attribute.prepend_array_access(index)
-                end
-              end
-            end
-
-            if missing_attributes.present?
-              message = 'Array cannot be serialized because the following attributes are nil: ' \
-                  "#{missing_attributes.map(&:to_s).join(', ')}"
-              raise Avromatic::Model::ValidationError.new(message, missing_attributes)
-            else
-              avro_hash
-            end
+            value.map { |element| value_type.serialize(element, strict) }
           end
         end
 
