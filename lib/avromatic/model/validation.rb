@@ -56,8 +56,8 @@ module Avromatic
           end
         end
 
-        unless self.class.config.mutable
-          @missing_attributes = missing_attributes.deep_freeze
+        if recursively_immutable?
+          @missing_attributes = missing_attributes.freeze
         end
 
         missing_attributes

@@ -14,20 +14,20 @@ module Avromatic
       module Encode
         extend ActiveSupport::Concern
 
+        UNSPECIFIED = Object.new
+
         delegate :datum_writer, :datum_reader, to: :class
         private :datum_writer, :datum_reader
-
-        UNSPECIFIED = Object.new
 
         def avro_raw_value(validate: UNSPECIFIED)
           unless validate == UNSPECIFIED
             ActiveSupport::Deprecation.warn("The 'validate' argument to #{__method__} is deprecated.")
           end
 
-          if self.class.config.mutable
-            avro_raw_encode(value_attributes_for_avro, :value)
-          else
+          if self.class.recursively_immutable?
             @avro_raw_value ||= avro_raw_encode(value_attributes_for_avro, :value)
+          else
+            avro_raw_encode(value_attributes_for_avro, :value)
           end
         end
 
@@ -45,10 +45,10 @@ module Avromatic
             ActiveSupport::Deprecation.warn("The 'validate' argument to #{__method__} is deprecated.")
           end
 
-          if self.class.config.mutable
-            avro_hash(value_avro_field_references)
-          else
+          if self.class.recursively_immutable?
             @value_attributes_for_avro ||= avro_hash(value_avro_field_references)
+          else
+            avro_hash(value_avro_field_references)
           end
         end
 
@@ -65,10 +65,10 @@ module Avromatic
             ActiveSupport::Deprecation.warn("The 'validate' argument to #{__method__} is deprecated.")
           end
 
-          if self.class.config.mutable
-            avro_hash(value_avro_field_references, strict: true)
+          if self.class.recursively_immutable?
+            @avro_value_datum ||= avro_hash(value_avro_field_references, strict: true)
           else
-            @avro_datum ||= avro_hash(value_avro_field_references, strict: true)
+            avro_hash(value_avro_field_references, strict: true)
           end
         end
 
