@@ -1,6 +1,6 @@
 # avromatic changelog
 
-## v2.4.0
+## Unreleased
 - Don't cache immutable model validation results or serialized Avro attributes if a model has mutable children.
 
 ## v2.3.0
