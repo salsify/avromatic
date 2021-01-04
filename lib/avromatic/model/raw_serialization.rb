@@ -15,10 +15,10 @@ module Avromatic
         private :datum_writer, :datum_reader
 
         def avro_raw_value(validate: true)
-          if self.class.config.mutable
-            avro_raw_encode(value_attributes_for_avro(validate: validate), :value)
-          else
+          if self.class.recursively_immutable?
             @avro_raw_value ||= avro_raw_encode(value_attributes_for_avro(validate: validate), :value)
+          else
+            avro_raw_encode(value_attributes_for_avro(validate: validate), :value)
           end
         end
 
@@ -28,10 +28,10 @@ module Avromatic
         end
 
         def value_attributes_for_avro(validate: true)
-          if self.class.config.mutable
-            avro_hash(value_avro_field_references, validate: validate)
-          else
+          if self.class.recursively_immutable?
             @value_attributes_for_avro ||= avro_hash(value_avro_field_references, validate: validate)
+          else
+            avro_hash(value_avro_field_references, validate: validate)
           end
         end
 
@@ -40,10 +40,10 @@ module Avromatic
         end
 
         def avro_value_datum(validate: true)
-          if self.class.config.mutable
-            avro_hash(value_avro_field_references, strict: true, validate: validate)
+          if self.class.recursively_immutable?
+            @avro_value_datum ||= avro_hash(value_avro_field_references, strict: true, validate: validate)
           else
-            @avro_datum ||= avro_hash(value_avro_field_references, strict: true, validate: validate)
+            avro_hash(value_avro_field_references, strict: true, validate: validate)
           end
         end
 

@@ -1,5 +1,8 @@
 # avromatic changelog
 
+## Unreleased
+- Don't cache immutable model validation results or serialized Avro attributes if a model has mutable children.
+
 ## v2.3.0
 - Add support for Rails 6.1.
 - Optimize nested model serialization.
