@@ -42,9 +42,10 @@ module Avromatic
         def serialize(value, strict)
           if value.nil?
             value
+          elsif strict
+            value.avro_value_datum
           else
-            # This is only used for recursive serialization so validation has already been done
-            strict ? value.avro_value_datum(validate: false) : value.value_attributes_for_avro(validate: false)
+            value.value_attributes_for_avro
           end
         end
 

@@ -16,9 +16,13 @@ module Avromatic
         !optional?(field)
       end
 
+      def nullable?(field)
+        optional?(field) || field.type.type_sym == :null
+      end
+
       def boolean?(field)
         field.type.type_sym == :boolean ||
-          (FieldHelper.optional?(field) && field.type.schemas.last.type_sym == :boolean)
+          (optional?(field) && field.type.schemas.last.type_sym == :boolean)
       end
     end
   end

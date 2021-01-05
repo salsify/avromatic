@@ -1,6 +1,9 @@
 # avromatic changelog
 
-## Unreleased
+## v2.4.0
+- Ignore the `validate` argument and always validate during serialization. This
+  argument will be removed in Avromatic 3.0.
+- Optimize model validation during serialization.
 - Don't cache immutable model validation results or serialized Avro attributes if a model has mutable children.
 
 ## v2.3.0

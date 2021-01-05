@@ -27,6 +27,8 @@ module Avromatic
         def initialize(owner:, field:, type:)
           @owner = owner
           @field = field
+          @required = FieldHelper.required?(field)
+          @nullable = FieldHelper.nullable?(field)
           @type = type
           @values_immutable = type.referenced_model_classes.all?(&:recursively_immutable?)
           @name = field.name.to_sym
@@ -41,8 +43,12 @@ module Avromatic
                      end
         end
 
+        def nullable?
+          @nullable
+        end
+
         def required?
-          FieldHelper.required?(field)
+          @required
         end
 
         def values_immutable?
@@ -187,7 +193,7 @@ module Avromatic
             generated_methods_module.send(:define_method, "#{field.name}?") { !!_attributes[symbolized_field_name] } if FieldHelper.boolean?(field)
 
             generated_methods_module.send(:define_method, "#{field.name}=") do |value|
-              _attributes[symbolized_field_name] = attribute_definitions[symbolized_field_name].coerce(value)
+              _attributes[symbolized_field_name] = attribute_definition.coerce(value)
             end
 
             unless mutable? # rubocop:disable Style/Next

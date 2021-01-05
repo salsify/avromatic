@@ -29,19 +29,18 @@ describe Avromatic::Model::Builder, 'validation' do
 
       it "validates that required fields must be present" do
         instance = test_class.new
-        aggregate_failures do
-          expect(instance).to be_invalid
-          expect(instance.errors[:base]).to include("s can't be nil")
-          expect(instance.errors[:base]).to include("tf can't be nil")
-          # All attributes are invalid except the field with type null
-          expect(instance.errors.size).to eq(attribute_names.size - 1)
-        end
+        assert_model_invalid(instance, 's', 'tf')
+      end
+
+      it "passes validation if all required fields are present" do
+        instance = test_class.new(valid_attributes)
+        assert_model_valid(instance)
       end
 
       context "boolean" do
         it "allows a boolean field to be false" do
           instance = test_class.new(valid_attributes.merge(tf: false))
-          expect(instance).to be_valid
+          assert_model_valid(instance)
         end
       end
     end
@@ -58,13 +57,17 @@ describe Avromatic::Model::Builder, 'validation' do
 
       it "validates that a required array is not nil" do
         instance = test_class.new(a: nil)
-        expect(instance).to be_invalid
-        expect(instance.errors[:base]).to match_array(["a can't be nil"])
+        assert_model_invalid(instance, 'a')
       end
 
       it "allows a required array to be empty" do
         instance = test_class.new(a: [])
-        expect(instance).to be_valid
+        assert_model_valid(instance)
+      end
+
+      it "passes validation if all required fields are present" do
+        instance = test_class.new(a: [1])
+        assert_model_valid(instance)
       end
     end
 
@@ -80,13 +83,17 @@ describe Avromatic::Model::Builder, 'validation' do
 
       it "validates that a required map is not nil" do
         instance = test_class.new(m: nil)
-        expect(instance).to be_invalid
-        expect(instance.errors[:base]).to include("m can't be nil")
+        assert_model_invalid(instance, 'm')
       end
 
       it "allows a required map to be empty" do
         instance = test_class.new(m: {})
-        expect(instance).to be_valid
+        assert_model_valid(instance)
+      end
+
+      it "passes validation if all required fields are present" do
+        instance = test_class.new(m: { 'foo' => 1 })
+        assert_model_valid(instance)
       end
     end
 
@@ -105,17 +112,17 @@ describe Avromatic::Model::Builder, 'validation' do
 
       it "validates nested records" do
         instance = test_class.new(sub: test_class.nested_models['sub_type'].new)
-        expect(instance).to be_invalid
-        aggregate_failures do
-          expect(instance.errors[:base]).to include("sub.i can't be nil")
-          expect(instance.errors[:base]).to include("sub.s can't be nil")
-        end
+        assert_model_invalid(instance, 'sub.i', 'sub.s')
       end
 
       it "validates nested records initialized with a hash" do
         instance = test_class.new(sub: { i: 0 })
-        expect(instance).to be_invalid
-        expect(instance.errors[:base]).to include("sub.s can't be nil")
+        assert_model_invalid(instance, 'sub.s')
+      end
+
+      it "passes validation if all required fields are present" do
+        instance = test_class.new(sub: { i: 0, s: 'f' })
+        assert_model_valid(instance)
       end
 
       context "doubly nested record" do
@@ -135,14 +142,17 @@ describe Avromatic::Model::Builder, 'validation' do
           level1 = test_class.nested_models['level1']
           level2 = test_class.nested_models['level2']
           instance = test_class.new(sub: level1.new(sub_sub: level2.new))
-          expect(instance).to be_invalid
-          expect(instance.errors[:base]).to include("sub.sub_sub.l can't be nil")
+          assert_model_invalid(instance, 'sub.sub_sub.l')
         end
 
         it "validates multiple levels of nesting initialized with a hash" do
           instance = test_class.new(sub: { sub_sub: {} })
-          expect(instance).to be_invalid
-          expect(instance.errors[:base]).to include("sub.sub_sub.l can't be nil")
+          assert_model_invalid(instance, 'sub.sub_sub.l')
+        end
+
+        it "passes validation if all required fields are present" do
+          instance = test_class.new(sub: { sub_sub: { l: 1 } })
+          assert_model_valid(instance)
         end
       end
 
@@ -166,13 +176,7 @@ describe Avromatic::Model::Builder, 'validation' do
                   nested_model.new(x: 1),
                   nested_model.new(y: 2)]
           instance = test_class.new(ary: data)
-          expect(instance).to be_invalid
-          aggregate_failures do
-            expect(instance.errors[:base]).to include("ary[0].x can't be nil")
-            expect(instance.errors[:base]).to include("ary[0].y can't be nil")
-            expect(instance.errors[:base]).to include("ary[1].y can't be nil")
-            expect(instance.errors[:base]).to include("ary[2].x can't be nil")
-          end
+          assert_model_invalid(instance, 'ary[0].x', 'ary[0].y', 'ary[1].y', 'ary[2].x')
         end
 
         it "validates records in an array initialized with hashes" do
@@ -180,13 +184,12 @@ describe Avromatic::Model::Builder, 'validation' do
                   { x: 1 },
                   { y: 2 }]
           instance = test_class.new(ary: data)
-          expect(instance).to be_invalid
-          aggregate_failures do
-            expect(instance.errors[:base]).to include("ary[0].x can't be nil")
-            expect(instance.errors[:base]).to include("ary[0].y can't be nil")
-            expect(instance.errors[:base]).to include("ary[1].y can't be nil")
-            expect(instance.errors[:base]).to include("ary[2].x can't be nil")
-          end
+          assert_model_invalid(instance, 'ary[0].x', 'ary[0].y', 'ary[1].y', 'ary[2].x')
+        end
+
+        it "passes validation if all required fields are present" do
+          instance = test_class.new(ary: [{ x: 1, y: 2 }])
+          assert_model_valid(instance)
         end
       end
 
@@ -210,11 +213,12 @@ describe Avromatic::Model::Builder, 'validation' do
             [nested_model.new(s: 'c'), nested_model.new, nested_model.new(s: 'b')]
           ]
           instance = test_class.new(m: data)
-          expect(instance).to be_invalid
-          aggregate_failures do
-            expect(instance.errors[:base]).to include("m[0][1].s can't be nil")
-            expect(instance.errors[:base]).to include("m[1][1].s can't be nil")
-          end
+          assert_model_invalid(instance, 'm[0][1].s', 'm[1][1].s')
+        end
+
+        it "passes validation if all required fields are present" do
+          instance = test_class.new(m: [[{ s: 's' }]])
+          assert_model_valid(instance)
         end
       end
 
@@ -240,13 +244,7 @@ describe Avromatic::Model::Builder, 'validation' do
             c: nested_model.new(x: 4)
           }
           instance = test_class.new(map: data)
-          expect(instance).to be_invalid
-          aggregate_failures do
-            expect(instance.errors[:base]).to include("map['a'].x can't be nil")
-            expect(instance.errors[:base]).to include("map['b'].y can't be nil")
-            expect(instance.errors[:base]).to include("map['b'].y can't be nil")
-            expect(instance.errors[:base]).to include("map['c'].y can't be nil")
-          end
+          assert_model_invalid(instance, "map['a'].x", "map['b'].x", "map['b'].y", "map['c'].y")
         end
 
         it "validates records in a map initialized with hashes" do
@@ -256,13 +254,12 @@ describe Avromatic::Model::Builder, 'validation' do
             c: { x: 4 }
           }
           instance = test_class.new(map: data)
-          expect(instance).to be_invalid
-          aggregate_failures do
-            expect(instance.errors[:base]).to include("map['a'].x can't be nil")
-            expect(instance.errors[:base]).to include("map['b'].y can't be nil")
-            expect(instance.errors[:base]).to include("map['b'].y can't be nil")
-            expect(instance.errors[:base]).to include("map['c'].y can't be nil")
-          end
+          assert_model_invalid(instance, "map['a'].x", "map['b'].x", "map['b'].y", "map['c'].y")
+        end
+
+        it "passes validation if all required fields are present" do
+          instance = test_class.new(map: { a: { x: 0, y: 1 } })
+          assert_model_valid(instance)
         end
       end
 
@@ -283,11 +280,7 @@ describe Avromatic::Model::Builder, 'validation' do
         it "validates a record in a union" do
           expect(test_class.new(u: 'foo')).to be_valid
           instance = test_class.new(u: test_class.nested_models['x_and_y'].new)
-          expect(instance).to be_invalid
-          aggregate_failures do
-            expect(instance.errors[:base]).to include("u.x can't be nil")
-            expect(instance.errors[:base]).to include("u.y can't be nil")
-          end
+          assert_model_invalid(instance, 'u.x', 'u.y')
         end
       end
     end
@@ -297,7 +290,31 @@ describe Avromatic::Model::Builder, 'validation' do
     let(:schema_name) { 'test.with_union' }
 
     it "does not require optional fields to be present" do
-      expect(test_class.new).to be_valid
+      instance = test_class.new
+      assert_model_valid(instance)
+    end
+  end
+
+  # Tests both ActiveModel validation and validation during serialization
+  def assert_model_valid(instance)
+    instance.value_attributes_for_avro
+    expect(instance).to be_valid
+  end
+
+  # Tests both ActiveModel validation and validation during serialization
+  def assert_model_invalid(instance, *missing_attributes)
+    expect do
+      instance.value_attributes_for_avro
+    end.to raise_error do |error|
+      expect(error).to be_a_kind_of(Avromatic::Model::ValidationError)
+      missing_attributes.each do |missing_attribute|
+        expect(error.message).to include(missing_attribute)
+      end
+    end
+
+    expect(instance).to be_invalid
+    missing_attributes.each do |missing_attribute|
+      expect(instance.errors[:base]).to include("#{missing_attribute} can't be nil")
     end
   end
 end
