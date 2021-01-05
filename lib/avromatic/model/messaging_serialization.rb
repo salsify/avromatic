@@ -14,18 +14,34 @@ module Avromatic
 
       module Encode
         def avro_message_value
-          avro_messaging.encode(
-            value_attributes_for_avro,
-            schema_name: value_avro_schema.fullname
-          )
+          if Avromatic.use_native_serialization
+            raw = Avromatic::IO::Native.encode_model(self, true)
+            avro_messaging.encode_raw(
+              raw,
+              schema_name: value_avro_schema.fullname
+            )
+          else
+            avro_messaging.encode(
+              value_attributes_for_avro,
+              schema_name: value_avro_schema.fullname
+            )
+          end
         end
 
         def avro_message_key
           raise 'Model has no key schema' unless key_avro_schema
-          avro_messaging.encode(
-            key_attributes_for_avro,
-            schema_name: key_avro_schema.fullname
-          )
+          if Avromatic.use_native_serialization
+            raw = Avromatic::IO::Native.encode_model(self, false)
+            avro_messaging.encode_raw(
+              raw,
+              schema_name: key_avro_schema.fullname
+            )
+          else
+            avro_messaging.encode(
+              key_attributes_for_avro,
+              schema_name: key_avro_schema.fullname
+            )
+          end
         end
       end
       include Encode

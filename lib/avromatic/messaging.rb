@@ -28,10 +28,20 @@ module Avromatic
         @schemas_by_id[schema_id] = Avro::Schema.parse(schema_json)
       end
 
-      # The following line differs from the parent class to use a custom DatumReader
-      reader_class = Avromatic.use_custom_datum_reader ? Avromatic::IO::DatumReader : Avro::IO::DatumReader
-      reader = reader_class.new(writers_schema, readers_schema)
-      reader.read(decoder)
+      if Avromatic.use_native_serialization
+        Avromatic::IO::Native.decode_attributes(
+          # TODO: Avoid creating a copy of the data here
+          data[5, data.size - 5],
+          readers_schema,
+          writers_schema,
+          false
+        )
+      else
+        # The following line differs from the parent class to use a custom DatumReader
+        reader_class = Avromatic.use_custom_datum_reader ? Avromatic::IO::DatumReader : Avro::IO::DatumReader
+        reader = reader_class.new(writers_schema, readers_schema)
+        reader.read(decoder)
+      end
     end
 
     def encode(message, schema_name: nil, namespace: @namespace, subject: nil)
@@ -56,6 +66,28 @@ module Avromatic
 
       # The actual message comes last.
       writer.write(message, encoder)
+
+      stream.string
+    end
+
+    # TODO: Figure out the right way to fold this into the Messaging API
+    def encode_raw(message, schema_name: nil, namespace: @namespace, subject: nil)
+      schema = @schema_store.find(schema_name, namespace)
+
+      # Schemas are registered under the full name of the top level Avro record
+      # type, or `subject` if it's provided.
+      schema_id = @registry.register(subject || schema.fullname, schema)
+
+      stream = StringIO.new
+
+      # Always start with the magic byte.
+      stream.write(MAGIC_BYTE)
+
+      # The schema id is encoded as a 4-byte big-endian integer.
+      stream.write([schema_id].pack('N'))
+
+      # The actual message comes last.
+      stream.write(message)
 
       stream.string
     end

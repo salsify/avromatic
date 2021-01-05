@@ -23,7 +23,9 @@ module Avromatic
             ActiveSupport::Deprecation.warn("The 'validate' argument to #{__method__} is deprecated.")
           end
 
-          if self.class.recursively_immutable?
+          if Avromatic.use_native_serialization
+            Avromatic::IO::Native.encode_model(self, true)
+          elsif self.class.recursively_immutable?
             @avro_raw_value ||= avro_raw_encode(value_attributes_for_avro, :value)
           else
             avro_raw_encode(value_attributes_for_avro, :value)
@@ -36,7 +38,12 @@ module Avromatic
           end
 
           raise 'Model has no key schema' unless key_avro_schema
-          avro_raw_encode(key_attributes_for_avro, :key)
+
+          if Avromatic.use_native_serialization
+            Avromatic::IO::Native.encode_model(self, false)
+          else
+            avro_raw_encode(key_attributes_for_avro, :key)
+          end
         end
 
         def value_attributes_for_avro(validate: UNSPECIFIED)
@@ -128,10 +135,20 @@ module Avromatic
         private
 
         def decode_avro_datum(data, schema = nil, key_or_value = :value)
-          stream = StringIO.new(data)
-          decoder = Avro::IO::BinaryDecoder.new(stream)
-          reader = schema ? custom_datum_reader(schema, key_or_value) : datum_reader[key_or_value]
-          reader.read(decoder)
+          if Avromatic.use_native_serialization
+            reader_schema = send("#{key_or_value}_avro_schema")
+            Avromatic::IO::Native.decode_attributes(
+              data,
+              reader_schema,
+              schema || reader_schema,
+              false
+            )
+          else
+            stream = StringIO.new(data)
+            decoder = Avro::IO::BinaryDecoder.new(stream)
+            reader = schema ? custom_datum_reader(schema, key_or_value) : datum_reader[key_or_value]
+            reader.read(decoder)
+          end
         end
 
         def custom_datum_reader(schema, key_or_value)

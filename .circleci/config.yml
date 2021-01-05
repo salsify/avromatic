@@ -22,6 +22,30 @@ jobs:
           paths:
             - "vendor/bundle"
             - "gemfiles/vendor/bundle"
+      - restore_cache:
+          name: Restore Avro C++ Cache
+          keys:
+            - v1-avro-cpp-1.10.1
+      - run:
+          name: Install Avro C++
+          command: |
+            # TODO: Add this to our Docker images
+            sudo apt-get -y install cmake libboost-dev libboost-filesystem-dev libboost-iostreams-dev libboost-program-options-dev libboost-system-dev
+            if [ ! -d avro-cpp-1.10.1 ]; then
+              wget http://apache.mirrors.spacedump.net/avro/stable/cpp/avro-cpp-1.10.1.tar.gz
+              tar -xzvf avro-cpp-1.10.1.tar.gz
+            fi
+            cd avro-cpp-1.10.1/
+            sudo ./build.sh install
+      - save_cache:
+          name: Save Avro C++ Cache
+          key: v1-avro-cpp-1.10.1
+          paths:
+            - "avro-cpp-1.10.1"
+      - run:
+          name: Compile Native Extension
+          command: |
+            bundle exec rake compile
       - run:
           name: Run Rubocop
           command: bundle exec rubocop
@@ -55,6 +79,30 @@ jobs:
           paths:
             - "vendor/bundle"
             - "gemfiles/vendor/bundle"
+      - restore_cache:
+          name: Restore Avro C++ Cache
+          keys:
+            - v1-avro-cpp-1.10.1
+      - run:
+          name: Install Avro C++
+          command: |
+            # TODO: Add this to our Docker images
+            sudo apt-get -y install cmake libboost-dev libboost-filesystem-dev libboost-iostreams-dev libboost-program-options-dev libboost-system-dev
+            if [ ! -d avro-cpp-1.10.1 ]; then
+              wget http://apache.mirrors.spacedump.net/avro/stable/cpp/avro-cpp-1.10.1.tar.gz
+              tar -xzvf avro-cpp-1.10.1.tar.gz
+            fi
+            cd avro-cpp-1.10.1/
+            sudo ./build.sh install
+      - save_cache:
+          name: Save Avro C++ Cache
+          key: v1-avro-cpp-1.10.1
+          paths:
+            - "avro-cpp-1.10.1"
+      - run:
+          name: Compile Native Extension
+          command: |
+            bundle exec rake compile
       - run:
           name: Run Tests
           command: |

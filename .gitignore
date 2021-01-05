@@ -9,3 +9,4 @@
 /tmp/
 /gemfiles/*.lock
 /log/*
+avromatic.bundle

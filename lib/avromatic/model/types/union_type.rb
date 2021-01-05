@@ -9,10 +9,16 @@ module Avromatic
       class UnionType < AbstractType
         attr_reader :member_types, :value_classes, :input_classes
 
-        def initialize(member_types:)
+        # TODO: Should we move the schema up into AbstractType?
+        def initialize(schema:, member_types:)
+          @schema = schema
           @member_types = member_types
           @value_classes = member_types.flat_map(&:value_classes)
           @input_classes = member_types.flat_map(&:input_classes).uniq
+        end
+
+        def nullable?
+          @schema.schemas.first.type_sym == :null
         end
 
         def name
@@ -31,7 +37,8 @@ module Avromatic
             end
           end
 
-          unless result
+          # TODO: Create separate fix
+          if result.nil?
             raise ArgumentError.new("Could not coerce '#{input.inspect}' to #{name}")
           end
 

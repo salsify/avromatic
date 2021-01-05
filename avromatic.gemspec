@@ -19,6 +19,7 @@ Gem::Specification.new do |spec|
   spec.bindir        = 'exe'
   spec.executables   = spec.files.grep(%r{^exe/}) { |f| File.basename(f) }
   spec.require_paths = ['lib']
+  spec.extensions = ['ext/avromatic/extconf.rb']
 
   spec.required_ruby_version = '>= 2.4'
 
@@ -34,6 +35,7 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency 'bundler', '>= 1.11'
   spec.add_development_dependency 'overcommit', '0.35.0'
   spec.add_development_dependency 'rake', '~> 10.0'
+  spec.add_development_dependency 'rake-compiler'
   spec.add_development_dependency 'rspec', '~> 3.0'
   spec.add_development_dependency 'rspec_junit_formatter'
   spec.add_development_dependency 'salsify_rubocop', '~> 0.52.1.1'

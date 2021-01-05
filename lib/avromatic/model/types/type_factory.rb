@@ -78,7 +78,7 @@ module Avromatic
                 member_types = member_schemas.map do |member_schema|
                   create(schema: member_schema, nested_models: nested_models, use_custom_types: use_custom_types)
                 end
-                Avromatic::Model::Types::UnionType.new(member_types: member_types)
+                Avromatic::Model::Types::UnionType.new(schema: schema, member_types: member_types)
               end
             when :record
               record_class = build_nested_model(schema: schema, nested_models: nested_models)

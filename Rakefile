@@ -4,6 +4,11 @@ require 'bundler/gem_tasks'
 require 'rspec/core/rake_task'
 require 'appraisal/task'
 require 'avro/builder'
+require 'rake/extensiontask'
+
+Rake::ExtensionTask.new('avromatic') do |ext|
+  ext.lib_dir = 'lib/avromatic'
+end
 
 RSpec::Core::RakeTask.new(:default_spec)
 

@@ -7,14 +7,16 @@ require 'ice_nine/core_ext/object'
 require 'avromatic/model'
 require 'avromatic/model_registry'
 require 'avromatic/messaging'
-require 'active_support/core_ext/string/inflections'
+require 'active_support/all'
+require 'avromatic/avromatic'
 
 module Avromatic
   class << self
     attr_accessor :schema_registry, :registry_url, :schema_store, :logger,
                   :messaging, :custom_type_registry, :nested_models,
                   :use_custom_datum_reader, :use_custom_datum_writer,
-                  :use_schema_fingerprint_lookup, :allow_unknown_attributes
+                  :use_schema_fingerprint_lookup, :allow_unknown_attributes,
+                  :use_native_serialization
 
     delegate :register_type, to: :custom_type_registry
   end
@@ -24,6 +26,7 @@ module Avromatic
   self.custom_type_registry = Avromatic::Model::CustomTypeRegistry.new
   self.use_custom_datum_reader = true
   self.use_custom_datum_writer = true
+  self.use_native_serialization = false
   self.use_schema_fingerprint_lookup = true
   self.allow_unknown_attributes = false
 
