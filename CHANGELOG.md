@@ -1,6 +1,6 @@
 # avromatic changelog
 
-## Unreleased
+## v2.4.0
 - Ignore the `validate` argument and always validate during serialization. This
   argument will be removed in Avromatic 3.0.
 - Optimize model validation during serialization.

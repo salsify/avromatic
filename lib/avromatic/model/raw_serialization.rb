@@ -87,7 +87,8 @@ module Avromatic
             value = _attributes[field_reference.name_sym]
 
             if value.nil? && !attribute_definition.nullable?
-              # Perform an explicit validation to generate a more complete error message
+              # We're missing a required attribute so perform an explicit validation to generate
+              # a more complete error message
               avro_validate!
             elsif _attributes.include?(field_reference.name_sym)
               begin
