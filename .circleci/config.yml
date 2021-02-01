@@ -82,4 +82,13 @@ workflows:
               ruby-version:
               - "2.5.8"
               - "2.6.6"
-              - "2.7.1"
+              - "2.7.2"
+      - test:
+          matrix:
+            parameters:
+              gemfile:
+                - "gemfiles/avro1_10_rails6_1.gemfile"
+                - "gemfiles/avro1_9_rails6_1.gemfile"
+                - "gemfiles/avro_patches_rails6_1.gemfile"
+              ruby-version:
+                - "3.0.0"
