@@ -430,23 +430,6 @@ Validation of required fields is done automatically when serializing a model to 
 explicitly by calling the `valid?` or `invalid?` methods from the 
 [ActiveModel::Validations](https://edgeapi.rubyonrails.org/classes/ActiveModel/Validations.html) interface.
 
-### Logical Types
-
-Currently the official Apache Avro Ruby library does not support logical types ([AVRO-1695](https://issues.apache.org/jira/browse/AVRO-1695)).
-That feature is in progress and will hopefully be merged soon.
-
-Avromatic supports logical types as implemented in the [pull request](https://github.com/apache/avro/pull/116) referenced in AVRO-1695.
-
-Until that change is included in the official library, you can
-use the [avro-patches gem](https://github.com/salsify/avro-patches) which includes
-the changes from the above pull request.
-
-To use this gem, reference it in your Gemfile instead of `avro`:
-
-```ruby
-gem 'avro-patches'
-````
-
 ### RSpec Support
 
 This gem also includes an `"avromatic/rspec"` file that can be required to support
