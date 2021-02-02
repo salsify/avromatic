@@ -1,5 +1,11 @@
 # avromatic changelog
 
+## Unreleased
+- Drop support for Ruby 2.4.
+- Add support for Ruby 3.0.
+- Drop support for Avro < 1.9.
+- Drop support for Rails < 5.2.
+
 ## v2.4.0
 - Ignore the `validate` argument and always validate during serialization. This
   argument will be removed in Avromatic 3.0.
