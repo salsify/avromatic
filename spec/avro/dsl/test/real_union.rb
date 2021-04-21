@@ -12,5 +12,5 @@ end
 
 record :real_union do
   required :header, :string
-  required :message, :union, types: [:foo, :bar]
+  required :message, :union, types: [:foo, :bar, :boolean]
 end

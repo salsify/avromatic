@@ -1,10 +1,11 @@
 # avromatic changelog
 
-## Unreleased
+## 3.0.0
 - Drop support for Ruby 2.4.
 - Add support for Ruby 3.0.
 - Drop support for Avro < 1.9.
 - Drop support for Rails < 5.2.
+- Fixes unions with boolean values.
 
 ## v2.4.0
 - Ignore the `validate` argument and always validate during serialization. This
