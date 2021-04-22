@@ -899,7 +899,7 @@ describe Avromatic::Model::Builder do
         expect do
           test_class.new(header: 'B', message: message_input)
         end.to raise_error(Avromatic::Model::CoercionError,
-                           'Value for RealUnion#message could not be coerced to a union[Foo, Bar] ' \
+                           'Value for RealUnion#message could not be coerced to a union[Foo, Bar, boolean] ' \
                               "because no union member type matches the provided attributes: #{message_input.inspect}")
       end
     end

@@ -31,7 +31,7 @@ module Avromatic
             end
           end
 
-          unless result
+          if result.nil?
             raise ArgumentError.new("Could not coerce '#{input.inspect}' to #{name}")
           end
 

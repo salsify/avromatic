@@ -79,6 +79,16 @@ describe Avromatic::IO::DatumReader do
       expect(test_class.avro_message_decode(avro_message_value)).to eq(instance)
     end
 
+    context "wtih a false value" do
+      let(:values) do
+        { header: 'has bar', message: false }
+      end
+
+      it "can decode a message" do
+        expect(test_class.avro_message_decode(avro_message_value)).to eq(instance)
+      end
+    end
+
     context "a record with an optional union" do
       let(:schema_name) { 'test.optional_union' }
 
