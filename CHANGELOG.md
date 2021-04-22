@@ -5,7 +5,7 @@
 - Add support for Ruby 3.0.
 - Drop support for Avro < 1.9.
 - Drop support for Rails < 5.2.
-- Fixes unions with boolean values.
+- Fix decoding of unions containing false boolean values.
 
 ## v2.4.0
 - Ignore the `validate` argument and always validate during serialization. This
