@@ -64,4 +64,14 @@ describe Avromatic::Model::Builder, 'nested_models' do
         .not_to equal(model2.attribute_definitions[:same].type.record_class)
     end
   end
+
+  context "when another instance of the nested model has already been registered" do
+    let!(:outer_model) { described_class.model(schema: schema) }
+
+    it "raises an error" do
+      expect do
+        described_class.model(schema: schema.fields_hash['sub'].type)
+      end.to raise_error(including('Attempted to replace existing Avromatic model'))
+    end
+  end
 end
