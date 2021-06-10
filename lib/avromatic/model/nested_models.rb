@@ -14,12 +14,14 @@ module Avromatic
         def register!
           return unless key_avro_schema.nil? && value_avro_schema.type_sym == :record
 
+          processed = Set.new
           roots = [self]
           until roots.empty?
             model = roots.shift
-            next if nested_models.registered?(model)
+            # Avoid any nested model dependency cycles by ignoring already processed models
+            next unless processed.add?(model)
 
-            nested_models.register(model)
+            nested_models.ensure_registered_model(model)
             roots.concat(model.referenced_model_classes)
           end
         end

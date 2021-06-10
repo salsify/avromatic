@@ -42,8 +42,11 @@ module Avromatic
     def ensure_registered_model(model)
       name = model_fullname(model)
       if registered?(name)
-        unless fetch(name).equal?(model)
-          raise "attempted to replace existing model #{fetch(name)} with new model #{model} as '#{name}'"
+        existing_model = fetch(name)
+        unless existing_model.equal?(model)
+          raise "Attempted to replace existing Avromatic model #{model_debug_name(existing_model)} with new model " \
+            "#{model_debug_name(model)} as '#{name}'. Perhaps '#{model_debug_name(model)}' needs to be eager loaded " \
+            'via the Avromatic eager_load_models setting?'
         end
       else
         register(model)
@@ -64,6 +67,12 @@ module Avromatic
         end
 
       value.start_with?('.') ? value.from(1) : value
+    end
+
+    private
+
+    def model_debug_name(model)
+      model.name || model.to_s
     end
   end
 end

@@ -1,5 +1,10 @@
 # avromatic changelog
 
+## 3.0.1
+- Raise an error when registering a nested model that has already been auto-generated.
+  This avoids hard to troubleshoot coercion errors when instantiating models and fixes 
+  a regression introduced in Avromatic 2.2.2.
+
 ## 3.0.0
 - Drop support for Ruby 2.4.
 - Add support for Ruby 3.0.

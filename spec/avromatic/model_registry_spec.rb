@@ -37,7 +37,7 @@ describe Avromatic::ModelRegistry do
         it "raises an error" do
           expect do
             instance.ensure_registered_model(model.dup)
-          end.to raise_error(including('attempted to replace existing model'))
+          end.to raise_error(including('Attempted to replace existing Avromatic model'))
         end
       end
     end
