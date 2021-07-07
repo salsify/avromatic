@@ -12,6 +12,7 @@ RSpec.configure do |config|
 
     WebMock.stub_request(:any, /^#{registry_uri}/).to_rack(AvroSchemaRegistry::FakeServer)
     AvroSchemaRegistry::FakeServer.clear
+    Avromatic.build_schema_registry!
     Avromatic.build_messaging!
   end
 end
