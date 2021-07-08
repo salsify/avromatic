@@ -1,5 +1,9 @@
 # avromatic changelog
 
+## 3.0.2
+- Reset the schema registry client between RSpec tests to ensure any cached values are
+  consistent with the fake schema registry.
+
 ## 3.0.1
 - Raise an error when registering a nested model that has already been auto-generated.
   This avoids hard to troubleshoot coercion errors when instantiating models and fixes 

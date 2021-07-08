@@ -45,6 +45,10 @@ module Avromatic
     end
   end
 
+  def self.build_schema_registry!
+    self.schema_registry = build_schema_registry
+  end
+
   def self.build_messaging
     raise 'Avromatic must be configured with a schema_store' unless schema_store
     Avromatic::Messaging.new(

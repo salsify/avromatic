@@ -72,7 +72,9 @@ and the [Messaging API](#messaging-api).
   so that they can be referenced by id. Either `schema_registry` or
   `registry_url` must be configured.
 * **registry_url**: URL for the schema registry. Either `schema_registry` or 
-  `registry_url` must be configured.
+  `registry_url` must be configured.  The `build_schema_registry!` method may 
+  be used to create a caching schema registry client instance based on other 
+  configuration values.
 * **use_schema_fingerprint_lookup**: Avromatic supports a Schema Registry
   [extension](https://github.com/salsify/avro-schema-registry#extensions) that
   provides an endpoint to lookup existing schema ids by fingerprint.
@@ -91,6 +93,7 @@ Example using a schema registry:
 Avromatic.configure do |config|
   config.schema_store = AvroTurf::SchemaStore.new(path: 'avro/schemas')
   config.registry_url = Rails.configuration.x.avro_schema_registry_url
+  config.build_schema_registry!
   config.build_messaging!
 end
 ```
