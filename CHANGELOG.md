@@ -1,5 +1,10 @@
 # avromatic changelog
 
+## 4.0.0
+- Drop support for Ruby 2.6.
+- Add support for Avro 1.11.
+- Add support for Rails 7.0.
+
 ## 3.0.2
 - Reset the schema registry client between RSpec tests to ensure any cached values are
   consistent with the fake schema registry.
