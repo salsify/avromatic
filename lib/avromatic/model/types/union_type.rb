@@ -10,6 +10,7 @@ module Avromatic
         attr_reader :member_types, :value_classes, :input_classes
 
         def initialize(member_types:)
+          super()
           @member_types = member_types
           @value_classes = member_types.flat_map(&:value_classes)
           @input_classes = member_types.flat_map(&:input_classes).uniq
@@ -31,9 +32,7 @@ module Avromatic
             end
           end
 
-          if result.nil?
-            raise ArgumentError.new("Could not coerce '#{input.inspect}' to #{name}")
-          end
+          raise ArgumentError.new("Could not coerce '#{input.inspect}' to #{name}") if result.nil?
 
           result
         end

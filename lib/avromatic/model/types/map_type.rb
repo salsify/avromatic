@@ -11,6 +11,7 @@ module Avromatic
         attr_reader :value_type, :key_type
 
         def initialize(key_type:, value_type:)
+          super()
           @key_type = key_type
           @value_type = value_type
         end

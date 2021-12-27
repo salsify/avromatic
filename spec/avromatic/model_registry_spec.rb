@@ -54,7 +54,7 @@ describe Avromatic::ModelRegistry do
     end
   end
 
-  context "#model_fullname" do
+  describe "#model_fullname" do
     let(:instance) { described_class.new(remove_namespace_prefix: 'test') }
 
     it "returns the value schema fullname with the prefix removed" do
@@ -132,7 +132,7 @@ describe Avromatic::ModelRegistry do
     end
 
     context "with a Regexp prefix" do
-      let(:instance) { described_class.new(remove_namespace_prefix: /([\w]+\.)+/) }
+      let(:instance) { described_class.new(remove_namespace_prefix: /(\w+\.)+/) }
 
       it "stores a model by its fullname with prefix removed" do
         instance.register(model)

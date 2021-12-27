@@ -21,9 +21,7 @@ module Avromatic
           end
         end
 
-        unless index_of_schema
-          raise Avro::IO::AvroTypeError.new(writers_schema, datum)
-        end
+        raise Avro::IO::AvroTypeError.new(writers_schema, datum) unless index_of_schema
 
         encoder.write_long(index_of_schema)
         write_data(writers_schema.schemas[index_of_schema], datum, encoder)

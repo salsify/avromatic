@@ -11,6 +11,7 @@ module Avromatic
         attr_reader :value_type
 
         def initialize(value_type:)
+          super()
           @value_type = value_type
         end
 

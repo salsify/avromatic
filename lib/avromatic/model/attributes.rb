@@ -22,6 +22,7 @@ module Avromatic
 
       class AttributeDefinition
         attr_reader :name, :name_string, :setter_name, :type, :field, :default, :owner
+
         delegate :serialize, to: :type
 
         def initialize(owner:, field:, type:)
@@ -58,21 +59,31 @@ module Avromatic
         def coerce(input)
           type.coerce(input)
         rescue Avromatic::Model::UnknownAttributeError => e
-          raise Avromatic::Model::CoercionError.new("Value for #{owner.name}##{name} could not be coerced to a #{type.name} " \
+          raise Avromatic::Model::CoercionError.new(
+            "Value for #{owner.name}##{name} could not be coerced to a #{type.name} " \
             "because the following unexpected attributes were provided: #{e.unknown_attributes.join(', ')}. " \
             "Only the following attributes are allowed: #{e.allowed_attributes.join(', ')}. " \
-            "Provided argument: #{input.inspect}")
+            "Provided argument: #{input.inspect}"
+          )
         rescue StandardError
           if type.input_classes && type.input_classes.none? { |input_class| input.is_a?(input_class) }
-            raise Avromatic::Model::CoercionError.new("Value for #{owner.name}##{name} could not be coerced to a #{type.name} " \
-              "because a #{input.class.name} was provided but expected a #{type.input_classes.map(&:name).to_sentence(two_words_connector: ' or ', last_word_connector: ', or ')}. " \
-              "Provided argument: #{input.inspect}")
+            raise Avromatic::Model::CoercionError.new(
+              "Value for #{owner.name}##{name} could not be coerced to a #{type.name} " \
+              "because a #{input.class.name} was provided but expected a #{type.input_classes.map(&:name).to_sentence(
+                two_words_connector: ' or ', last_word_connector: ', or '
+              )}. " \
+              "Provided argument: #{input.inspect}"
+            )
           elsif input.is_a?(Hash) && type.is_a?(Avromatic::Model::Types::UnionType)
-            raise Avromatic::Model::CoercionError.new("Value for #{owner.name}##{name} could not be coerced to a #{type.name} " \
-              "because no union member type matches the provided attributes: #{input.inspect}")
+            raise Avromatic::Model::CoercionError.new(
+              "Value for #{owner.name}##{name} could not be coerced to a #{type.name} " \
+              "because no union member type matches the provided attributes: #{input.inspect}"
+            )
           else
-            raise Avromatic::Model::CoercionError.new("Value for #{owner.name}##{name} could not be coerced to a #{type.name}. " \
-              "Provided argument: #{input.inspect}")
+            raise Avromatic::Model::CoercionError.new(
+              "Value for #{owner.name}##{name} could not be coerced to a #{type.name}. " \
+              "Provided argument: #{input.inspect}"
+            )
           end
         end
       end
@@ -106,7 +117,8 @@ module Avromatic
           unknown_attributes = (data.keys.map(&:to_s) - _attributes.keys.map(&:to_s)).sort
           allowed_attributes = attribute_definitions.keys.map(&:to_s).sort
           message = "Unexpected arguments for #{self.class.name}#initialize: #{unknown_attributes.join(', ')}. " \
-            "Only the following arguments are allowed: #{allowed_attributes.join(', ')}. Provided arguments: #{data.inspect}"
+            "Only the following arguments are allowed: #{allowed_attributes.join(', ')}. " \
+            "Provided arguments: #{data.inspect}"
           raise Avromatic::Model::UnknownAttributeError.new(message, unknown_attributes: unknown_attributes,
                                                             allowed_attributes: allowed_attributes)
         end
@@ -136,8 +148,8 @@ module Avromatic
             begin
               define_avro_attributes(key_avro_schema, generated_methods_module,
                                      allow_optional: config.allow_optional_key_fields)
-            rescue OptionalFieldError => ex
-              raise "Optional field '#{ex.field.name}' not allowed in key schema."
+            rescue OptionalFieldError => e
+              raise "Optional field '#{e.field.name}' not allowed in key schema."
             end
           end
           define_avro_attributes(avro_schema, generated_methods_module)
@@ -155,6 +167,7 @@ module Avromatic
           conflicts =
             (key_avro_field_names & value_avro_field_names).each_with_object([]) do |name, msgs|
               next unless schema_fields_differ?(name)
+
               msgs << "Field '#{name}' has a different type in each schema: "\
                       "value #{value_avro_fields_by_name[name]}, "\
                       "key #{key_avro_fields_by_name[name]}"
@@ -190,7 +203,11 @@ module Avromatic
 
             # Add all generated methods to a module so they can be overridden
             generated_methods_module.send(:define_method, field.name) { _attributes[symbolized_field_name] }
-            generated_methods_module.send(:define_method, "#{field.name}?") { !!_attributes[symbolized_field_name] } if FieldHelper.boolean?(field)
+            if FieldHelper.boolean?(field)
+              generated_methods_module.send(:define_method, "#{field.name}?") do
+                !!_attributes[symbolized_field_name]
+              end
+            end
 
             generated_methods_module.send(:define_method, "#{field.name}=") do |value|
               _attributes[symbolized_field_name] = attribute_definition.coerce(value)

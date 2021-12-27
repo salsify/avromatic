@@ -11,6 +11,7 @@ module Avromatic
         attr_reader :size
 
         def initialize(size)
+          super()
           @size = size
         end
 

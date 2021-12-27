@@ -59,10 +59,12 @@ module Avromatic
             when :enum
               Avromatic::Model::Types::EnumType.new(schema.symbols)
             when :array
-              value_type = create(schema: schema.items, nested_models: nested_models, use_custom_types: use_custom_types)
+              value_type = create(schema: schema.items, nested_models: nested_models,
+use_custom_types: use_custom_types)
               Avromatic::Model::Types::ArrayType.new(value_type: value_type)
             when :map
-              value_type = create(schema: schema.values, nested_models: nested_models, use_custom_types: use_custom_types)
+              value_type = create(schema: schema.values, nested_models: nested_models,
+use_custom_types: use_custom_types)
               Avromatic::Model::Types::MapType.new(
                 key_type: Avromatic::Model::Types::StringType.new,
                 value_type: value_type
@@ -97,8 +99,10 @@ module Avromatic
           if nested_models.registered?(fullname)
             nested_model = nested_models[fullname]
             unless schema_fingerprint(schema) == schema_fingerprint(nested_model.avro_schema)
-              raise "The #{nested_model.name} model is already registered with an incompatible version of the #{schema.fullname} schema"
+              raise "The #{nested_model.name} model is already registered with an incompatible version of the " \
+                    "#{schema.fullname} schema"
             end
+
             nested_model
           else
             Avromatic::Model.model(schema: schema, nested_models: nested_models)

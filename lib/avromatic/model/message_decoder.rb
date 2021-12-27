@@ -89,6 +89,7 @@ module Avromatic
         message_key, message_value = extract_key_and_value(*args)
         model_key = model_key_for_message(message_key, message_value)
         raise UnexpectedKeyError.new(*model_key) unless model_map.key?(model_key)
+
         [model_map[model_key], message_key, message_value]
       end
 
@@ -106,7 +107,7 @@ module Avromatic
       end
 
       def extract_schema_id(data)
-        data[1..4].unpack('N').first
+        data[1..4].unpack1('N')
       end
 
       def validate_magic_byte!(data)
@@ -118,6 +119,7 @@ module Avromatic
         models.each_with_object(Hash.new) do |model, map|
           key = model_key(model)
           raise DuplicateKeyError.new(map[key], model) if map.key?(key) && !model.equal?(map[key])
+
           map[key] = model
         end
       end

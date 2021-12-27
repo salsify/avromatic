@@ -27,6 +27,7 @@ module Avromatic
       def initialize(**options)
         @avro_schema = find_avro_schema(**options)
         raise ArgumentError.new('value_schema(_name) or schema(_name) must be specified') unless avro_schema
+
         @key_avro_schema = find_schema_by_option(:key_schema, **options)
         @nested_models = options[:nested_models]
         @mutable = options.fetch(:mutable, false)
@@ -46,6 +47,7 @@ module Avromatic
           (options[:schema] || options[:schema_name])
           raise ArgumentError.new('Only one of value_schema(_name) and schema(_name) can be specified')
         end
+
         find_schema_by_option(:value_schema, **options) || find_schema_by_option(:schema, **options)
       end
 

@@ -64,9 +64,7 @@ module Avromatic
           end
         end
 
-        if recursively_immutable?
-          @missing_attributes = missing_attributes.freeze
-        end
+        @missing_attributes = missing_attributes.freeze if recursively_immutable?
 
         missing_attributes
       end
