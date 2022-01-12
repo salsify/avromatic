@@ -5,7 +5,7 @@ AllCops:
   TargetRubyVersion: 2.7
   Exclude:
     - 'vendor/**/*'
-    - 'gemfiles/vendor/**/*'
+    - 'gemfiles/**/*'
 
 Style/MultilineBlockChain:
   Enabled: false

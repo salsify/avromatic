@@ -2,6 +2,7 @@
 
 ## 4.0.0
 - Drop support for Ruby 2.6.
+- Drop support for Avro 1.9.
 - Add support for Avro 1.11.
 - Add support for Rails 7.0.
 
