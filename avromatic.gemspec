@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-lib = File.expand_path('../lib', __FILE__)
+lib = File.expand_path('lib', __dir__)
 $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
 require 'avromatic/version'
 
@@ -27,11 +27,13 @@ Gem::Specification.new do |spec|
   spec.executables   = spec.files.grep(%r{^exe/}) { |f| File.basename(f) }
   spec.require_paths = ['lib']
 
-  spec.required_ruby_version = '>= 2.5'
+  spec.metadata['rubygems_mfa_required'] = 'true'
 
-  spec.add_runtime_dependency 'activemodel', '>= 5.2', '< 6.2'
-  spec.add_runtime_dependency 'activesupport', '>= 5.2', '< 6.2'
-  spec.add_runtime_dependency 'avro', '>= 1.9.0', '< 1.11'
+  spec.required_ruby_version = '>= 2.7'
+
+  spec.add_runtime_dependency 'activemodel', '>= 5.2', '< 7.1'
+  spec.add_runtime_dependency 'activesupport', '>= 5.2', '< 7.1'
+  spec.add_runtime_dependency 'avro', '>= 1.10.0', '< 1.12'
   spec.add_runtime_dependency 'avro_schema_registry-client', '>= 0.4.0'
   spec.add_runtime_dependency 'avro_turf'
   spec.add_runtime_dependency 'ice_nine'
@@ -43,7 +45,7 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency 'rake', '~> 13.0'
   spec.add_development_dependency 'rspec', '~> 3.8'
   spec.add_development_dependency 'rspec_junit_formatter'
-  spec.add_development_dependency 'salsify_rubocop', '~> 0.52.1.1'
+  spec.add_development_dependency 'salsify_rubocop', '~> 1.1.0'
   spec.add_development_dependency 'simplecov'
   spec.add_development_dependency 'webmock'
   # For AvroSchemaRegistry::FakeServer

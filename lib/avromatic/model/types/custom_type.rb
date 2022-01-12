@@ -11,6 +11,7 @@ module Avromatic
         attr_reader :custom_type_configuration, :value_classes, :default_type
 
         def initialize(custom_type_configuration:, default_type:)
+          super()
           @custom_type_configuration = custom_type_configuration
           @default_type = default_type
           @deserializer = custom_type_configuration.deserializer || IDENTITY_PROC
@@ -27,7 +28,11 @@ module Avromatic
         end
 
         def name
-          custom_type_configuration.value_class ? custom_type_configuration.value_class.name.to_s.freeze : default_type.name
+          if custom_type_configuration.value_class
+            custom_type_configuration.value_class.name.to_s.freeze
+          else
+            default_type.name
+          end
         end
 
         def coerce(input)

@@ -12,6 +12,7 @@ module Avromatic
         attr_reader :allowed_values
 
         def initialize(allowed_values)
+          super()
           @allowed_values = allowed_values.to_set
         end
 

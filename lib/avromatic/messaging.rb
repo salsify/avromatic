@@ -16,12 +16,10 @@ module Avromatic
       # The first byte is MAGIC!!!
       magic_byte = decoder.read(1)
 
-      if magic_byte != MAGIC_BYTE
-        raise "Expected data to begin with a magic byte, got `#{magic_byte.inspect}`"
-      end
+      raise "Expected data to begin with a magic byte, got `#{magic_byte.inspect}`" if magic_byte != MAGIC_BYTE
 
       # The schema id is a 4-byte big-endian integer.
-      schema_id = decoder.read(4).unpack('N').first
+      schema_id = decoder.read(4).unpack1('N')
 
       writers_schema = @schemas_by_id.fetch(schema_id) do
         schema_json = @registry.fetch(schema_id)

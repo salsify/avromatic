@@ -9,6 +9,7 @@ module Avromatic
         attr_reader :record_class, :value_classes, :input_classes
 
         def initialize(record_class:)
+          super()
           @record_class = record_class
           @value_classes = [record_class].freeze
           @input_classes = [record_class, Hash].freeze

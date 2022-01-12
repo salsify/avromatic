@@ -36,6 +36,7 @@ module Avromatic
           end
 
           raise 'Model has no key schema' unless key_avro_schema
+
           avro_raw_encode(key_attributes_for_avro, :key)
         end
 
@@ -118,7 +119,7 @@ module Avromatic
         # If supplied then the key_schema and value_schema are used as the writer's
         # schema for the corresponding value. The model's schemas are always used
         # as the reader's schemas.
-        def avro_raw_decode(key: nil, value:, key_schema: nil, value_schema: nil)
+        def avro_raw_decode(value:, key: nil, key_schema: nil, value_schema: nil)
           key_attributes = key && decode_avro_datum(key, key_schema, :key)
           value_attributes = decode_avro_datum(value, value_schema, :value)
           value_attributes.merge!(key_attributes) if key_attributes
@@ -150,10 +151,10 @@ module Avromatic
 
         def datum_writer
           @datum_writer ||= begin
-                              hash = { value: datum_writer_class.new(value_avro_schema) }
-                              hash[:key] = datum_writer_class.new(key_avro_schema) if key_avro_schema
-                              hash
-                            end
+            hash = { value: datum_writer_class.new(value_avro_schema) }
+            hash[:key] = datum_writer_class.new(key_avro_schema) if key_avro_schema
+            hash
+          end
         end
 
         def datum_reader

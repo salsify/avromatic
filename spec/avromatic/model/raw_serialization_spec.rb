@@ -47,7 +47,7 @@ describe Avromatic::Model::RawSerialization do
       let(:values) { { sub1: wrapped1, sub2: wrapped1, sub3: wrapped2 } }
 
       it "reuses cacheable attributes" do
-        expected = values.deep_stringify_keys.each_with_object({}) { |(k, v), hash| hash[k] = v.value_attributes_for_avro }
+        expected = values.deep_stringify_keys.transform_values(&:value_attributes_for_avro)
         actual = instance.value_attributes_for_avro
         expect(actual).to eq(expected)
         expect(actual['sub1']).to equal(wrapped1.value_attributes_for_avro)

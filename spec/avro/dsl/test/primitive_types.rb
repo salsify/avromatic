@@ -12,5 +12,5 @@ record :primitive_types do
   required :d, :double
   required :n, :null
   required :fx, :fixed, size: 7
-  required :e, :enum, symbols: %i(A B)
+  required :e, :enum, symbols: [:A, :B]
 end

@@ -34,6 +34,7 @@ module Avromatic
 
   def self.build_schema_registry
     raise 'Avromatic must be configured with a registry_url' unless registry_url
+
     if use_schema_fingerprint_lookup
       AvroSchemaRegistry::CachedClient.new(
         AvroSchemaRegistry::Client.new(registry_url, logger: logger)
@@ -51,6 +52,7 @@ module Avromatic
 
   def self.build_messaging
     raise 'Avromatic must be configured with a schema_store' unless schema_store
+
     Avromatic::Messaging.new(
       registry: schema_registry || build_schema_registry,
       schema_store: schema_store,

@@ -24,8 +24,10 @@ module Avromatic
 
     def register(model)
       raise 'models with a key schema are not supported' if model.key_avro_schema
+
       name = model_fullname(model)
       raise "'#{name}' has already been registered" if registered?(name)
+
       @hash[name] = model
     end
 

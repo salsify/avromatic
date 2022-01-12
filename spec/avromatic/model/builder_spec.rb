@@ -91,7 +91,8 @@ describe Avromatic::Model::Builder do
       it "raises an error during model definition" do
         expect do
           described_class.model(schema: outer_schema)
-        end.to raise_error('The InnerRecord model is already registered with an incompatible version of the inner_record schema')
+        end.to raise_error('The InnerRecord model is already registered with an incompatible version of the ' \
+                           'inner_record schema')
       end
     end
 
@@ -317,7 +318,8 @@ describe Avromatic::Model::Builder do
           expect(instance.ts_msec).to eq(::Time.at(1540332724, 123_000))
         end
 
-        it "coerces a Time to a Time with millisecond precision even if the number of microseconds is divisible by 1000" do
+        it 'coerces a Time to a Time with millisecond precision ' \
+           'even if the number of microseconds is divisible by 1000' do
           time = Time.at(1540332724, 123_000.789)
           instance = test_class.new(ts_msec: time)
           expect(instance.ts_msec).to eq(::Time.at(1540332724, 123_000))
@@ -378,7 +380,7 @@ describe Avromatic::Model::Builder do
         end
 
         it "accepts a DateTime" do
-          time = DateTime.now # rubocop:disable Style/DateTime
+          time = DateTime.now
           instance = test_class.new(date: time)
           expect(instance.date).to eq(::Date.new(time.year, time.month, time.day))
         end
@@ -440,25 +442,36 @@ describe Avromatic::Model::Builder do
   describe "#initialize" do
     let(:schema_name) { 'test.primitive_types' }
 
-    it "raises an Avromatic::Model::UnknownAttributeError when passed an unknown attribute when allow_unknown_attributes is false" do
-      input = { unknown: true }
-      expect do
-        test_class.new(input)
-      end.to raise_error(Avromatic::Model::UnknownAttributeError,
-                         'Unexpected arguments for PrimitiveType#initialize: unknown. ' \
-                          "Only the following arguments are allowed: #{test_class.attribute_definitions.keys.map(&:to_s).sort.join(', ')}. " \
-                          "Provided arguments: #{input.inspect}")
+    context "when allow_unknown_attributes is false (default)" do
+      it "raises an Avromatic::Model::UnknownAttributeError when passed an unknown attribute" do
+        input = { unknown: true }
+        expect do
+          test_class.new(input)
+        end.to raise_error(
+          Avromatic::Model::UnknownAttributeError,
+          'Unexpected arguments for PrimitiveType#initialize: unknown. ' \
+          'Only the following arguments are allowed: ' \
+          "#{test_class.attribute_definitions.keys.map(&:to_s).sort.join(', ')}. " \
+          "Provided arguments: #{input.inspect}"
+        )
+      end
     end
 
-    it "does not raise an Avromatic::Model::UnknownAttributeError when passed an unknown attribute when allow_unknown_attributes is true" do
-      allow(Avromatic).to receive(:allow_unknown_attributes).and_return(true)
-      expect { test_class.new(unknown: true) }.not_to raise_error
+    context "when allow_unknown_attributes is true" do
+      before do
+        allow(Avromatic).to receive(:allow_unknown_attributes).and_return(true)
+      end
+
+      it "does not raise an Avromatic::Model::UnknownAttributeError when passed an unknown attribute" do
+        expect { test_class.new(unknown: true) }.not_to raise_error
+      end
     end
 
     context "when the model has a super class" do
       let(:parent_class) do
         Class.new do
           attr_reader :parent_initialized
+
           def initialize
             @parent_initialized = true
           end
@@ -745,7 +758,8 @@ describe Avromatic::Model::Builder do
           test_class.new(sub: sub_input)
         end.to raise_error(Avromatic::Model::CoercionError,
                            'Value for NestedRecord#sub could not be coerced to a NestedRecordSubRecord because the ' \
-                             'following unexpected attributes were provided: b. Only the following attributes are allowed: i, str. ' \
+                             'following unexpected attributes were provided: b. ' \
+                             'Only the following attributes are allowed: i, str. ' \
                              "Provided argument: #{sub_input.inspect}")
       end
     end

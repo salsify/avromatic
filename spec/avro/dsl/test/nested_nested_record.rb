@@ -20,7 +20,7 @@ record :nested_nested_record do
   required :unknown, :int, logical_type: 'foobar'
 
   # complex types
-  required :e, :enum, symbols: %i{A B}
+  required :e, :enum, symbols: [:A, :B]
   required :a, :array, items: :int
   required :m, :map, values: :int
   required :u, :union, types: [:string, :int]
@@ -44,7 +44,7 @@ record :nested_nested_record do
     required :unknown, :int, logical_type: 'foobar'
 
     # complex types
-    required :e, :enum, symbols: %i{A B}
+    required :e, :enum, symbols: [:A, :B]
     required :a, :array, items: :int
     required :m, :map, values: :int
     required :u, :union, types: [:string, :int]
@@ -68,7 +68,7 @@ record :nested_nested_record do
       required :unknown, :int, logical_type: 'foobar'
 
       # complex types
-      required :e, :enum, symbols: %i{A B}
+      required :e, :enum, symbols: [:A, :B]
       required :a, :array, items: :int
       required :m, :map, values: :int
       required :u, :union, types: [:string, :int]
