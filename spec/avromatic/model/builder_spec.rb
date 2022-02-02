@@ -148,10 +148,9 @@ describe Avromatic::Model::Builder do
           Avromatic::Model.model(schema_name: schema_name,
                                  schema_subject: schema_subject)
         end
+        let(:instance) { test_class.new }
 
         it_behaves_like "a generated model"
-
-        let(:instance) { test_class.new }
 
         it "returns the specified schema_subject" do
           expect(instance.avro_schema_subject).to eq(schema_subject)

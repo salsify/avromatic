@@ -22,7 +22,8 @@ describe Avromatic::Model::MessagingSerialization do
       message_value = instance.avro_message_value
       decoded = test_class.avro_message_decode(message_value)
       expect(decoded).to eq(instance)
-      expect(Avromatic.schema_registry).to have_received(:register).with('test.encode_value', instance_of(Avro::Schema::RecordSchema))
+      expect(Avromatic.schema_registry).to have_received(:register)
+                                             .with('test.encode_value', instance_of(Avro::Schema::RecordSchema))
     end
 
     context "with a specified value subject" do
@@ -36,7 +37,8 @@ describe Avromatic::Model::MessagingSerialization do
         message_value = instance.avro_message_value
         decoded = test_class.avro_message_decode(message_value)
         expect(decoded).to eq(instance)
-        expect(Avromatic.schema_registry).to have_received(:register).with('test.encode_value-value', instance_of(Avro::Schema::RecordSchema))
+        expect(Avromatic.schema_registry).to have_received(:register)
+                                               .with('test.encode_value-value', instance_of(Avro::Schema::RecordSchema))
       end
     end
 
@@ -176,7 +178,8 @@ describe Avromatic::Model::MessagingSerialization do
       message_key = instance.avro_message_key
       decoded = test_class.avro_message_decode(message_key, message_value)
       expect(decoded).to eq(instance)
-      expect(Avromatic.schema_registry).to have_received(:register).with('test.encode_key', instance_of(Avro::Schema::RecordSchema))
+      expect(Avromatic.schema_registry).to have_received(:register)
+                                             .with('test.encode_key', instance_of(Avro::Schema::RecordSchema))
     end
 
     context "with a specified key subject" do
@@ -191,7 +194,8 @@ describe Avromatic::Model::MessagingSerialization do
         message_key = instance.avro_message_key
         decoded = test_class.avro_message_decode(message_key, message_value)
         expect(decoded).to eq(instance)
-        expect(Avromatic.schema_registry).to have_received(:register).with('test.encode_key-value', instance_of(Avro::Schema::RecordSchema))
+        expect(Avromatic.schema_registry).to have_received(:register)
+                                               .with('test.encode_key-value', instance_of(Avro::Schema::RecordSchema))
       end
     end
 
