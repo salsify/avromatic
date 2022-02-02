@@ -124,7 +124,7 @@ The Avro schema can be specified by name and loaded using the schema store:
 
 ```ruby
 class MyModel
-  include Avromatic::Model.build(schema_name :my_model)
+  include Avromatic::Model.build(schema_name: :my_model)
 end
 
 # Construct instances by passing in a hash of attributes
@@ -156,12 +156,20 @@ class MyModel
 end
 ```
 
+A specific subject name can be associated with the schema:
+```ruby
+class MyModel
+  include Avromatic::Model.build(schema_name: 'my_model',
+                                 schema_subject: 'my_model-value')
+end
+```
+
 Models are generated as immutable value
 objects by default, but can optionally be defined as mutable:
 
 ```ruby
 class MyModel
-  include Avromatic::Model.build(schema_name :my_model, mutable: true)
+  include Avromatic::Model.build(schema_name: :my_model, mutable: true)
 end
 ```
 
@@ -192,6 +200,16 @@ class MyTopic
   include Avromatic::Model.build(value_schema_name: :topic_value,
                                  key_schema_name: :topic_key,
                                  allow_optional_key_fields: true)
+end
+```
+
+A specific subject name can be associated with both the value and key schemas:
+```ruby
+class MyTopic
+  include Avromatic::Model.build(value_schema_name: :topic_value,
+                                 value_schema_subject: 'topic_value-value',
+                                 key_schema_name: :topic_key,
+                                 key_schema_subject: 'topic_key-value')
 end
 ```
 

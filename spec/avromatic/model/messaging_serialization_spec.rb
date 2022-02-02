@@ -8,6 +8,10 @@ describe Avromatic::Model::MessagingSerialization do
   let(:avro_message_value) { instance.avro_message_value }
   let(:avro_message_key) { instance.avro_message_key }
 
+  before do
+    allow(Avromatic.schema_registry).to receive(:register).and_call_original
+  end
+
   describe "#avro_message_value" do
     let(:test_class) do
       Avromatic::Model.model(value_schema_name: 'test.encode_value')
@@ -18,6 +22,22 @@ describe Avromatic::Model::MessagingSerialization do
       message_value = instance.avro_message_value
       decoded = test_class.avro_message_decode(message_value)
       expect(decoded).to eq(instance)
+      expect(Avromatic.schema_registry).to have_received(:register).with('test.encode_value', instance_of(Avro::Schema::RecordSchema))
+    end
+
+    context "with a specified value subject" do
+      let(:test_class) do
+        Avromatic::Model.model(value_schema_name: 'test.encode_value',
+                               value_schema_subject: 'test.encode_value-value')
+      end
+      let(:values) { { str1: 'a', str2: 'b' } }
+
+      it "encodes the value for the model" do
+        message_value = instance.avro_message_value
+        decoded = test_class.avro_message_decode(message_value)
+        expect(decoded).to eq(instance)
+        expect(Avromatic.schema_registry).to have_received(:register).with('test.encode_value-value', instance_of(Avro::Schema::RecordSchema))
+      end
     end
 
     context "with a nested record" do
@@ -156,6 +176,23 @@ describe Avromatic::Model::MessagingSerialization do
       message_key = instance.avro_message_key
       decoded = test_class.avro_message_decode(message_key, message_value)
       expect(decoded).to eq(instance)
+      expect(Avromatic.schema_registry).to have_received(:register).with('test.encode_key', instance_of(Avro::Schema::RecordSchema))
+    end
+
+    context "with a specified key subject" do
+      let(:test_class) do
+        Avromatic::Model.model(value_schema_name: 'test.encode_value',
+                               key_schema_name: 'test.encode_key',
+                               key_schema_subject: 'test.encode_key-value')
+      end
+
+      it "encodes the key for the model" do
+        message_value = instance.avro_message_value
+        message_key = instance.avro_message_key
+        decoded = test_class.avro_message_decode(message_key, message_value)
+        expect(decoded).to eq(instance)
+        expect(Avromatic.schema_registry).to have_received(:register).with('test.encode_key-value', instance_of(Avro::Schema::RecordSchema))
+      end
     end
 
     context "when a model does not have a key schema" do
@@ -406,6 +443,22 @@ describe Avromatic::Model::MessagingSerialization do
       end
 
       it_behaves_like "value schema registration"
+    end
+
+    context "a model with a specified subject" do
+      let(:test_class) do
+        Avromatic::Model.model(value_schema_name: 'test.encode_value',
+                               value_schema_subject: 'test.encode_value-value')
+      end
+
+      it "registers the value schema with the specified subject" do
+        expect(test_class.register_schemas!).to be_nil
+        registered = registry.subject_version('test.encode_value-value')
+        aggregate_failures do
+          expect(registered['version']).to eq(1)
+          expect(registered['schema']).to eq(test_class.value_avro_schema.to_s)
+        end
+      end
     end
 
     context "a model with a key and value" do

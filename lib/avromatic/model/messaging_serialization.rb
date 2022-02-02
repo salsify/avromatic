@@ -16,7 +16,8 @@ module Avromatic
         def avro_message_value
           avro_messaging.encode(
             value_attributes_for_avro,
-            schema_name: value_avro_schema.fullname
+            schema_name: value_avro_schema.fullname,
+            subject: value_avro_schema_subject
           )
         end
 
@@ -25,7 +26,8 @@ module Avromatic
 
           avro_messaging.encode(
             key_attributes_for_avro,
-            schema_name: key_avro_schema.fullname
+            schema_name: key_avro_schema.fullname,
+            subject: key_avro_schema_subject
           )
         end
       end
@@ -56,15 +58,15 @@ module Avromatic
 
       module Registration
         def register_schemas!
-          register_schema(key_avro_schema) if key_avro_schema
-          register_schema(value_avro_schema)
+          register_schema(key_avro_schema, subject: key_avro_schema_subject) if key_avro_schema
+          register_schema(value_avro_schema, subject: value_avro_schema_subject)
           nil
         end
 
         private
 
-        def register_schema(schema)
-          avro_messaging.registry.register(schema.fullname, schema)
+        def register_schema(schema, subject: nil)
+          avro_messaging.registry.register(subject || schema.fullname, schema)
         end
       end
 

@@ -1,5 +1,8 @@
 # avromatic changelog
 
+## 4.1.0
+- Add support for specifying a subject for the avro schema when building an Avromatic model
+
 ## 4.0.0
 - Drop support for Ruby 2.6.
 - Drop support for Avro 1.9.
