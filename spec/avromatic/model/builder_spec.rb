@@ -143,7 +143,7 @@ describe Avromatic::Model::Builder do
       it_behaves_like "a generated model"
 
       context "with a specified schema subject" do
-        let(:schema_subject) { 'test.primitive_types-value' }
+        let(:schema_subject) { 'test.primitive_types-subject' }
         let(:test_class) do
           Avromatic::Model.model(schema_name: schema_name,
                                  schema_subject: schema_subject)
@@ -283,8 +283,8 @@ describe Avromatic::Model::Builder do
       end
 
       context "with a specified value and key subjects" do
-        let(:value_schema_subject) { 'test.value-value' }
-        let(:key_schema_subject) { 'test.key-value' }
+        let(:value_schema_subject) { 'test.value-subject' }
+        let(:key_schema_subject) { 'test.key-subject' }
         let(:test_class) do
           Avromatic::Model.model(value_schema_name: schema_name,
                                  value_schema_subject: value_schema_subject,

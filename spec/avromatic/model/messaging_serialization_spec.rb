@@ -29,7 +29,7 @@ describe Avromatic::Model::MessagingSerialization do
     context "with a specified value subject" do
       let(:test_class) do
         Avromatic::Model.model(value_schema_name: 'test.encode_value',
-                               value_schema_subject: 'test.encode_value-value')
+                               value_schema_subject: 'test.encode_value-subject')
       end
       let(:values) { { str1: 'a', str2: 'b' } }
 
@@ -38,7 +38,7 @@ describe Avromatic::Model::MessagingSerialization do
         decoded = test_class.avro_message_decode(message_value)
         expect(decoded).to eq(instance)
         expect(Avromatic.schema_registry).to have_received(:register)
-                                               .with('test.encode_value-value', instance_of(Avro::Schema::RecordSchema))
+                                               .with('test.encode_value-subject', instance_of(Avro::Schema::RecordSchema))
       end
     end
 
@@ -186,7 +186,7 @@ describe Avromatic::Model::MessagingSerialization do
       let(:test_class) do
         Avromatic::Model.model(value_schema_name: 'test.encode_value',
                                key_schema_name: 'test.encode_key',
-                               key_schema_subject: 'test.encode_key-value')
+                               key_schema_subject: 'test.encode_key-subject')
       end
 
       it "encodes the key for the model" do
@@ -195,7 +195,7 @@ describe Avromatic::Model::MessagingSerialization do
         decoded = test_class.avro_message_decode(message_key, message_value)
         expect(decoded).to eq(instance)
         expect(Avromatic.schema_registry).to have_received(:register)
-                                               .with('test.encode_key-value', instance_of(Avro::Schema::RecordSchema))
+                                               .with('test.encode_key-subject', instance_of(Avro::Schema::RecordSchema))
       end
     end
 
@@ -452,12 +452,12 @@ describe Avromatic::Model::MessagingSerialization do
     context "a model with a specified subject" do
       let(:test_class) do
         Avromatic::Model.model(value_schema_name: 'test.encode_value',
-                               value_schema_subject: 'test.encode_value-value')
+                               value_schema_subject: 'test.encode_value-subject')
       end
 
       it "registers the value schema with the specified subject" do
         expect(test_class.register_schemas!).to be_nil
-        registered = registry.subject_version('test.encode_value-value')
+        registered = registry.subject_version('test.encode_value-subject')
         aggregate_failures do
           expect(registered['version']).to eq(1)
           expect(registered['schema']).to eq(test_class.value_avro_schema.to_s)
