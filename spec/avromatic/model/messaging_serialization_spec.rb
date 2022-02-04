@@ -38,7 +38,8 @@ describe Avromatic::Model::MessagingSerialization do
         decoded = test_class.avro_message_decode(message_value)
         expect(decoded).to eq(instance)
         expect(Avromatic.schema_registry).to have_received(:register)
-                                               .with('test.encode_value-subject', instance_of(Avro::Schema::RecordSchema))
+                                               .with('test.encode_value-subject',
+                                                     instance_of(Avro::Schema::RecordSchema))
       end
     end
 
