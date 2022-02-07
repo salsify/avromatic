@@ -24,7 +24,8 @@ module Avromatic
       end
 
       module ClassMethods
-        delegate :avro_schema, :value_avro_schema, :key_avro_schema, :mutable?, :immutable?, to: :config
+        delegate :avro_schema, :value_avro_schema, :key_avro_schema, :mutable?, :immutable?,
+                 :avro_schema_subject, :value_avro_schema_subject, :key_avro_schema_subject, to: :config
 
         def value_avro_field_names
           @value_avro_field_names ||= value_avro_schema.fields.map(&:name).map(&:to_sym).freeze
@@ -68,6 +69,7 @@ module Avromatic
       end
 
       delegate :avro_schema, :value_avro_schema, :key_avro_schema,
+               :avro_schema_subject, :value_avro_schema_subject, :key_avro_schema_subject,
                :value_avro_field_names, :key_avro_field_names,
                :value_avro_field_references, :key_avro_field_references,
                :mutable?, :immutable?,

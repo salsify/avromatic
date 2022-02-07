@@ -141,6 +141,21 @@ describe Avromatic::Model::Builder do
       end
 
       it_behaves_like "a generated model"
+
+      context "with a specified schema subject" do
+        let(:schema_subject) { 'test.primitive_types-subject' }
+        let(:test_class) do
+          Avromatic::Model.model(schema_name: schema_name,
+                                 schema_subject: schema_subject)
+        end
+        let(:instance) { test_class.new }
+
+        it_behaves_like "a generated model"
+
+        it "returns the specified schema_subject" do
+          expect(instance.avro_schema_subject).to eq(schema_subject)
+        end
+      end
     end
 
     context "named fields" do
@@ -264,6 +279,32 @@ describe Avromatic::Model::Builder do
         it "defines a model with attributes for the key and value" do
           expect(attribute_names)
             .to match_array(schema.fields.map(&:name) | key_schema.fields.map(&:name))
+        end
+      end
+
+      context "with a specified value and key subjects" do
+        let(:value_schema_subject) { 'test.value-subject' }
+        let(:key_schema_subject) { 'test.key-subject' }
+        let(:test_class) do
+          Avromatic::Model.model(value_schema_name: schema_name,
+                                 value_schema_subject: value_schema_subject,
+                                 key_schema_name: key_schema_name,
+                                 key_schema_subject: key_schema_subject)
+        end
+
+        let(:instance) { test_class.new }
+
+        it "defines a model with attributes for the key and value" do
+          expect(attribute_names)
+            .to match_array(schema.fields.map(&:name) | key_schema.fields.map(&:name))
+        end
+
+        it "returns the specified value_schema_subject" do
+          expect(instance.value_avro_schema_subject).to eq(value_schema_subject)
+        end
+
+        it "returns the specified key_schema_subject" do
+          expect(instance.key_avro_schema_subject).to eq(key_schema_subject)
         end
       end
 
