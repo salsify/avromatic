@@ -60,11 +60,11 @@ module Avromatic
               Avromatic::Model::Types::EnumType.new(schema.symbols)
             when :array
               value_type = create(schema: schema.items, nested_models: nested_models,
-use_custom_types: use_custom_types)
+                                  use_custom_types: use_custom_types)
               Avromatic::Model::Types::ArrayType.new(value_type: value_type)
             when :map
               value_type = create(schema: schema.values, nested_models: nested_models,
-use_custom_types: use_custom_types)
+                                  use_custom_types: use_custom_types)
               Avromatic::Model::Types::MapType.new(
                 key_type: Avromatic::Model::Types::StringType.new,
                 value_type: value_type
