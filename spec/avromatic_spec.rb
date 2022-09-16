@@ -55,15 +55,6 @@ describe Avromatic do
       described_class.nested_models.clear
     end
 
-    context "at the end of configure" do
-      it "registers models" do
-        described_class.configure do |config|
-          config.eager_load_models = NestedRecord
-        end
-        expect(described_class.nested_models.registered?('test.nested_record')).to be(true)
-      end
-    end
-
     describe "#prepare!" do
       before do
         stub_const('ValueModel', Avromatic::Model.model(schema_name: 'test.value'))
@@ -78,18 +69,6 @@ describe Avromatic do
       it "clears the schema store" do
         described_class.prepare!
         expect(Avromatic.schema_store).to have_received(:clear)
-      end
-
-      context "when skip_clear is true" do
-        it "does not clear the registry" do
-          described_class.prepare!(skip_clear: true)
-          expect(described_class.nested_models.registered?('test.value')).to be(true)
-        end
-
-        it "does not clear the schema store" do
-          described_class.prepare!(skip_clear: true)
-          expect(Avromatic.schema_store).not_to have_received(:clear)
-        end
       end
 
       it "registers models" do
