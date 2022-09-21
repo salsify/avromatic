@@ -66,7 +66,6 @@ module Avromatic
   # This method is called as a Rails to_prepare hook after the application
   # first initializes during boot-up and prior to each code reloading.
   def self.prepare!
-    puts 'Avromatic.prepare!'
     nested_models.clear
     if schema_store
       if schema_store.respond_to?(:clear_schemas)
@@ -77,7 +76,6 @@ module Avromatic
     end
 
     eager_load_models!
-    puts 'Finished Avromatic.prepare'
   end
 
   def self.eager_load_models=(models)
@@ -85,10 +83,7 @@ module Avromatic
   end
 
   def self.eager_load_models!
-    @eager_load_model_names&.each do |model_name|
-      puts "Loading #{model_name}"
-      model_name.constantize.register!
-    end
+    @eager_load_model_names&.each { |model_name| model_name.constantize.register! }
   end
   private_class_method :eager_load_models!
 end
