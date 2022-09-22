@@ -286,7 +286,7 @@ correct order:
 Avromatic.configure do |config|
   config.eager_load_models = [
     # reference any extended models that should be defined first
-    MyNestedModel
+    'MyNestedModel'
   ]
 end
 ```
