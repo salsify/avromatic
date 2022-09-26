@@ -29,7 +29,6 @@ module Avromatic
 
   def self.configure
     yield self
-    eager_load_models!
   end
 
   def self.build_schema_registry
@@ -66,18 +65,16 @@ module Avromatic
 
   # This method is called as a Rails to_prepare hook after the application
   # first initializes during boot-up and prior to each code reloading.
-  # For the first call during boot-up we do not want to clear the nested_models.
-  def self.prepare!(skip_clear: false)
-    unless skip_clear
-      nested_models.clear
-      if schema_store
-        if schema_store.respond_to?(:clear_schemas)
-          schema_store.clear_schemas
-        elsif schema_store.respond_to?(:clear)
-          schema_store.clear
-        end
+  def self.prepare!
+    nested_models.clear
+    if schema_store
+      if schema_store.respond_to?(:clear_schemas)
+        schema_store.clear_schemas
+      elsif schema_store.respond_to?(:clear)
+        schema_store.clear
       end
     end
+
     eager_load_models!
   end
 

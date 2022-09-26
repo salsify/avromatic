@@ -1,5 +1,8 @@
 # avromatic changelog
 
+## 4.1.1
+- Fix eager loading of nested models when using the Zeitwerk classloader with Rails.
+
 ## 4.1.0
 - Add support for specifying a subject for the avro schema when building an Avromatic model
 
