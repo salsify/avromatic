@@ -2,6 +2,7 @@
 
 ## 4.2.0
 - Add an `Avromatic.eager_load_models` attribute reader method.
+- Remove unnecessary files from the gem distribution.
 
 ## 4.1.1
 - Fix eager loading of nested models when using the Zeitwerk classloader with Rails.
