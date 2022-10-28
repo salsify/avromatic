@@ -1,6 +1,7 @@
 # avromatic changelog
 
 ## 4.2.0
+- Add an `Avromatic.eager_load_models` attribute reader method.
 - Remove unnecessary files from the gem distribution.
 
 ## 4.1.1

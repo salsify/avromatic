@@ -73,12 +73,14 @@ describe Avromatic do
 
       it "registers models" do
         described_class.eager_load_models = ['NestedRecord']
+        expect(described_class.eager_load_models).to eq(['NestedRecord'])
         described_class.prepare!
         expect(described_class.nested_models.registered?('test.value')).to be(false)
       end
 
       it "registers nested models" do
         described_class.eager_load_models = ['NestedNestedRecord']
+        expect(described_class.eager_load_models).to eq(['NestedNestedRecord'])
         described_class.prepare!
         expect(described_class.nested_models.registered?('test.__nested_nested_record_sub_record')).to be(true)
         expect(described_class.nested_models.registered?('test.__nested_nested_record_sub_subsub_record')).to be(true)

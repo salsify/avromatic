@@ -79,7 +79,11 @@ module Avromatic
   end
 
   def self.eager_load_models=(models)
-    @eager_load_model_names = Array(models).map { |model| model.is_a?(Class) ? model.name : model }
+    @eager_load_model_names = Array(models).map { |model| model.is_a?(Class) ? model.name : model }.freeze
+  end
+
+  def self.eager_load_models
+    @eager_load_model_names
   end
 
   def self.eager_load_models!
