@@ -2,14 +2,14 @@ version: 2.1
 jobs:
   lint:
     docker:
-      - image: salsify/ruby_ci:2.7.6
+      - image: salsify/ruby_ci:2.7.7
     working_directory: ~/avromatic
     steps:
       - checkout
       - restore_cache:
           keys:
-            - v2-gems-ruby-2.7.6-{{ checksum "avromatic.gemspec" }}-{{ checksum "Gemfile" }}
-            - v2-gems-ruby-2.7.6-
+            - v2-gems-ruby-2.7.7-{{ checksum "avromatic.gemspec" }}-{{ checksum "Gemfile" }}
+            - v2-gems-ruby-2.7.7-
       - run:
           name: Install Gems
           command: |
@@ -18,7 +18,7 @@ jobs:
               bundle clean
             fi
       - save_cache:
-          key: v2-gems-ruby-2.7.6-{{ checksum "avromatic.gemspec" }}-{{ checksum "Gemfile" }}
+          key: v2-gems-ruby-2.7.7-{{ checksum "avromatic.gemspec" }}-{{ checksum "Gemfile" }}
           paths:
             - "vendor/bundle"
             - "gemfiles/vendor/bundle"
@@ -75,7 +75,7 @@ workflows:
               - "gemfiles/avro1_10_rails7_0.gemfile"
               - "gemfiles/avro1_11_rails7_0.gemfile"
               ruby-version:
-              - "2.7.6"
+              - "2.7.7"
       - test:
           matrix:
             parameters:
@@ -84,5 +84,6 @@ workflows:
                 - "gemfiles/avro1_10_rails7_0.gemfile"
                 - "gemfiles/avro1_11_rails7_0.gemfile"
               ruby-version:
-                - "3.0.4"
-                - "3.1.2"
+                - "3.0.5"
+                - "3.1.3"
+                - "3.2.0"
