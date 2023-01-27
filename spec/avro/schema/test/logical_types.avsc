@@ -25,6 +25,15 @@
       }
     },
     {
+      "name": "decimal",
+      "type": {
+        "type": "bytes",
+        "logicalType": "decimal",
+        "precision": 4,
+        "scale": 2
+      }
+    },
+    {
       "name": "unknown",
       "type": {
         "type": "int",

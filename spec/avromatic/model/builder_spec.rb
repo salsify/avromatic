@@ -430,6 +430,37 @@ describe Avromatic::Model::Builder do
           expect { test_class.new(date: 'today') }.to raise_error(Avromatic::Model::CoercionError)
         end
       end
+
+      context "decimal" do
+        it "accepts a BigDecimal" do
+          decimal = BigDecimal('3.4562')
+          instance = test_class.new(decimal: decimal)
+          expect(instance.decimal).to eq(decimal)
+        end
+
+        it "accepts a String" do
+          string = '3.4562'
+          instance = test_class.new(decimal: string)
+          expect(instance.decimal).to eq(string.to_d)
+        end
+
+        it "accepts an Integer" do
+          instance = test_class.new(decimal: 42)
+          expect(instance.decimal).to eq(42.to_d)
+        end
+
+        it "accepts a Rational" do
+          rational = 2/3r
+          instance = test_class.new(decimal: rational)
+          expect(instance.decimal).to eq(rational.to_d(3))
+        end
+
+        it "accepts a Float" do
+          float = 5.23
+          instance = test_class.new(decimal: float)
+          expect(instance.decimal).to eq(float.to_d)
+        end
+      end
     end
 
     context "recursive models" do
@@ -1139,6 +1170,22 @@ describe Avromatic::Model::Builder do
           now = Date.today
           instance = test_class.new(u: now)
           expect(instance.u).to eq(now)
+        end
+      end
+
+      context "union with a decimal" do
+        let(:schema) do
+          Avro::Builder.build_schema do
+            record :with_decimal_union do
+              required :u, :union, types: [:string, bytes(logical_type: 'decimal', precision: 4)]
+            end
+          end
+        end
+
+        it "coerces numeric to a union member" do
+          numeric = 42.42
+          instance = test_class.new(u: numeric)
+          expect(instance.u).to eq(numeric.to_d)
         end
       end
     end
