@@ -25,6 +25,7 @@ shared_examples_for "logical type encoding and decoding" do
             date: Date.today,
             ts_msec: now,
             ts_usec: now,
+            decimal: BigDecimal('5.2'),
             unknown: 42
           }
         end
@@ -43,6 +44,7 @@ shared_examples_for "logical type encoding and decoding" do
             date: (Date.today - epoch_start).to_i,
             ts_msec: now.to_i + now.usec / 1000 * 1000,
             ts_usec: now.to_i * 1_000_000 + now.usec,
+            decimal: BigDecimal('1.5432'),
             unknown: 42
           }
         end

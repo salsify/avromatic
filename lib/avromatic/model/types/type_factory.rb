@@ -4,6 +4,7 @@ require 'avromatic/model/types/array_type'
 require 'avromatic/model/types/boolean_type'
 require 'avromatic/model/types/custom_type'
 require 'avromatic/model/types/date_type'
+require 'avromatic/model/types/decimal_type'
 require 'avromatic/model/types/enum_type'
 require 'avromatic/model/types/fixed_type'
 require 'avromatic/model/types/float_type'
@@ -26,6 +27,7 @@ module Avromatic
           'date' => Avromatic::Model::Types::DateType.new,
           'timestamp-micros' => Avromatic::Model::Types::TimestampMicrosType.new,
           'timestamp-millis' => Avromatic::Model::Types::TimestampMillisType.new,
+          'decimal' => Avromatic::Model::Types::DecimalType.new,
           'string' => Avromatic::Model::Types::StringType.new,
           'bytes' => Avromatic::Model::Types::StringType.new,
           'boolean' => Avromatic::Model::Types::BooleanType.new,
