@@ -70,9 +70,10 @@ and the [Messaging API](#messaging-api).
 * **schema_registry**: An `AvroSchemaRegistry::Client` or
   `AvroTurf::ConfluentSchemaRegistry` object used to store Avro schemas
   so that they can be referenced by id. Either `schema_registry` or
-  `registry_url` must be configured.
-* **registry_url**: URL for the schema registry. Either `schema_registry` or 
-  `registry_url` must be configured.  The `build_schema_registry!` method may 
+  `registry_url` must be configured. If using `build_schema_registry!`, only
+  `registry_url` is required. See example below.
+* **registry_url**: URL for the schema registry. This must be configured when using
+  `build_schema_registry!`. The `build_schema_registry!` method may 
   be used to create a caching schema registry client instance based on other 
   configuration values.
 * **use_schema_fingerprint_lookup**: Avromatic supports a Schema Registry
@@ -93,10 +94,13 @@ Example using a schema registry:
 Avromatic.configure do |config|
   config.schema_store = AvroTurf::SchemaStore.new(path: 'avro/schemas')
   config.registry_url = Rails.configuration.x.avro_schema_registry_url
-  config.build_schema_registry!
+
   config.build_messaging!
 end
 ```
+
+NOTE: `build_messaging!` ultimately calls `build_schema_registry!` so you don't have
+to call both.
 
 #### Decoding
 
