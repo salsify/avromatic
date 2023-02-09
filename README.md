@@ -99,6 +99,9 @@ Avromatic.configure do |config|
 end
 ```
 
+NOTE: `build_message!` ultimately calls `build_schema_registry!` so you don't have
+to call both.
+
 #### Decoding
 
 * **use_custom_datum_reader**: `Avromatic` includes a modified subclass of
