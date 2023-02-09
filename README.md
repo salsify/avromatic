@@ -99,7 +99,7 @@ Avromatic.configure do |config|
 end
 ```
 
-NOTE: `build_message!` ultimately calls `build_schema_registry!` so you don't have
+NOTE: `build_messaging!` ultimately calls `build_schema_registry!` so you don't have
 to call both.
 
 #### Decoding
