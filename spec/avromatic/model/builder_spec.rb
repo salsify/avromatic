@@ -348,7 +348,9 @@ describe Avromatic::Model::Builder do
     end
 
     context "logical types" do
-      let(:schema_name) { 'test.logical_types' }
+      let(:schema_name) do
+        Avromatic.allow_decimal_logical_type ? 'test.logical_types_with_decimal' : 'test.logical_types'
+      end
 
       it_behaves_like "a generated model"
 
@@ -431,7 +433,7 @@ describe Avromatic::Model::Builder do
         end
       end
 
-      context "decimal" do
+      context "decimal", skip: !Avromatic.allow_decimal_logical_type do
         it "accepts a BigDecimal" do
           decimal = BigDecimal('3.4562')
           instance = test_class.new(decimal: decimal)
@@ -1173,7 +1175,7 @@ describe Avromatic::Model::Builder do
         end
       end
 
-      context "union with a decimal" do
+      context "union with a decimal", skip: !Avromatic.allow_decimal_logical_type do
         let(:schema) do
           Avro::Builder.build_schema do
             record :with_decimal_union do
