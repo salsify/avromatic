@@ -10,8 +10,14 @@ module Avromatic
       class DecimalType < AbstractType
         VALUE_CLASSES = [::BigDecimal].freeze
         INPUT_CLASSES = [::Numeric, ::String].freeze
-        DEFAULT_PRECISION = 3
-        private_constant :DEFAULT_PRECISION
+
+        attr_reader :precision, :scale
+
+        def initialize(precision:, scale: 0)
+          super()
+          @precision = precision
+          @scale = scale
+        end
 
         def value_classes
           VALUE_CLASSES
@@ -22,7 +28,7 @@ module Avromatic
         end
 
         def name
-          'decimal'
+          "decimal(#{precision}, #{scale})"
         end
 
         def coerce(input)
@@ -30,7 +36,7 @@ module Avromatic
           when ::NilClass, ::BigDecimal
             input
           when ::Rational
-            input.to_d(DEFAULT_PRECISION)
+            input.to_d(precision)
           when ::Numeric, ::String
             input.to_d
           else

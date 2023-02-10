@@ -439,7 +439,7 @@ describe Avromatic::Model::Builder do
         end
 
         it "accepts a String" do
-          string = '3.4562'
+          string = '3.4562asd'
           instance = test_class.new(decimal: string)
           expect(instance.decimal).to eq(string.to_d)
         end
@@ -450,9 +450,9 @@ describe Avromatic::Model::Builder do
         end
 
         it "accepts a Rational" do
-          rational = 2/3r
+          rational = 2 / 3r
           instance = test_class.new(decimal: rational)
-          expect(instance.decimal).to eq(rational.to_d(3))
+          expect(instance.decimal).to eq(rational.to_d(4))
         end
 
         it "accepts a Float" do
