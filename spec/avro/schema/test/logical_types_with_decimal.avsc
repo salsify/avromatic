@@ -1,6 +1,6 @@
 {
   "type": "record",
-  "name": "logical_types",
+  "name": "logical_types_with_decimal",
   "namespace": "test",
   "fields": [
     {
@@ -22,6 +22,15 @@
       "type": {
         "type": "long",
         "logicalType": "timestamp-micros"
+      }
+    },
+    {
+      "name": "decimal",
+      "type": {
+        "type": "bytes",
+        "logicalType": "decimal",
+        "precision": 4,
+        "scale": 2
       }
     },
     {
