@@ -9,6 +9,7 @@ require 'avromatic/model/types/enum_type'
 require 'avromatic/model/types/fixed_type'
 require 'avromatic/model/types/float_type'
 require 'avromatic/model/types/integer_type'
+require 'avromatic/model/types/big_int_type'
 require 'avromatic/model/types/map_type'
 require 'avromatic/model/types/null_type'
 require 'avromatic/model/types/record_type'
@@ -31,7 +32,7 @@ module Avromatic
           'bytes' => Avromatic::Model::Types::StringType.new,
           'boolean' => Avromatic::Model::Types::BooleanType.new,
           'int' => Avromatic::Model::Types::IntegerType.new,
-          'long' => Avromatic::Model::Types::IntegerType.new,
+          'long' => Avromatic::Model::Types::BigIntType.new,
           'float' => Avromatic::Model::Types::FloatType.new,
           'double' => Avromatic::Model::Types::FloatType.new,
           'null' => Avromatic::Model::Types::NullType.new
