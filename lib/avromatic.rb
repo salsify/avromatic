@@ -90,6 +90,10 @@ module Avromatic
     @eager_load_model_names&.each { |model_name| model_name.constantize.register! }
   end
   private_class_method :eager_load_models!
+
+  def self.allow_decimal_logical_type
+    ::Gem::Requirement.new('>= 1.11.0').satisfied_by?(::Gem::Version.new(::Avro::VERSION))
+  end
 end
 
 require 'avromatic/railtie' if defined?(Rails)

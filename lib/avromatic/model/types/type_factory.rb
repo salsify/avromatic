@@ -4,6 +4,7 @@ require 'avromatic/model/types/array_type'
 require 'avromatic/model/types/boolean_type'
 require 'avromatic/model/types/custom_type'
 require 'avromatic/model/types/date_type'
+require 'avromatic/model/types/decimal_type'
 require 'avromatic/model/types/enum_type'
 require 'avromatic/model/types/fixed_type'
 require 'avromatic/model/types/float_type'
@@ -50,6 +51,9 @@ module Avromatic
             )
           elsif schema.respond_to?(:logical_type) && SINGLETON_TYPES.include?(schema.logical_type)
             SINGLETON_TYPES.fetch(schema.logical_type)
+          elsif schema.respond_to?(:logical_type) && schema.logical_type == 'decimal' &&
+                Avromatic.allow_decimal_logical_type
+            Avromatic::Model::Types::DecimalType.new(precision: schema.precision, scale: schema.scale || 0)
           elsif SINGLETON_TYPES.include?(schema.type)
             SINGLETON_TYPES.fetch(schema.type)
           else

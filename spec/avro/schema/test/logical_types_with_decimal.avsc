@@ -1,0 +1,44 @@
+{
+  "type": "record",
+  "name": "logical_types_with_decimal",
+  "namespace": "test",
+  "fields": [
+    {
+      "name": "date",
+      "type": {
+        "type": "int",
+        "logicalType": "date"
+      }
+    },
+    {
+      "name": "ts_msec",
+      "type": {
+        "type": "long",
+        "logicalType": "timestamp-millis"
+      }
+    },
+    {
+      "name": "ts_usec",
+      "type": {
+        "type": "long",
+        "logicalType": "timestamp-micros"
+      }
+    },
+    {
+      "name": "decimal",
+      "type": {
+        "type": "bytes",
+        "logicalType": "decimal",
+        "precision": 4,
+        "scale": 2
+      }
+    },
+    {
+      "name": "unknown",
+      "type": {
+        "type": "int",
+        "logicalType": "foobar"
+      }
+    }
+  ]
+}
