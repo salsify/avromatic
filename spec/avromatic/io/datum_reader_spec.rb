@@ -44,7 +44,7 @@ describe Avromatic::IO::DatumReader do
         b: '123',
         tf: true,
         i: rand(10),
-        l: 123456789,
+        l: 2 ** 40,
         f: 0.5,
         d: 1.0 / 3.0,
         n: nil,
