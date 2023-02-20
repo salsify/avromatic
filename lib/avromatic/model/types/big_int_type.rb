@@ -8,7 +8,7 @@ module Avromatic
       class BigIntType < AbstractType
         VALUE_CLASSES = [::Integer].freeze
 
-        MAX_RANGE = 2 ** 63
+        MAX_RANGE = 2**63
 
         def value_classes
           VALUE_CLASSES
