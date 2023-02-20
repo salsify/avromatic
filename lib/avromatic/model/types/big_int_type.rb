@@ -5,21 +5,21 @@ require 'avromatic/model/types/abstract_type'
 module Avromatic
   module Model
     module Types
-      class IntegerType < AbstractType
+      class BigIntType < AbstractType
         VALUE_CLASSES = [::Integer].freeze
 
-        MAX_RANGE = 2 ** 31
+        MAX_RANGE = 2 ** 63
 
         def value_classes
           VALUE_CLASSES
         end
 
         def name
-          'integer'
+          'bigint'
         end
 
         def coerce(input)
-          if input.nil? || input.is_a?(::Integer)
+          if coercible?(input)
             input
           else
             raise ArgumentError.new("Could not coerce '#{input.inspect}' to #{name}")
