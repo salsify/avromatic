@@ -52,4 +52,55 @@ describe Avromatic::IO::DatumWriter do
       end
     end
   end
+
+  context 'with int/bigint union' do
+    let(:schema_name) { 'test.real_int_union' }
+
+    context 'for int' do
+      let(:values) do
+        {
+          header: 'foo',
+          message: 1
+        }
+      end
+
+      describe "#write_union" do
+        before { datum_writer.write_union(union_schema, datum, encoder) }
+
+        context "when the datum includes union member index" do
+          it "does not call Avro::Schema.validate" do
+            expect(Avro::Schema).not_to have_received(:validate)
+          end
+
+          it "calls write_data to encode the union" do
+            expect(datum_writer).to have_received(:write_data).with(union_schema.schemas[1], datum.datum, encoder)
+          end
+        end
+      end
+    end
+
+    context 'for big int' do
+      let(:values) do
+        {
+          header: 'foo',
+          message: 1587961247350867973
+        }
+      end
+
+      describe "#write_union" do
+        before { datum_writer.write_union(union_schema, datum, encoder) }
+
+        context "when the datum includes union member index" do
+          it "does not call Avro::Schema.validate" do
+            expect(Avro::Schema).not_to have_received(:validate)
+          end
+
+          it "calls write_data to encode the union" do
+            expect(datum_writer).to have_received(:write_data).with(union_schema.schemas[3], datum.datum, encoder)
+          end
+        end
+      end
+    end
+  end
+
 end

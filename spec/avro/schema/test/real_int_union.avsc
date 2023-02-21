@@ -1,0 +1,20 @@
+{
+  "type": "record",
+  "name": "real_int_union",
+  "namespace": "test",
+  "fields": [
+    {
+      "name": "header",
+      "type": "string"
+    },
+    {
+      "name": "message",
+      "type": [
+        "null",
+        "int",
+        "string",
+        "long"
+      ]
+    }
+  ]
+}

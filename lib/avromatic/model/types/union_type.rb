@@ -78,7 +78,7 @@ module Avromatic
         def find_index(value)
           # TODO: Cache this?
           member_types.find_index do |member_type|
-            member_type.value_classes.any? { |value_class| value.is_a?(value_class) }
+            member_type.value_classes.any? { |value_class| value.is_a?(value_class) } && member_type.coercible?(value)
           end
         end
 
