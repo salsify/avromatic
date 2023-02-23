@@ -7,9 +7,14 @@ module Avromatic
     module Types
       class DateType < AbstractType
         VALUE_CLASSES = [::Date].freeze
+        INPUT_CLASSES = [::Date, ::Time].freeze
 
         def value_classes
           VALUE_CLASSES
+        end
+
+        def input_classes
+          INPUT_CLASSES
         end
 
         def name
@@ -25,12 +30,6 @@ module Avromatic
             raise ArgumentError.new("Could not coerce '#{input.inspect}' to #{name}")
           end
         end
-
-        def coercible?(input)
-          input.nil? || input.is_a?(::Date) || input.is_a?(::Time)
-        end
-
-        alias_method :coerced?, :coercible?
 
         def serialize(value, _strict)
           value

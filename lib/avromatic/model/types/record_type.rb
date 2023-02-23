@@ -36,10 +36,6 @@ module Avromatic
           false
         end
 
-        def coerced?(value)
-          value.nil? || value.is_a?(record_class)
-        end
-
         def serialize(value, strict)
           if value.nil?
             value

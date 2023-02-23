@@ -31,14 +31,6 @@ module Avromatic
           end
         end
 
-        def coercible?(input)
-          input.nil? || input.is_a?(::Float) || input.is_a?(::Integer)
-        end
-
-        def coerced?(input)
-          input.nil? || input.is_a?(::Float)
-        end
-
         def serialize(value, _strict)
           value
         end

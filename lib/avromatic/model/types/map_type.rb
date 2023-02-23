@@ -60,6 +60,9 @@ module Avromatic
           end
         end
 
+        # we can take any coercible nested values for union types for backward-compatibility
+        alias_method :matched?, :coercible?
+
         def serialize(value, strict)
           if value.nil?
             value

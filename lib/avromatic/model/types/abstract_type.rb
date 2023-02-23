@@ -4,6 +4,7 @@ module Avromatic
   module Model
     module Types
       class AbstractType
+
         EMPTY_ARRAY = [].freeze
         private_constant :EMPTY_ARRAY
 
@@ -23,12 +24,16 @@ module Avromatic
           raise "#{__method__} must be overridden by #{self.class.name}"
         end
 
-        def coercible?(_input)
-          raise "#{__method__} must be overridden by #{self.class.name}"
+        def coercible?(input)
+          input.nil? || input_classes.any? { |input_class| input.is_a?(input_class) }
         end
 
-        def coerced?(_value)
-          raise "#{__method__} must be overridden by #{self.class.name}"
+        def coerced?(value)
+          value.nil? || value_classes.any? { |value_class| value.is_a?(value_class) }
+        end
+
+        def matched?(value)
+          coerced?(value)
         end
 
         # Note we use positional args rather than keyword args to reduce

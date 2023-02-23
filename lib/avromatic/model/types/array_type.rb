@@ -38,8 +38,11 @@ module Avromatic
         end
 
         def coerced?(value)
-          value.nil? || (value.is_a?(::Array) && value.all? { |element| value_type.coerced?(element) })
+          value.nil? || (value.is_a?(::Array) && value.all? { |element_input| value_type.coerced?(element_input) })
         end
+
+        # we can take any coercible nested values for union types for backward-compatibility
+        alias_method :matched?, :coercible?
 
         def serialize(value, strict)
           if value.nil?

@@ -24,12 +24,6 @@ module Avromatic
           end
         end
 
-        def coercible?(input)
-          input.nil? || input.is_a?(::TrueClass) || input.is_a?(::FalseClass)
-        end
-
-        alias_method :coerced?, :coercible?
-
         def serialize(value, _strict)
           value
         end
