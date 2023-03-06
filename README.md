@@ -439,10 +439,10 @@ The following coercions are supported:
 | String, Symbol | string |
 | Array | array |
 | Hash | map |
-| Integer, Float | int |
+| Integer | int |
 | Integer | long |
-| Float | float |
-| Float | double |
+| Float, Integer | float |
+| Float, Integer | double |
 | String | bytes |
 | Date, Time, DateTime | date |
 | Time, DateTime | timestamp-millis |
