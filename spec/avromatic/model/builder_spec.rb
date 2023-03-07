@@ -440,12 +440,6 @@ describe Avromatic::Model::Builder do
           expect(instance.decimal).to eq(decimal)
         end
 
-        it "accepts a String" do
-          string = '3.4562asd'
-          instance = test_class.new(decimal: string)
-          expect(instance.decimal).to eq(string.to_d)
-        end
-
         it "accepts an Integer" do
           instance = test_class.new(decimal: 42)
           expect(instance.decimal).to eq(42.to_d)
