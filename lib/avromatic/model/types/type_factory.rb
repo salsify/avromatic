@@ -52,7 +52,7 @@ module Avromatic
           elsif schema.respond_to?(:logical_type) && SINGLETON_TYPES.include?(schema.logical_type)
             SINGLETON_TYPES.fetch(schema.logical_type)
           elsif schema.respond_to?(:logical_type) && schema.logical_type == 'decimal' &&
-                Avromatic.allow_decimal_logical_type
+                Avromatic.allow_decimal_logical_type?
             Avromatic::Model::Types::DecimalType.new(precision: schema.precision, scale: schema.scale || 0)
           elsif SINGLETON_TYPES.include?(schema.type)
             SINGLETON_TYPES.fetch(schema.type)

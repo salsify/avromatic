@@ -91,7 +91,7 @@ module Avromatic
   end
   private_class_method :eager_load_models!
 
-  def self.allow_decimal_logical_type
+  def self.allow_decimal_logical_type?
     ::Gem::Requirement.new('>= 1.11.0').satisfied_by?(::Gem::Version.new(::Avro::VERSION))
   end
 end
