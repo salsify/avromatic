@@ -8,7 +8,7 @@ module Avromatic
   module Model
     module Types
       class DecimalType < AbstractType
-        VALUE_CLASSES = [::BigDecimal].freeze
+        VALUE_CLASSES = [::Numeric].freeze
         INPUT_CLASSES = [::Numeric, ::String].freeze
 
         attr_reader :precision, :scale
