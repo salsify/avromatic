@@ -445,12 +445,6 @@ describe Avromatic::Model::Builder do
           expect(instance.decimal).to eq(42.to_d)
         end
 
-        it "accepts a Rational" do
-          rational = 2 / 3r
-          instance = test_class.new(decimal: rational)
-          expect(instance.decimal).to eq(rational.to_d(4))
-        end
-
         it "accepts a Float" do
           float = 5.23
           instance = test_class.new(decimal: float)

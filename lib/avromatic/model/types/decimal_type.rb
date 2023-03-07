@@ -30,8 +30,6 @@ module Avromatic
           case input
           when ::NilClass, ::BigDecimal
             input
-          when ::Rational
-            input.to_d(precision)
           when ::Numeric
             input.to_d
           else
