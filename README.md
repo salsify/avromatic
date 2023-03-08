@@ -8,7 +8,7 @@
 `Avromatic` generates Ruby models from [Avro](http://avro.apache.org/) schemas
 and provides utilities to encode and decode them.
 
-**This README reflects Avromatic 2.0. Please see the 
+**This README reflects Avromatic 2.0. Please see the
 [1-0-stable](https://github.com/salsify/avromatic/blob/1-0-stable/README.md) branch for Avromatic 1.0.**
 
 ## Installation
@@ -41,7 +41,7 @@ Avromatic with unreleased Avro features.
 * **schema_store**: A schema store is required to load Avro schemas from the filesystem.
   It should be an object that responds to `find(name, namespace = nil)` and
   returns an `Avro::Schema` object. An `AvroTurf::SchemaStore` can be used.
-  The `schema_store` is unnecessary if models are generated directly from 
+  The `schema_store` is unnecessary if models are generated directly from
   `Avro::Schema` objects. See [Models](#models).
 * **nested_models**: An optional [ModelRegistry](https://github.com/salsify/avromatic/blob/master/lib/avromatic/model_registry.rb)
   that is used to store, by full schema name, the generated models that are
@@ -53,8 +53,8 @@ Avromatic with unreleased Avro features.
   option is useful for defining models that will be extended when the load order
   is important.
 * **allow_unknown_attributes**: Optionally allow model constructors to silently
-  ignore unknown attributes. Defaults to `false`. WARNING: Setting this to `true` 
-  will result in incorrect union member coercions if an earlier union member is 
+  ignore unknown attributes. Defaults to `false`. WARNING: Setting this to `true`
+  will result in incorrect union member coercions if an earlier union member is
   satisfied by a subset of the latter union member's attributes.
 
 #### Custom Types
@@ -62,19 +62,19 @@ Avromatic with unreleased Avro features.
 See the section below on configuring [Custom Types](#custom-type-configuration).
 
 #### Using a Schema Registry/Messaging API
- 
-The configuration options below are required when using a schema registry 
+
+The configuration options below are required when using a schema registry
 (see [Confluent Schema Registry](http://docs.confluent.io/2.0.1/schema-registry/docs/intro.html))
 and the [Messaging API](#messaging-api).
-  
+
 * **schema_registry**: An `AvroSchemaRegistry::Client` or
   `AvroTurf::ConfluentSchemaRegistry` object used to store Avro schemas
   so that they can be referenced by id. Either `schema_registry` or
   `registry_url` must be configured. If using `build_schema_registry!`, only
   `registry_url` is required. See example below.
 * **registry_url**: URL for the schema registry. This must be configured when using
-  `build_schema_registry!`. The `build_schema_registry!` method may 
-  be used to create a caching schema registry client instance based on other 
+  `build_schema_registry!`. The `build_schema_registry!` method may
+  be used to create a caching schema registry client instance based on other
   configuration values.
 * **use_schema_fingerprint_lookup**: Avromatic supports a Schema Registry
   [extension](https://github.com/salsify/avro-schema-registry#extensions) that
@@ -113,9 +113,9 @@ to call both.
 
 #### Encoding
 * **use_custom_datum_writer**: `Avromatic` includes a modified subclass of
-  `Avro::IO::DatumWriter`. This subclass supports caching avro encodings for 
-  immutable models and uses additional information about the index of union 
-  members to optimize the encoding of Avro messages. By default this 
+  `Avro::IO::DatumWriter`. This subclass supports caching avro encodings for
+  immutable models and uses additional information about the index of union
+  members to optimize the encoding of Avro messages. By default this
   information is included in the hash passed to the encoder but can be omitted
   by setting this option to `false`.
 
@@ -138,7 +138,7 @@ instance = MyModel.new(id: 123, name: 'Tesla Model 3', enabled: true)
 instance.name # => "Tesla Model 3"
 
 # Models are immutable by default
-instance.name = 'Tesla Model X' # => NoMethodError (private method `name=' called for #<MyModel:0x00007ff711e64e60>) 
+instance.name = 'Tesla Model X' # => NoMethodError (private method `name=' called for #<MyModel:0x00007ff711e64e60>)
 
 # Booleans can also be accessed by '?' readers that coerce nil to false
 instance.enabled? # => true
@@ -309,14 +309,14 @@ end
 ```
 
 The full name of the type and an optional class may be specified. When a class is
-provided then values for attributes of that type are defined using the specified 
+provided then values for attributes of that type are defined using the specified
 class.
 
 If the provided class responds to the class methods `from_avro` and `to_avro`
-then those methods are used to convert values when assigning to the model and 
+then those methods are used to convert values when assigning to the model and
 before encoding using Avro respectively.
 
-`from_avro` and `to_avro` methods may be also be specified as Procs when 
+`from_avro` and `to_avro` methods may be also be specified as Procs when
 registering the type:
 
 ```ruby
@@ -331,7 +331,7 @@ end
 Nil handling is not required as the conversion methods are not be called if the
 inbound or outbound value is nil.
 
-If a custom type is registered for a record-type field, then any `to_avro` 
+If a custom type is registered for a record-type field, then any `to_avro`
 method/Proc should return a Hash with string keys for encoding using Avro.
 
 ### Encoding and Decoding
@@ -364,7 +364,7 @@ MyModel.avro_raw_decode(key: encoded_key, value: encoded_value)
 ```
 
 If the attributes where encoded using a different version of the model's schemas,
-then a new model instance can be created by also providing the schemas used to 
+then a new model instance can be created by also providing the schemas used to
 encode the data:
 
 ```ruby
@@ -417,7 +417,7 @@ MyTopic.register_schemas!
 #### Avromatic::Model::MessageDecoder
 
 A stream of messages encoded from various models using the messaging approach
-can be decoded using `Avromatic::Model::MessageDecoder`. The decoder must be 
+can be decoded using `Avromatic::Model::MessageDecoder`. The decoder must be
 initialized with the list of models to decode:
 
 ```ruby
@@ -447,12 +447,13 @@ The following coercions are supported:
 | Date, Time, DateTime | date |
 | Time, DateTime | timestamp-millis |
 | Time, DateTime | timestamp-micros |
+| Float, Integer, BigDecimal | decimal |
 | TrueClass, FalseClass | boolean |
 | NilClass | null |
 | Hash | record |
 
 Validation of required fields is done automatically when serializing a model to Avro. It can also be done
-explicitly by calling the `valid?` or `invalid?` methods from the 
+explicitly by calling the `valid?` or `invalid?` methods from the
 [ActiveModel::Validations](https://edgeapi.rubyonrails.org/classes/ActiveModel/Validations.html) interface.
 
 ### RSpec Support

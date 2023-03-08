@@ -4,7 +4,9 @@
 #   decoded: a model instance based on the encoded_value
 shared_examples_for "logical type encoding and decoding" do
   context "logical types" do
-    let(:schema_name) { 'test.logical_types' }
+    let(:schema_name) do
+      Avromatic.allow_decimal_logical_type? ? 'test.logical_types_with_decimal' : 'test.logical_types'
+    end
     let(:test_class) do
       Avromatic::Model.model(schema_name: schema_name)
     end
@@ -26,7 +28,7 @@ shared_examples_for "logical type encoding and decoding" do
             ts_msec: now,
             ts_usec: now,
             unknown: 42
-          }
+          }.tap { _1[:decimal] = BigDecimal('5.2') if Avromatic.allow_decimal_logical_type? }
         end
 
         it "encodes and decodes instances" do
@@ -44,7 +46,7 @@ shared_examples_for "logical type encoding and decoding" do
             ts_msec: now.to_i + now.usec / 1000 * 1000,
             ts_usec: now.to_i * 1_000_000 + now.usec,
             unknown: 42
-          }
+          }.tap { _1[:decimal] = BigDecimal('1.5432') if Avromatic.allow_decimal_logical_type? }
         end
 
         it "encodes and decodes instances" do

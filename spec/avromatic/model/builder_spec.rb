@@ -348,7 +348,9 @@ describe Avromatic::Model::Builder do
     end
 
     context "logical types" do
-      let(:schema_name) { 'test.logical_types' }
+      let(:schema_name) do
+        Avromatic.allow_decimal_logical_type? ? 'test.logical_types_with_decimal' : 'test.logical_types'
+      end
 
       it_behaves_like "a generated model"
 
@@ -428,6 +430,25 @@ describe Avromatic::Model::Builder do
 
         it "raises an Avromatic::Model::CoercionError when the value is not coercible" do
           expect { test_class.new(date: 'today') }.to raise_error(Avromatic::Model::CoercionError)
+        end
+      end
+
+      context "decimal", skip: !Avromatic.allow_decimal_logical_type? do
+        it "accepts a BigDecimal" do
+          decimal = BigDecimal('3.4562')
+          instance = test_class.new(decimal: decimal)
+          expect(instance.decimal).to eq(decimal)
+        end
+
+        it "accepts an Integer" do
+          instance = test_class.new(decimal: 42)
+          expect(instance.decimal).to eq(42.to_d)
+        end
+
+        it "accepts a Float" do
+          float = 5.23
+          instance = test_class.new(decimal: float)
+          expect(instance.decimal).to eq(float.to_d)
         end
       end
     end
@@ -1139,6 +1160,22 @@ describe Avromatic::Model::Builder do
           now = Date.today
           instance = test_class.new(u: now)
           expect(instance.u).to eq(now)
+        end
+      end
+
+      context "union with a decimal", skip: !Avromatic.allow_decimal_logical_type? do
+        let(:schema) do
+          Avro::Builder.build_schema do
+            record :with_decimal_union do
+              required :u, :union, types: [:string, bytes(logical_type: 'decimal', precision: 4)]
+            end
+          end
+        end
+
+        it "coerces numeric to a union member" do
+          numeric = 42.42
+          instance = test_class.new(u: numeric)
+          expect(instance.u).to eq(numeric.to_d)
         end
       end
     end
