@@ -8,7 +8,7 @@ module Avromatic
   module Model
     module Types
       class DecimalType < AbstractType
-        VALUE_CLASSES = [::Numeric].freeze
+        VALUE_CLASSES = [::BigDecimal, ::Float, ::Integer].freeze
 
         attr_reader :precision, :scale
 
@@ -30,7 +30,7 @@ module Avromatic
           case input
           when ::NilClass, ::BigDecimal
             input
-          when ::Numeric
+          when ::Float, ::Integer
             input.to_d
           else
             raise ArgumentError.new("Could not coerce '#{input.inspect}' to #{name}")
@@ -38,7 +38,7 @@ module Avromatic
         end
 
         def coercible?(input)
-          input.nil? || input.is_a?(::Numeric)
+          input.nil? || input_classes.any? { |input_class| input.is_a?(input_class) }
         end
 
         def coerced?(input)

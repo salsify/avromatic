@@ -447,7 +447,7 @@ The following coercions are supported:
 | Date, Time, DateTime | date |
 | Time, DateTime | timestamp-millis |
 | Time, DateTime | timestamp-micros |
-| Numeric | decimal |
+| Float, Integer, BigDecimal | decimal |
 | TrueClass, FalseClass | boolean |
 | NilClass | null |
 | Hash | record |
