@@ -8,7 +8,8 @@ module Avromatic
   module Model
     module Types
       class DecimalType < AbstractType
-        VALUE_CLASSES = [::BigDecimal, ::Float, ::Integer].freeze
+        VALUE_CLASSES = [::BigDecimal].freeze
+        INPUT_CLASSES = [::BigDecimal, ::Float, ::Integer].freeze
 
         attr_reader :precision, :scale
 
@@ -20,6 +21,10 @@ module Avromatic
 
         def value_classes
           VALUE_CLASSES
+        end
+
+        def input_classes
+          INPUT_CLASSES
         end
 
         def name
@@ -41,8 +46,8 @@ module Avromatic
           input.nil? || input_classes.any? { |input_class| input.is_a?(input_class) }
         end
 
-        def coerced?(input)
-          input.nil? || input.is_a?(::BigDecimal)
+        def coerced?(value)
+          value.nil? || value_classes.any? { |value_class| value.is_a?(value_class) }
         end
 
         def serialize(value, _strict)
