@@ -462,8 +462,10 @@ This gem also includes an `"avromatic/rspec"` file that can be required to suppo
 using Avromatic with a fake schema registry during tests.
 
 Requiring this file configures a RSpec before hook that directs any schema
-registry requests to a fake, in-memory schema registry and rebuilds the
+registry requests to a fake, in-memory schema registry (instead of port 21001) and rebuilds the
 `Avromatic::Messaging` object for each example.
+
+Note: Use of `avromatic/rspec` requires installing the `sinatra` gem for the in-memory schema registry to work properly.
 
 ## Development
 
