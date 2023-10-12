@@ -2,9 +2,11 @@
 
 ## 5.0.0
 - Add support for Rails 7.1
+- Drop support for Ruby < 3
+- Add support for Rails < 6.1
 
 ## 4.3.0
-- add support for decimal logical type
+- Add support for decimal logical type
 
 ## 4.2.0
 - Add an `Avromatic.eager_load_models` attribute reader method.
