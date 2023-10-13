@@ -32,7 +32,7 @@ jobs:
       ruby-version:
         type: string
     docker:
-      - image: cimg/ruby_ci:<< parameters.ruby_version >>
+      - image: cimg/ruby:<< parameters.ruby-version >>
     environment:
       CIRCLE_TEST_REPORTS: "test-results"
       BUNDLE_GEMFILE: << parameters.gemfile >>
