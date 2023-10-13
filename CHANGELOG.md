@@ -1,5 +1,11 @@
 # avromatic changelog
 
+## 5.0.0
+- Add support for Rails 7.1
+- Drop support for Ruby < 3
+- Add support for Rails < 6.1
+- Drop support for Avro 1.10
+
 ## 4.3.0
 - Add support for decimal logical type
 
