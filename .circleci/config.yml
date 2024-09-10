@@ -78,3 +78,6 @@ workflows:
                 - 3.1.4
                 - 3.2.2
                 - 3.3.0
+            exclude:
+              - gemfile: gemfiles/avro1_11_rails7_2.gemfile
+                ruby-version: 3.0.6
