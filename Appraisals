@@ -17,3 +17,9 @@ appraise 'avro1_11-rails7_1' do
   gem 'activesupport', '~> 7.1.1'
   gem 'activemodel', '~> 7.1.1'
 end
+
+appraise 'avro1_11-rails7_2' do
+  gem 'avro', '~> 1.11.0'
+  gem 'activesupport', '~> 7.2.1'
+  gem 'activemodel', '~> 7.2.1'
+end
