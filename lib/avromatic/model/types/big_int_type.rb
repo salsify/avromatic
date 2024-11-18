@@ -10,6 +10,10 @@ module Avromatic
 
         MAX_RANGE = 2**63
 
+        def self.in_range?(value)
+          value.is_a?(::Integer) && value.between?(-MAX_RANGE, MAX_RANGE - 1)
+        end
+
         def value_classes
           VALUE_CLASSES
         end
@@ -27,7 +31,7 @@ module Avromatic
         end
 
         def coercible?(input)
-          input.nil? || (input.is_a?(::Integer) && input.between?(-MAX_RANGE, MAX_RANGE - 1))
+          input.nil? || self.class.in_range?(input)
         end
 
         alias_method :coerced?, :coercible?
