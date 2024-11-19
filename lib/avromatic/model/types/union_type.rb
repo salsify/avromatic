@@ -76,7 +76,15 @@ module Avromatic
         private
 
         def find_index(value)
-          # TODO: Cache this?
+          if value.is_a?(::Integer)
+            if Avromatic::Model::Types::IntegerType.in_range?(value)
+              return member_types.index { |member_type| member_type.is_a?(Avromatic::Model::Types::IntegerType) }
+            elsif Avromatic::Model::Types::BigIntType.in_range?(value)
+              return member_types.index { |member_type| member_type.is_a?(Avromatic::Model::Types::BigIntType) }
+            end
+          end
+
+          # TODO: Consider caching the index for each value class
           member_types.find_index do |member_type|
             member_type.value_classes.any? { |value_class| value.is_a?(value_class) }
           end

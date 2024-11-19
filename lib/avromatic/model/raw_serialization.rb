@@ -15,8 +15,10 @@ module Avromatic
 
         UNSPECIFIED = Object.new
 
+        # rubocop:disable Style/AccessModifierDeclarations
         delegate :datum_writer, :datum_reader, to: :class
         private :datum_writer, :datum_reader
+        # rubocop:enable Style/AccessModifierDeclarations
 
         def avro_raw_value(validate: UNSPECIFIED)
           unless validate == UNSPECIFIED

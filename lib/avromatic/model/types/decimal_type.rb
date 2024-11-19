@@ -42,14 +42,6 @@ module Avromatic
           end
         end
 
-        def coercible?(input)
-          input.nil? || input_classes.any? { |input_class| input.is_a?(input_class) }
-        end
-
-        def coerced?(value)
-          value.nil? || value_classes.any? { |value_class| value.is_a?(value_class) }
-        end
-
         def serialize(value, _strict)
           value
         end

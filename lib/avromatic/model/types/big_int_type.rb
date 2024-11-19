@@ -5,31 +5,36 @@ require 'avromatic/model/types/abstract_type'
 module Avromatic
   module Model
     module Types
-      class StringType < AbstractType
-        VALUE_CLASSES = [::String].freeze
-        INPUT_CLASSES = [::String, ::Symbol].freeze
+      class BigIntType < AbstractType
+        VALUE_CLASSES = [::Integer].freeze
+
+        MAX_RANGE = 2**63
+
+        def self.in_range?(value)
+          value.is_a?(::Integer) && value.between?(-MAX_RANGE, MAX_RANGE - 1)
+        end
 
         def value_classes
           VALUE_CLASSES
         end
 
-        def input_classes
-          INPUT_CLASSES
-        end
-
         def name
-          'string'
+          'bigint'
         end
 
         def coerce(input)
-          if input.nil? || input.is_a?(::String)
+          if coercible?(input)
             input
-          elsif input.is_a?(::Symbol)
-            input.to_s
           else
             raise ArgumentError.new("Could not coerce '#{input.inspect}' to #{name}")
           end
         end
+
+        def coercible?(input)
+          input.nil? || self.class.in_range?(input)
+        end
+
+        alias_method :coerced?, :coercible?
 
         def serialize(value, _strict)
           value
