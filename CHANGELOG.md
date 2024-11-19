@@ -1,8 +1,13 @@
 # avromatic changelog
 
+## 5.1.1
+
+- Respect allowed int and long ranges in accordance with the Avro Specification. **Thanks
+  [opti](https://github.com/opti)**
+
 ## 5.1.0
 - Add support for Rails 7.2.
-- 
+
 ## 5.0.0
 - Add support for Rails 7.1
 - Drop support for Ruby < 3
