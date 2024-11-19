@@ -32,10 +32,6 @@ module Avromatic
           value.nil? || value_classes.any? { |value_class| value.is_a?(value_class) }
         end
 
-        def matched?(value)
-          coerced?(value)
-        end
-
         # Note we use positional args rather than keyword args to reduce
         # memory allocations
         def serialize(_value, _strict)
