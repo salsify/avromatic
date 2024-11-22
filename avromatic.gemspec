@@ -31,8 +31,8 @@ Gem::Specification.new do |spec|
 
   spec.required_ruby_version = '>= 2.7'
 
-  spec.add_runtime_dependency 'activemodel', '>= 5.2', '< 8'
-  spec.add_runtime_dependency 'activesupport', '>= 5.2', '< 8'
+  spec.add_runtime_dependency 'activemodel', '>= 5.2', '< 8.1'
+  spec.add_runtime_dependency 'activesupport', '>= 5.2', '< 8.1'
   spec.add_runtime_dependency 'avro', '>= 1.11.0', '< 1.12'
   spec.add_runtime_dependency 'avro_schema_registry-client', '>= 0.4.0'
   spec.add_runtime_dependency 'avro_turf'
