@@ -1,7 +1,9 @@
 # avromatic changelog
 
-## 5.1.1
+## 5.2.0
+- Add support for Rails 8.0
 
+## 5.1.1
 - Respect allowed int and long ranges in accordance with the Avro Specification. **Thanks
   [opti](https://github.com/opti)**
 
