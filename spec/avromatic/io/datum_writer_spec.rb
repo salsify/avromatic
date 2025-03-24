@@ -60,7 +60,8 @@ describe Avromatic::IO::DatumWriter do
       let(:values) do
         {
           header: 'foo',
-          message: 1
+          message: 1,
+          string_or_long: 1
         }
       end
 

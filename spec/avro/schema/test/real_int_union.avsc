@@ -14,6 +14,15 @@
         "string",
         "long"
       ]
+    },
+    {
+      "name": "string_or_long",
+      "type": [
+        "null",
+        "string",
+        "long"
+      ],
+      "default": null
     }
   ]
 }
