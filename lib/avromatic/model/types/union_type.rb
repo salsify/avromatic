@@ -78,7 +78,8 @@ module Avromatic
         def find_index(value)
           if value.is_a?(::Integer)
             if Avromatic::Model::Types::IntegerType.in_range?(value)
-              return member_types.index { |member_type| member_type.is_a?(Avromatic::Model::Types::IntegerType) }
+              return member_types.index { |member_type| member_type.is_a?(Avromatic::Model::Types::IntegerType) } ||
+                     member_types.index { |member_type| member_type.is_a?(Avromatic::Model::Types::BigIntType) }
             elsif Avromatic::Model::Types::BigIntType.in_range?(value)
               return member_types.index { |member_type| member_type.is_a?(Avromatic::Model::Types::BigIntType) }
             end

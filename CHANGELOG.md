@@ -1,5 +1,8 @@
 # avromatic changelog
 
+## 5.2.1
+- Fixed writing small ints to unions with `long` member type.
+
 ## 5.2.0
 - Add support for Rails 8.0
 
