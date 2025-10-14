@@ -1294,7 +1294,8 @@ describe Avromatic::Model::Builder do
       it "prevents changes to models" do
         expect do
           model1.s = 'new value'
-        end.to raise_error(NoMethodError, /private method `s=' called for/)
+          # Ruby < 3.4 has a bug where the error message used a backtick rather than a single quote
+        end.to raise_error(NoMethodError, /private method [`']s=' called for/)
       end
 
       it "is recursively immutable" do
