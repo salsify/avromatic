@@ -1,7 +1,7 @@
 # avromatic changelog
 
-# Unreleased
-- Drop support for Rails < 7.1 and Ruby < 3.2.
+# 6.0.0
+- Drop support for Rails < 7.2 and Ruby < 3.2.
 - Add support for Avro 1.12.
 
 ## 5.2.1
