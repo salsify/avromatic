@@ -9,12 +9,14 @@ RSpec::Core::RakeTask.new(:default_spec)
 
 Appraisal::Task.new
 
+# rubocop:disable Rake/DuplicateTask
 if !ENV['APPRAISAL_INITIALIZED']
   task default: :appraisal
-  task spec: :appraisal
+  task spec: :appraisal # rubocop:disable Rake/Desc
 else
   task default: :default_spec
 end
+# rubocop:enable Rake/DuplicateTask
 
 namespace :avro do
   desc 'Generate Avro schema files used by specs'
