@@ -1,5 +1,9 @@
 # avromatic changelog
 
+# 6.0.0
+- Drop support for Rails < 7.2 and Ruby < 3.2.
+- Add support for Avro 1.12.
+
 ## 5.2.1
 - Fixed writing small ints to unions with `long` member type.
 

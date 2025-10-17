@@ -2,14 +2,14 @@ version: 2.1
 jobs:
   lint:
     docker:
-      - image: cimg/ruby:3.0.6
+      - image: cimg/ruby:3.2.9
     working_directory: ~/avromatic
     steps:
       - checkout
       - restore_cache:
           keys:
-            - v2-gems-ruby-3.0.6-{{ checksum "avromatic.gemspec" }}-{{ checksum "Gemfile" }}
-            - v2-gems-ruby-3.0.6-
+            - v2-gems-ruby-3.2.9-{{ checksum "avromatic.gemspec" }}-{{ checksum "Gemfile" }}
+            - v2-gems-ruby-3.2.9-
       - run:
           name: Install Gems
           command: |
@@ -18,7 +18,7 @@ jobs:
               bundle clean
             fi
       - save_cache:
-          key: v2-gems-ruby-3.0.6-{{ checksum "avromatic.gemspec" }}-{{ checksum "Gemfile" }}
+          key: v2-gems-ruby-3.2.9-{{ checksum "avromatic.gemspec" }}-{{ checksum "Gemfile" }}
           paths:
             - "vendor/bundle"
             - "gemfiles/vendor/bundle"
@@ -69,20 +69,11 @@ workflows:
           matrix:
             parameters:
               gemfile:
-                - gemfiles/avro1_11_rails6_1.gemfile
-                - gemfiles/avro1_11_rails7_0.gemfile
-                - gemfiles/avro1_11_rails7_1.gemfile
                 - gemfiles/avro1_11_rails7_2.gemfile
                 - gemfiles/avro1_11_rails8_0.gemfile
+                - gemfiles/avro1_12_rails7_2.gemfile
+                - gemfiles/avro1_12_rails8_0.gemfile
               ruby-version:
-                - 3.0.6
-                - 3.1.4
-                - 3.2.2
-                - 3.3.0
-            exclude:
-              - gemfile: gemfiles/avro1_11_rails7_2.gemfile
-                ruby-version: 3.0.6
-              - gemfile: gemfiles/avro1_11_rails8_0.gemfile
-                ruby-version: 3.0.6
-              - gemfile: gemfiles/avro1_11_rails8_0.gemfile
-                ruby-version: 3.1.4
+                - 3.2.9
+                - 3.3.9
+                - 3.4.7

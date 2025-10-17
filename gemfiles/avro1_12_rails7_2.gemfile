@@ -2,8 +2,8 @@
 
 source "https://rubygems.org"
 
-gem "avro", "~> 1.11.0"
-gem "activesupport", "~> 7.0.0"
-gem "activemodel", "~> 7.0.0"
+gem "avro", "~> 1.12.0"
+gem "activesupport", "~> 7.2.2"
+gem "activemodel", "~> 7.2.2"
 
 gemspec path: "../"

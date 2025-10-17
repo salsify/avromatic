@@ -29,12 +29,13 @@ Gem::Specification.new do |spec|
 
   spec.metadata['rubygems_mfa_required'] = 'true'
 
-  spec.required_ruby_version = '>= 2.7'
+  spec.required_ruby_version = '>= 3.2'
 
-  spec.add_runtime_dependency 'activemodel', '>= 5.2', '< 8.1'
-  spec.add_runtime_dependency 'activesupport', '>= 5.2', '< 8.1'
-  spec.add_runtime_dependency 'avro', '>= 1.11.0', '< 1.12'
-  spec.add_runtime_dependency 'avro_schema_registry-client', '>= 0.4.0'
+  spec.add_runtime_dependency 'activemodel', '>= 7.2', '< 9'
+  spec.add_runtime_dependency 'activesupport', '>= 7.2', '< 9'
+  spec.add_runtime_dependency 'avro', '~> 1.11'
+  spec.add_runtime_dependency 'avro-resolution_canonical_form', '>= 0.7.0'
+  spec.add_runtime_dependency 'avro_schema_registry-client', '>= 0.5.0'
   spec.add_runtime_dependency 'avro_turf'
   spec.add_runtime_dependency 'ice_nine'
 
@@ -45,7 +46,7 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency 'rake', '~> 13.0'
   spec.add_development_dependency 'rspec', '~> 3.8'
   spec.add_development_dependency 'rspec_junit_formatter'
-  spec.add_development_dependency 'salsify_rubocop', '~> 1.27.1'
+  spec.add_development_dependency 'salsify_rubocop', '~> 1.74.0'
   spec.add_development_dependency 'simplecov'
   spec.add_development_dependency 'webmock'
   # For AvroSchemaRegistry::FakeServer
