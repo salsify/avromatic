@@ -1,5 +1,8 @@
 # avromatic changelog
 
+# 6.0.1
+- Remove `sinatra` as a development dependency
+
 # 6.0.0
 - Drop support for Rails < 7.2 and Ruby < 3.2.
 - Add support for Avro 1.12.
@@ -48,7 +51,7 @@
 
 ## 3.0.1
 - Raise an error when registering a nested model that has already been auto-generated.
-  This avoids hard to troubleshoot coercion errors when instantiating models and fixes 
+  This avoids hard to troubleshoot coercion errors when instantiating models and fixes
   a regression introduced in Avromatic 2.2.2.
 
 ## 3.0.0
@@ -105,14 +108,14 @@
 ## v2.0.0
 - Remove [virtus](https://github.com/solnic/virtus) dependency resulting in a 3x performance improvement in model instantation and 1.4x - 2.0x performance improvement in Avro serialization and Avromatic code simplification.
 - Raise `Avromatic::Model::CoercionError` when attribute values can't be coerced to the target type in model constructors and attribute setters. Previously coercion errors weren't detected until Avro serialization or an explicit call to `valid?`.
-- Prevent model instances from being constructed with unknown attributes. Previously unknown attributes were ignored. 
+- Prevent model instances from being constructed with unknown attributes. Previously unknown attributes were ignored.
   This can be disabled by setting `Avromatic.allow_unknown_attributes` to `true`.
-  WARNING: Setting `Avromatic.allow_unknown_attributes` to `true` will result in incorrect union member coercions 
+  WARNING: Setting `Avromatic.allow_unknown_attributes` to `true` will result in incorrect union member coercions
   if an earlier union member is satisfied by a subset of the latter union member's attributes.
-- Validate required attributes are present when serializing to Avro for better error messages. Explicit 
-  validation can still be done by calling the `valid?` or `invalid?` methods from the 
+- Validate required attributes are present when serializing to Avro for better error messages. Explicit
+  validation can still be done by calling the `valid?` or `invalid?` methods from the
   [ActiveModel::Validations](https://edgeapi.rubyonrails.org/classes/ActiveModel/Validations.html) interface
-  but errors will now appear under the `:base` key. Previously these errors were detected late in the Avro serialization process resulting in hard to understand error messages. 
+  but errors will now appear under the `:base` key. Previously these errors were detected late in the Avro serialization process resulting in hard to understand error messages.
 - Support for custom types in unions with more than one non-null type.
 - Drop support for Ruby < 2.3 and Rails < 5.0.
 - Call `super()` in model constructor making it easier to define class/module hierarchies for models.
@@ -145,7 +148,7 @@
 
 ## v0.28.1
 - Fix a bug that raised an error when encoding a cached model containing optional
-  field(s). With this change, immutable model caching now enabled only when 
+  field(s). With this change, immutable model caching now enabled only when
   `avro-patches` is present.
 
 ## v0.28.0
